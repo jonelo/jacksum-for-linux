@@ -1,0 +1,48 @@
+Release Notes
+-------------
+1.4.0, Sep 7, 2020
+- added support for KDE framework 5
+
+1.3.0, Mar 12, 2016
+- changed sh to bash
+- added "Jacksum File Browser Integration" for 
+  Xfe (Xfe 1.35+ required), Nemo and Caja
+- minor bug fixed: missing optional Thunar xml file could break the installer
+  script
+- minor bug fixed: Gnome Nautilus changed script file location on Ubuntu 14.04
+  and later
+
+1.2.1, Nov 11, 2010
+- possible Race Condition for Nautilus during restart of Nautilus (sf# 3099869)
+  workaround: injected a sleep instruction
+- redirecting both stdout and stderr to /dev/null in order to avoid
+  ugly warnings from Nautilus after a restart of Nautilus
+
+1.2.0, Aug 18, 2010
+- the script has been made compatible with KDE 4 Konqueror
+- using kate rather than kwrite
+- the script has been made compatible with ROX-Filer
+- the script has been made compatible with Thunar
+- improved restart sequence for Gnome Nautilus
+- result files won't be removed anymore in order to satisfy some editors,
+  remove /tmp/jacksum.*.txt by cron or remove manually if required
+
+1.1.0, Oct 7, 2006
+- bundled jacksum.jar from the Jacksum 1.7.0 package
+  which provides additional algorithms called crc32_bzip2, HAS-160, 
+  and the Tiger/Tiger2 Tree Hashes
+- Tiger/Tiger2 algorithms have been added
+- the menu items called "calc integrity for directory",
+  "check integrity of directory", "all algorithms", and "edit script"
+  have been added
+- the user will be asked to restart Gnome Nautilus if required
+- a german readme.txt has been added
+
+1.0.0, June 5, 2006
+- bundled jacksum.jar from the Jacksum 1.6.1 package
+
+0.9.0, Feb 21, 2006
+- first public release
+- with english readme
+- without jacksum.jar
+
