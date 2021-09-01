@@ -6,4 +6,4 @@ Caja, Dolphin, Konqueror, Krusader, Nemo, Nautilus, ROX-Filer, Thunar, and Xfe a
 The script requires bash in order to run properly.
 It expects both jacksum.jar and license.txt in the same directory where the script is stored.
 
-For more information about Jacksum see also http://jacksum.net
+For more information about Jacksum see also https://jacksum.net
