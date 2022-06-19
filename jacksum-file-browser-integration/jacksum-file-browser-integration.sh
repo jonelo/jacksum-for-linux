@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 
 #  Jacksum File Browser Integration for Unix and GNU/Linux Operating Systems
-#  Copyright (c) 2006-2020 Dipl.-Inf. (FH) Johann N. Loefflmann
+#  Copyright (c) 2006-2022 Dipl.-Inf. (FH) Johann N. Loefflmann
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
+#  the Free Software Foundation; either version 3 of the License, or
 #  any later version.
 #
 #  This program is distributed in the hope that it will be useful,
@@ -17,16 +17,32 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-#  * This shell script is based on the bash script called 
+#  * credit: this shell script is based on the bash script called 
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
-#    See also http://www.kde-apps.org/content/download.php?content=11577&id=1
+#    See also https://www.linux-apps.com/p/998451
 #
-#  * This script requires jacksum.jar from Jacksum 1.7.0 or later
-#    which is part of the jacksum file browser integration package since 1.1.0
-#    See also http://jacksum.net
+#  * This script requires jacksum-3.4.0.jar and HashGarten-0.10.0.jar
+#    which are part of the Jacksum file browser integration package for Linux since 2.0.0
+#    See also https://jacksum.net
 #
-#  * This script has been successfully tested on the following systems,
-#    and it should work on similar platforms as well:
+#  * Version 2.0.0 of the script has been successfully tested on the following systems,
+#    and it should work on older platforms as well:
+#
+#    Caja 1.26.0 on Ubuntu Linux 22.04
+#
+#    Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
+#
+#    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
+#
+#    Nemo 5.24 on Ubuntu Linux 22.04
+#
+#    ROX Filer 2.11 on Ubuntu Linux 22.04
+#
+#    Xfe 1.43 on Ubuntu Linux 22.04
+#
+#
+#  * Version < 2.0.0 of the script has been successfully tested on the following systems,
+#    and it should work on similar platforms was well:
 #
 #    Caja 1.12.0 on Linux Mint 17.3 Mate
 #
@@ -65,58 +81,67 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="1.4.0"
+VERSION="2.0.0"
 NAME="jacksum"
+JACKSUM_VERSION="3.4.0"
+HASHGARTEN_VERSION="0.10.0"
 PROGNAME="Jacksum File Browser Integration"
-KDEPROGNAME="Jacksum at Dolphin/Konqueror/Krusader"
-GNOMEROGNAME="Jacksum at Gnome Nautilus"
-ROXPROGNAME="Jacksum at ROX-Filer"
-THUNARPROGNAME="Jacksum at Thunar"
-XFEPROGNAME="Jacksum at Xfe"
-NEMOPROGNAME="Jacksum at Nemo"
-CAJAPROGNAME="Jacksum at Caja"
-JACKSUMJAR="`pwd`/jacksum.jar"
-ALGOALL="adler32 cksum crc8 crc16 crc24 crc32 crc32_bzip2 crc32_mpeg2 crc64 ed2k elf fcs16 gost has160 haval_128_3 haval_128_4 haval_128_5 haval_160_3 haval_160_4 haval_160_5 haval_192_3 haval_192_4 haval_192_5 haval_224_3 haval_224_4 haval_224_5 haval_256_3 haval_256_4 haval_256_5 md2 md4 md5 ripemd128 ripemd160 ripemd256 ripemd320 sha0 sha1 sha224 sha256 sha384 sha512 sum8 sum16 sum24 sum32 sumbsd sumsysv tiger tiger128 tiger160 tiger2 tree:tiger tree:tiger2 whirlpool0 whirlpool1 whirlpool2 xor8"
-ALGOMIN="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sumbsd sumsysv whirlpool"
-ALGORITHMS="$ALGOMIN"
-COMMANDS="cmd_calc;1)_Calc_integrity_for_directory cmd_check;2)_Check_integrity_for_directory cmd_all;3)_All_algorithms cmd_edit;4)_Edit_script"
+JACKSUM_JAR="`pwd`/jacksum-${JACKSUM_VERSION}.jar"
+HASHGARTEN_JAR="`pwd`/HashGarten-${HASHGARTEN_VERSION}.jar"
+ALGOS_DIRECT_SUGGESTION="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sha256 sha3-256 sumbsd sumsysv whirlpool"
+ALGORITHMS=""
+COMMANDS="cmd_calc;1)_Calc_hash_values cmd_check;2)_Check_data_integrity cmd_cust;3)_Customized_output cmd_edit;4)_Edit_script cmd_help;5)_Help"
+
+KDE_PROGNAME="Jacksum at Dolphin/Konqueror/Krusader"
+GNOME_PROGNAME="Jacksum at Gnome Nautilus/Files"
+ROX_PROGNAME="Jacksum at ROX-Filer"
+THUNAR_PROGNAME="Jacksum at Thunar"
+XFE_PROGNAME="Jacksum at Xfe"
+NEMO_PROGNAME="Jacksum at Nemo"
+CAJA_PROGNAME="Jacksum at Caja"
+
 
 # -------------------------------------------------------------------------
 print_line() {
-# $0 number of dashes in the line
+# Prints a particular number of dashes.
+#
+# $1 number of dashes in the line
 # -------------------------------------------------------------------------
     printf -- '-%.0s' {1..80}; printf '\n'
 }
 
+
 # -------------------------------------------------------------------------
 print_header() {
 # -------------------------------------------------------------------------
-  echo "                - $PROGNAME v$VERSION -"
-  echo "                           http://www.jacksum.net"
-  echo
+  printf "                - $PROGNAME v$VERSION -\n"
+  printf "                            https://jacksum.net\n\n"
 }
+
 
 # -------------------------------------------------------------------------
 print_menu() {
 # -------------------------------------------------------------------------
-  echo "Menu:"
-  echo "  1 - Install   $KDEPROGNAME for $USERS $KDEDISABLED"
-  echo "  2 - Uninstall $KDEPROGNAME for $USERS $KDEDISABLED"
-  echo "  3 - Install   $GNOMEROGNAME for $USERS $GNOMEDISABLED"
-  echo "  4 - Uninstall $GNOMEROGNAME for $USERS $GNOMEDISABLED"
-  echo "  5 - Install   $ROXPROGNAME for $USERS $ROXDISABLED"
-  echo "  6 - Uninstall $ROXPROGNAME for $USERS $ROXDISABLED"
-  echo "  7 - Install   $THUNARPROGNAME for $USERS $THUNARDISABLED"
-  echo "  8 - Uninstall $THUNARPROGNAME for $USERS $THUNARDISABLED"
-  echo "  9 - Install   $XFEPROGNAME for $USERS $XFEDISABLED"
-  echo " 10 - Uninstall $XFEPROGNAME for $USERS $XFEDISABLED"
-  echo " 11 - Install   $NEMOPROGNAME for $USERS $NEMODISABLED"
-  echo " 12 - Uninstall $NEMOPROGNAME for $USERS $NEMODISABLED"
-  echo " 13 - Install   $CAJAPROGNAME for $USERS $CAJADISABLED"
-  echo " 14 - Uninstall $CAJAPROGNAME for $USERS $CAJADISABLED"
-  echo "  0 - Quit the installer"
+  printf "Menu:\n"
+  printf "  1 - Install   %s for %s %s\n" "$KDE_PROGNAME"    "$USERS" "$KDE_DISABLED"
+  printf "  2 - Uninstall %s for %s %s\n" "$KDE_PROGNAME"    "$USERS" "$KDE_DISABLED"
+  printf "  3 - Install   %s for %s %s\n" "$GNOME_PROGNAME"  "$USERS" "$GNOME_DISABLED"
+  printf "  4 - Uninstall %s for %s %s\n" "$GNOME_PROGNAME"  "$USERS" "$GNOME_DISABLED"
+  printf "  5 - Install   %s for %s %s\n" "$ROX_PROGNAME"    "$USERS" "$ROX_DISABLED"
+  printf "  6 - Uninstall %s for %s %s\n" "$ROX_PROGNAME"    "$USERS" "$ROX_DISABLED"
+  printf "  7 - Install   %s for %s %s\n" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
+  printf "  8 - Uninstall %s for %s %s\n" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
+  printf "  9 - Install   %s for %s %s\n" "$XFE_PROGNAME"    "$USERS" "$XFE_DISABLED"
+  printf " 10 - Uninstall %s for %s %s\n" "$XFE_PROGNAME"    "$USERS" "$XFE_DISABLED"
+  printf " 11 - Install   %s for %s %s\n" "$NEMO_PROGNAME"   "$USERS" "$NEMO_DISABLED"
+  printf " 12 - Uninstall %s for %s %s\n" "$NEMO_PROGNAME"   "$USERS" "$NEMO_DISABLED"
+  printf " 13 - Install   %s for %s %s\n" "$CAJA_PROGNAME"   "$USERS" "$CAJA_DISABLED"
+  printf " 14 - Uninstall %s for %s %s\n" "$CAJA_PROGNAME"   "$USERS" "$CAJA_DISABLED"
+  printf "\n"
+  printf "  q - Quit the installer\n"
   print_line 80
 }
+
 
 # -------------------------------------------------------------------------
 check_env() {
@@ -135,12 +160,13 @@ check_env() {
     while ( test ! -d "$DIR" )
     do
       echo "Couldn't find $1!"
-      printf "Type the full path here or press \"Ctrl+C\" to abort: "
+      printf "Type the absolute path here or press \"Ctrl+C\" to abort: "
       read DIR
     done
   fi
   DIR="`dirname "$DIR"`/`basename "$DIR"`"
 }
+
 
 # -------------------------------------------------------------------------
 check_bin() {
@@ -161,6 +187,7 @@ check_bin() {
   fi
 }
 
+
 # -------------------------------------------------------------------------
 check_file() {
 # parameters:
@@ -176,27 +203,29 @@ check_file() {
   fi
 }
 
+
 # -------------------------------------------------------------------------
 find_bin() {
 # parameters:
-# - $1 = Binary name
+# - $1 = Description for the binary
 # - $2 = Default location
 # -------------------------------------------------------------------------
-  echo
+  printf "\n"
   BIN=""
   if ( test ! -z "$2" ) then
-    echo "Type the full path to \"$1\""
-    printf "or press \"Enter\" to continue [%s]: " "$2"
+    printf "Type the absolute path to \"%s\"\n" "$1"
+    printf "and press \"Enter\" to continue [%s]: " "$2"
     read BIN
     test -z "$BIN" && BIN="$2"
   fi
   while ( test ! -f "$BIN" )
   do
-    echo "Couldn't find \"$1\"!"
-    printf "Type the full path here or \"Ctrl+C\" to abort: "
+    printf "Couldn't find \"%s\"!\n" "$1"
+    printf "Type the absolute path here or \"Ctrl+C\" to abort: "
     read BIN
   done
 }
+
 
 # -------------------------------------------------------------------------
 version_value() {
@@ -206,6 +235,7 @@ version_value() {
 # -------------------------------------------------------------------------
   printf "%03d%03d%03d" $(echo "$1" | tr '.' '\n' | head -n 3)
 }
+
 
 # -------------------------------------------------------------------------
 set_env() {
@@ -221,7 +251,7 @@ set_env() {
         if [ $? -eq 0 ]; then
           # KDE Framework 5.x
           KDE=5
-          KDEDISABLED=""
+          KDE_DISABLED=""
           if [ $(id | cut -c5) -ne 0 ]; then
             # non-root user
             LOCAL=""
@@ -242,7 +272,7 @@ set_env() {
         if [ $? -eq 0 ]; then
           # KDE 4.x
           KDE=4
-          KDEDISABLED=""
+          KDE_DISABLED=""
           if [ $(id | cut -c5) -ne 0 ]; then
             # non-root user
             LOCAL="`kde4-config --localprefix 2>/dev/null`"
@@ -263,7 +293,7 @@ set_env() {
         if [ $? -eq 0 ]; then
           # KDE 3.x
           KDE=3
-          KDEDISABLED=""
+          KDE_DISABLED=""
           if [ $(id | cut -c5) -ne 0 ]; then
             # non-root user
             LOCAL="`kde-config --localprefix 2>/dev/null`"
@@ -282,7 +312,7 @@ set_env() {
       if [ "$KDE" = "" ]; then
         # no KDE
         KDE=0
-        KDEDISABLED="(DISABLED)"
+        KDE_DISABLED="(DISABLED)"
         USERS="user "`whoami`
       fi
       ;;
@@ -290,10 +320,10 @@ set_env() {
       nautilus --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         GNOME=0
-        GNOMEDISABLED="(DISABLED)"
+        GNOME_DISABLED="(DISABLED)"
       else
         GNOME=1
-        GNOMEDISABLED=""
+        GNOME_DISABLED=""
         if ( test `nautilus --version | cut -c16` -ge 2 ) then
 
           if ( test -e "$HOME/.local/share/nautilus/scripts" ) then
@@ -316,10 +346,10 @@ set_env() {
       nemo --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         NEMO=0
-        NEMODISABLED="(DISABLED)"
+        NEMO_DISABLED="(DISABLED)"
       else
         NEMO=1
-        NEMODISABLED=""
+        NEMO_DISABLED=""
         NEMOVER=$(nemo --version | cut -f2 -d' ')
         if [ $(version_value $NEMOVER) -ge $(version_value 2.6.7) ]; then
             # starting with Nemo 2.6.7 Nemo's config folder is
@@ -336,18 +366,18 @@ set_env() {
       xfe --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         XFE=0
-        XFEDISABLED="(DISABLED)"
+        XFE_DISABLED="(DISABLED)"
       else
         XFEVER=$(xfe --version | cut -f3 -d' ')
         # script folder is supported starting with Xfe 1.35
         if [ $(version_value $XFEVER) -ge $(version_value 1.35) ]; then
             XFE=1
-            XFEDISABLED=""
+            XFE_DISABLED=""
             PREFIX="$HOME/.config/xfe"
             FB_SCRIPTFOLDER=scripts
         else
             XFE=0
-            XFEDISABLED="(DISABLED)"
+            XFE_DISABLED="(DISABLED)"
         fi
       fi
       ;;
@@ -355,10 +385,10 @@ set_env() {
       caja --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         CAJA=0
-        CAJADISABLED="(DISABLED)"
+        CAJA_DISABLED="(DISABLED)"
       else
         CAJA=1
-        CAJADISABLED=""
+        CAJA_DISABLED=""
         PREFIX="$HOME/.config/caja"
         FB_SCRIPTFOLDER=scripts
       fi
@@ -367,10 +397,10 @@ set_env() {
       rox --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         ROX=0
-        ROXDISABLED="(DISABLED)"
+        ROX_DISABLED="(DISABLED)"
       else
         ROX=1
-        ROXDISABLED=""
+        ROX_DISABLED=""
         PREFIX="$HOME/.config/rox.sourceforge.net"
       fi
       ;;
@@ -378,15 +408,16 @@ set_env() {
       thunar --version >/dev/null 2>&1
       if ( test $? -ne 0 ) then
         THUNAR=0
-        THUNARDISABLED="(DISABLED)"
+        THUNAR_DISABLED="(DISABLED)"
       else
         THUNAR=1
-        THUNARDISABLED=""
+        THUNAR_DISABLED=""
         PREFIX="$HOME/.config/Thunar"
       fi
       ;;
   esac
 }
+
 
 # -------------------------------------------------------------------------
 uninstall() {
@@ -397,6 +428,7 @@ uninstall() {
   printf "\nUninstallation finished. Press any key to continue ... "
   read DUMMY
 }
+
 
 # -------------------------------------------------------------------------
 uninstall_silent() {
@@ -421,6 +453,7 @@ uninstall_silent() {
   esac
 }
 
+
 # -------------------------------------------------------------------------
 uninstall_kde() {
 # -------------------------------------------------------------------------
@@ -442,6 +475,7 @@ uninstall_kde() {
     echo "[ NOT INSTALLED ]"
   fi
 }
+
 
 # -------------------------------------------------------------------------
 uninstall_gnome() {
@@ -465,11 +499,13 @@ uninstall_gnome() {
   fi
 }
 
+
 # -------------------------------------------------------------------------
 uninstall_xfe() {
 # -------------------------------------------------------------------------
   uninstall_gnome
 }
+
 
 # -------------------------------------------------------------------------
 uninstall_nemo() {
@@ -477,11 +513,13 @@ uninstall_nemo() {
   uninstall_gnome
 }
 
+
 # -------------------------------------------------------------------------
 uninstall_caja() {
 # -------------------------------------------------------------------------
   uninstall_gnome
 }
+
 
 # -------------------------------------------------------------------------
 uninstall_rox() {
@@ -507,6 +545,7 @@ uninstall_rox() {
     echo "[ NOT INSTALLED ]"
   fi
 }
+
 
 # -------------------------------------------------------------------------
 uninstall_thunar() {
@@ -534,6 +573,7 @@ uninstall_thunar() {
   fi
 }
 
+
 # -------------------------------------------------------------------------
 install_menu() {
 # parameters:
@@ -556,6 +596,7 @@ install_menu() {
            ;;
   esac
 }
+
 
 # -------------------------------------------------------------------------
 install_menu_kde() {
@@ -624,6 +665,7 @@ install_menu_kde() {
   echo "[  OK  ]" || { echo "[FAILED]" ; exit 1; }
 }
 
+
 # -------------------------------------------------------------------------
 install_menu_gnome_shared() {
 # function for Nautilus, Xfe and Nemo
@@ -667,12 +709,14 @@ install_menu_gnome() {
   install_menu_gnome_shared
 }
 
+
 # -------------------------------------------------------------------------
 install_menu_xfe() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
   install_menu_gnome_shared
 }
+
 
 # -------------------------------------------------------------------------
 install_menu_nemo() {
@@ -681,12 +725,14 @@ install_menu_nemo() {
   install_menu_gnome_shared
 }
 
+
 # -------------------------------------------------------------------------
 install_menu_caja() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
   install_menu_gnome_shared
 }
+
 
 # -------------------------------------------------------------------------
 install_menu_rox() {
@@ -731,6 +777,7 @@ install_menu_rox() {
 
   echo "[  OK  ]"
 }
+
 
 # -------------------------------------------------------------------------
 install_menu_thunar() {
@@ -788,34 +835,164 @@ install_menu_thunar() {
   echo "[  OK  ]"
 }
 
+
 # -------------------------------------------------------------------------
 install_script() {
 # parameters:
 # kde, gnome, rox, thunar, xfe, caja or nemo
 # -------------------------------------------------------------------------
   case $1 in
-      kde) install_script_kde
+      kde|gnome|rox|thunar|xfe|nemo|caja) install_script_generic
            ;;
-    gnome) install_script_gnome
-           ;;
-      rox) install_script_rox
-           ;;
-   thunar) install_script_thunar
-           ;;
-      xfe) install_script_xfe
-           ;;
-     nemo) install_script_nemo
-           ;;
-     caja) install_script_caja
+      *) printf "file browser $1 is not supported. Exit.\n"
+         exit 1
            ;;
   esac
 }
 
+
 # -------------------------------------------------------------------------
-install_script_share() {
+install_script_sh() {
 # -------------------------------------------------------------------------
-  JACKSUMVER=$("$JAVA" -jar "$JACKSUMJAR" -v)
-  echo "  Found $JACKSUMVER:                [  OK  ]"
+
+  echo '#!/bin/bash
+#
+# Jacksum File Browser Integration Script, https://jacksum.net
+# Copyright (c) 2006-2022 Johann N. Loefflmann, https://johann.loefflmann.net
+# Code has been released under the conditions of the GPLv3+.
+#
+
+viewer() {' > "$JACKSUMSH"
+
+    if [ "${VIEWER##*/}" = "zenity" ]; then
+        echo '    cat "$1" | "'"${VIEWER}"'" --text-info --width 800 --height 600 --title "Jacksum: $1" --no-wrap --font="Monospace" "$1"' >> "$JACKSUMSH"
+    else
+        echo '    "'"${EDIT}"'" "$1"' >> "$JACKSUMSH"
+    fi
+echo '}
+
+FILE_LIST="/tmp/jacksum-'"${JACKSUM_VERSION}"'-filelist.txt"
+OUTPUT="/tmp/jacksum-'"${JACKSUM_VERSION}"'-output.txt"
+ERROR_LOG="/tmp/jacksum-'"${JACKSUM_VERSION}"'-error.txt"
+CHECK_FILE="/tmp/jacksum-'"${JACKSUM_VERSION}"'-check.txt"
+JAVA="'"${JAVA}"'"
+JACKSUM_JAR="'"${JACKSUM_JAR}"'"
+HASHGARTEN_JAR="'"${HASHGARTEN_JAR}"'"
+
+cat /dev/null > $FILE_LIST
+VIRGIN=1
+for i in "$@"
+do
+    # ignore the 1st arg
+    if [ "$VIRGIN" -eq 1 ]; then
+        VIRGIN=0
+    else
+        printf "%s\n" "$i" >> "${FILE_LIST}"
+    fi
+done
+
+ALGO=$1
+shift
+case $ALGO in
+
+  "cmd_calc")
+  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O ${CHECK_FILE} -U ${ERROR_LOG} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  if [ $? -eq 0 ]
+  then
+    cat ${CHECK_FILE} ${ERRORL_LOG} > ${OUTPUT}
+    viewer "${OUTPUT}"
+  fi
+  ;;
+
+
+  "cmd_check")
+  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c ${CHECK_FILE} -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  if [ $? -eq 0 ]
+  then
+    viewer "${OUTPUT}"
+  fi
+  ;;
+
+
+  "cmd_cust")
+  cat /dev/null > "${OUTPUT}"
+  ALGOS="md5+sha1+ripemd160+tiger+\
+sha256+sha512/256+sha3-256+shake128+sm3+streebog256+kupyna-256+lsh-256-256+blake3+k12+keccak256+\
+sha512+sha3-512+shake256+streebog512+kupyna-512+lsh-512-512+blake2b-512+keccak512+m14+skein-512-512+whirlpool"
+  TEMPLATE='\''File info:
+    name:                      #FILENAME{name}
+    path:                      #FILENAME{path}
+    size:                      #FILESIZE bytes
+
+legacy message digests (avoid if possible):
+    MD5 (128 bit):             #HASH{md5}
+    SHA1 (160 bit):            #HASH{sha1}
+    RIPEMD-160 (160 bit):      #HASH{ripemd160}
+    TIGER (192 bit):           #HASH{tiger}
+
+256 bit message digests (hex):
+    SHA-256 (USA):             #HASH{sha256}
+    SHA-512/256 (USA):         #HASH{sha512/256}
+    SHA3-256 (USA):            #HASH{sha3-256}
+    SHAKE128 (USA):            #HASH{shake128}
+    SM3 (China):               #HASH{sm3}
+    STREEBOG 256 (Russia):     #HASH{streebog256}
+    Kupyna256 (Ukraine):       #HASH{kupyna-256}
+    LSH-256-256 (South Korea): #HASH{lsh-256-256}
+    BLAKE3:                    #HASH{blake3}
+    KangarooTwelve:            #HASH{k12}
+    KECCAK256:                 #HASH{keccak256}
+
+512 bit message digests (base64, no padding):
+    SHA-512 (USA):             #HASH{sha512,base64-nopadding}
+    SHA3-512 (USA):            #HASH{sha3-512,base64-nopadding}
+    SHAKE256 (USA):            #HASH{shake256,base64-nopadding}
+    STREEBOG 512 (Russia):     #HASH{streebog512,base64-nopadding}
+    KUPYNA-512 (Ukraine):      #HASH{kupyna-512,base64-nopadding}
+    LSH-512-512 (South Korea): #HASH{lsh-512-512,base64-nopadding}
+    BLAKE2b-512:               #HASH{blake2b-512,base64-nopadding}
+    KECCAK512:                 #HASH{keccak512,base64-nopadding}
+    MarsupilamiFourteen:       #HASH{m14,base64-nopadding}
+    SKEIN-512-512:             #HASH{skein-512-512,base64-nopadding}
+    WHIRLPOOL:                 #HASH{whirlpool,base64-nopadding}
+
+'\''
+
+  "${JAVA}" -jar "${JACKSUM_JAR}" -a "${ALGOS}" -E hex --format "${TEMPLATE}" \
+  --file-list "${FILE_LIST}" --file-list-format list \
+  -O "${OUTPUT}" -U "${OUTPUT}"
+
+  viewer "${OUTPUT}"
+  ;;
+  
+  "cmd_edit")
+  "'"$EDIT"'" "'"${JACKSUMSH}"'"
+  exit
+  ;;
+  
+  "cmd_help")
+  "${JAVA}" -jar "${JACKSUM_JAR}" --help > "${OUTPUT}"
+  viewer "${OUTPUT}"
+  ;;
+
+  *)
+  "${JAVA}" -jar "${JACKSUM_JAR}" -a $ALGO --header \
+  --file-list "${FILE_LIST}" --file-list-format list --path-relative-to-entry 1 \
+  -O "${OUTPUT}" -U "${OUTPUT}"
+  viewer "${OUTPUT}"
+  ;;
+
+esac
+
+' >> "$JACKSUMSH"
+}
+
+
+# -------------------------------------------------------------------------
+install_script_generic() {
+# -------------------------------------------------------------------------
+  JACKSUM_VER=$("$JAVA" -jar "$JACKSUM_JAR" -v)
+  printf "  Found %s:                [  OK  ]\n" "$JACKSUM_VER"
 
   printf "  Installing %s.sh:              " "$NAME"
   if ( test -d "$PREFIX/share/apps/$NAME/" )
@@ -825,320 +1002,92 @@ install_script_share() {
 
   JACKSUMSH="$PREFIX/share/apps/$NAME/$NAME.sh"
   mkdir -p "$PREFIX/share/apps/$NAME" 2>/dev/null
-}
 
-
-# -------------------------------------------------------------------------
-install_script_xfe() {
-# -------------------------------------------------------------------------
-    install_script_gnome
-}
-
-# -------------------------------------------------------------------------
-install_script_nemo() {
-# -------------------------------------------------------------------------
-    install_script_gnome
-}
-
-# -------------------------------------------------------------------------
-install_script_caja() {
-# -------------------------------------------------------------------------
-    install_script_gnome
-}
-
-# -------------------------------------------------------------------------
-install_script_gnome() {
-# -------------------------------------------------------------------------
-  install_script_share
   test -d "$PREFIX/share/apps/$NAME" &&
-  echo '#!/bin/sh
-#
-# Gnome Nautilus, Caja, Nemo, Xfe Integration Script for Jacksum
-# Copyright (c) 2006-2016 Johann N. Loefflmann, released under the GPLv2+
-#
-FILENAMES=
-VIRGIN=1
-for arg
-do
-    # ignore the 1st arg
-    if [ "$VIRGIN" -eq 1 ]; then
-        VIRGIN=0
-    else
-        FILENAMES=$FILENAMES"\""$arg"\" "
+  install_script_sh &&
+  chmod +x "$JACKSUMSH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
+}
+
+
+# -------------------------------------------------------------------------
+function find_app() {
+# -------------------------------------------------------------------------
+  if [[ "$#" == "0" ]]; then
+    printf >&2 "FATAL: at least one parameter is required in find_app(). Exit.\n"
+    exit 1
+  fi
+  while (( "$#" )); do
+    if type -P "$1" >/dev/null; then
+      APP="$(type -P "$1")"
+      break
     fi
-done
-
-FILE=/tmp/jacksum.$$.txt
-ALGO=$1
-shift
-case $ALGO in
-  "cmd_all")
-  eval "'$JAVA' -jar '\'''$JACKSUMJAR''\'' -a all -F \"#ALGONAME{i} (#FILENAME) = #CHECKSUM{i}\" -O $FILE -U $FILE $FILENAMES"
-  '$EDIT' $FILE
-  ;;
-  "cmd_edit")
-  '$EDIT' "'$JACKSUMSH'"
-  exit
-  ;;
-  "cmd_calc")
-  eval "'$JAVA' -jar '\'''$JACKSUMJAR''\'' -a sha1+crc32 -m -r -f -p -O /tmp/jacksum.txt -U $FILE -w $FILENAMES"
-  echo >> $FILE
-  echo "Done. Go to another directory and select 2) Check integrity of directory from the Scripts menu." >> $FILE
-  '$EDIT' $FILE
-  ;;
-  "cmd_check")
-  eval "'$JAVA' -jar '\'''$JACKSUMJAR''\'' -O $FILE -U $FILE -c /tmp/jacksum.txt -w $FILENAMES"
-  '$EDIT' $FILE
-  ;;
-  *)
-  eval "'$JAVA' -jar '\'''$JACKSUMJAR''\'' -a $ALGO -O $FILE -U $FILE $FILENAMES"
-  echo >> $FILE
-  echo "# -- " >> $FILE
-  echo "# created with '$JACKSUMVER', algorithm=$ALGO" >> $FILE
-  '$EDIT' $FILE
-  ;;
-esac
-ALGO=
-FILENAMES=
-#rm $FILE
-FILE=
-' > "$JACKSUMSH" &&
-  chmod +x "$JACKSUMSH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
+    shift
+  done
 }
 
-# -------------------------------------------------------------------------
-install_script_rox() {
-# -------------------------------------------------------------------------
-  install_script_share
-  test -d "$PREFIX/share/apps/$NAME" &&
-  echo '#!/bin/sh
-#
-# ROX-Filer Integration Script for Jacksum
-# Copyright (c) 2010-2016 Johann N. Loefflmann, released under the GPLv2+
-#
-FILE=/tmp/jacksum.$$.txt
-ALGO=$1
-shift
-case $ALGO in
-  "cmd_all")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a all -F "#ALGONAME{i} (#FILENAME) = #CHECKSUM{i}" -O $FILE -U $FILE "$@"
-  '$EDIT' $FILE
-  ;;
-  "cmd_edit")
-  '$EDIT' "'$JACKSUMSH'"
-  exit
-  ;;
-  "cmd_calc")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a sha1+crc32 -m -r -f -p -O /tmp/jacksum.txt -U $FILE -w "$@"
-  echo >> $FILE
-  echo "Done. Go to another directory and select 2) Check integrity of directory from the Action menu." >> $FILE
-  '$EDIT' $FILE
-  ;;
-  "cmd_check")
-  '$JAVA' -jar "'$JACKSUMJAR'" -O $FILE -U $FILE -c /tmp/jacksum.txt -w "$@"
-  '$EDIT' $FILE
-  ;;
-  *)
-  '$JAVA' -jar "'$JACKSUMJAR'" -a $ALGO -O $FILE -U $FILE "$@"
-  echo >> $FILE
-  echo "# -- " >> $FILE
-  echo "# created with '$JACKSUMVER', algorithm=$ALGO" >> $FILE
-  '$EDIT' $FILE
-  ;;
-esac
-ALGO=
-#rm $FILE
-FILE=
-' > "$JACKSUMSH" &&
-  chmod +x "$JACKSUMSH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
-}
-
-
-# -------------------------------------------------------------------------
-install_script_thunar() {
-# -------------------------------------------------------------------------
-  install_script_share
-  test -d "$PREFIX/share/apps/$NAME" &&
-  echo '#!/bin/sh
-#
-# Thunar Integration Script for Jacksum
-# Copyright (c) 2010-2016 Johann N. Loefflmann, released under the GPLv2+
-#
-FILE=/tmp/jacksum.$$.txt
-ALGO=$1
-shift
-case $ALGO in
-  "cmd_all")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a all -F "#ALGONAME{i} (#FILENAME) = #CHECKSUM{i}" -O $FILE -U $FILE "$@"
-  '$EDIT' $FILE
-  ;;
-  "cmd_edit")
-  '$EDIT' "'$JACKSUMSH'"
-  exit
-  ;;
-  "cmd_calc")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a sha1+crc32 -m -r -f -p -O /tmp/jacksum.txt -U $FILE -w "$@"
-  echo >> $FILE
-  echo "Done. Go to another directory and select 2) Check integrity of directory from the Action menu." >> $FILE
-  '$EDIT' $FILE
-  ;;
-  "cmd_check")
-  '$JAVA' -jar "'$JACKSUMJAR'" -O $FILE -U $FILE -c /tmp/jacksum.txt -w "$@"
-  '$EDIT' $FILE
-  ;;
-  *)
-  '$JAVA' -jar "'$JACKSUMJAR'" -a $ALGO -O $FILE -U $FILE "$@"
-  echo >> $FILE
-  echo "# -- " >> $FILE
-  echo "# created with '$JACKSUMVER', algorithm=$ALGO" >> $FILE
-  '$EDIT' $FILE
-  ;;
-esac
-ALGO=
-#rm $FILE
-FILE=
-' > "$JACKSUMSH" &&
-  chmod +x "$JACKSUMSH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
-}
-
-
-# -------------------------------------------------------------------------
-install_script_kde() {
-# -------------------------------------------------------------------------
-  install_script_share
-  test -d "$PREFIX/share/apps/$NAME" &&
-  echo '#!/bin/sh
-#
-# KDE Konqueror Integration Script for Jacksum
-# Copyright (c) 2006-2016 Johann N. Loefflmann, released under the GPLv2+
-#
-FILE=/tmp/jacksum.$$.txt
-ALGO=$1
-shift
-case $ALGO in
-  "cmd_all")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a all -F "#ALGONAME{i} (#FILENAME) = #CHECKSUM{i}" -O $FILE -U $FILE "$@"
-  '$EDIT' $FILE
-  ;;
-  "cmd_edit")
-  '$EDIT' "'$JACKSUMSH'"
-  exit
-  ;;
-  "cmd_calc")
-  '$JAVA' -jar "'$JACKSUMJAR'" -a sha1+crc32 -m -r -f -p -O /tmp/jacksum.txt -U $FILE -w "$@"
-  echo >> $FILE
-  echo "Done. Go to another directory and select 2) Check integrity of directory from the Action menu." >> $FILE
-  '$EDIT' $FILE
-  ;;
-  "cmd_check")
-  '$JAVA' -jar "'$JACKSUMJAR'" -O $FILE -U $FILE -c /tmp/jacksum.txt -w "$@"
-  '$EDIT' $FILE
-  ;;
-  *)
-  '$JAVA' -jar "'$JACKSUMJAR'" -a $ALGO -O $FILE -U $FILE "$@"
-  echo >> $FILE
-  echo "# -- " >> $FILE
-  echo "# created with '$JACKSUMVER', algorithm=$ALGO" >> $FILE
-  '$EDIT' $FILE
-  ;;
-esac
-ALGO=
-#rm $FILE
-FILE=
-' > "$JACKSUMSH" &&
-  chmod +x "$JACKSUMSH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
-}
 
 # -------------------------------------------------------------------------
 print_params() {
-# parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
 # -------------------------------------------------------------------------
-  echo
-  echo "Parameters:"
+  printf "\nCurrent parameters:\n"
   check_bin "java" "$JAVA"
   JAVA="$BIN"
-  check_file "jacksum.jar" "$JACKSUMJAR"
-  JACKSUMJAR="$BIN"
-  case $1 in
-      kde) check_bin "kate" "$EDIT"
-           EDIT="$BIN"
-           ;;
-    gnome) check_bin "gedit" "$EDIT"
-           EDIT="$BIN"
-           ;;
-      rox) check_bin "defaulttexteditor" "$EDIT"
-           EDIT="$BIN"
-           ;;
-   thunar) check_bin "xfwrite" "$EDIT"
-           EDIT="$BIN"
-           ;;
-      xfe) check_bin "xfwrite" "$EDIT"
-           EDIT="$BIN"
-           ;;
-     nemo) check_bin "gedit" "$EDIT"
-           EDIT="$BIN"
-           ;;
-     caja) check_bin "pluma" "$EDIT"
-           EDIT="$BIN"
-           ;;
-  esac
-  echo "  [algorithms]: $ALGORITHMS"
-  echo
+  
+  check_file "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
+  JACKSUM_JAR="$BIN"
+  
+  check_file "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
+  HASHGARTEN_JAR="$BIN"
+
+  check_bin "Viewer" "$VIEWER"
+  VIEWER="$BIN"
+  
+  check_bin "Editor" "$EDIT"
+  EDIT="$BIN"
+  
+  printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
 }
 
+
 # -------------------------------------------------------------------------
-change_params() {
-# parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+modify_params() {
 # -------------------------------------------------------------------------
+  printf "\nA complete JDK is required. If you use a headless JDK, you cannot use HashGarten which is a GUI for Jacksum.\n"
+  printf "You could go to https://adoptium.net for example to obtain a full JDK.\n"
   find_bin "java" "$JAVA"
   JAVA="$BIN"
-  find_bin "jacksum.jar" "$JACKSUMJAR"
-  JACKSUMJAR="$BIN"
-  case $1 in
-      kde) find_bin "kate" "$EDIT"
-           EDIT="$BIN"
-           ;;
-    gnome) find_bin "gedit" "$EDIT"
-           EDIT="$BIN"
-           ;;
-      rox) find_bin "defaulttexteditor" "$EDIT"
-           EDIT="$BIN"
-           ;;
-   thunar) find_bin "xfwrite" "$EDIT"
-           EDIT="$BIN"
-           ;;
-      xfe) find_bin "xfwrite" "$EDIT"
-           EDIT="$BIN"
-           ;;
-     nemo) find_bin "gedit" "$EDIT"
-           EDIT="$BIN"
-           ;;
-     caja) find_bin "pluma" "$EDIT"
-           EDIT="$BIN"
-           ;;    
-  esac
-  echo
-  algorithm_selection
-  printf "You can modify the selection again [%s]: " "$ALGORITHMS"
-  read ALGOS
-  test -z "$ALGOS" && ALGOS="$ALGORITHMS"
-  ALGORITHMS="$ALGOS"
+
+  printf "\n\nThe jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but during runtime it expects those binaries to be there at the specified location after the installation.\n"
+  find_bin "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
+  JACKSUM_JAR="$BIN"
+  
+  find_bin "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
+  HASHGARTEN_JAR="$BIN"
+
+  printf "\n\nTo view text output, you need to specify a viewer or an editor.\n"
+  find_bin "viewer" "$VIEWER"
+  VIEWER="$BIN"
+
+  printf "\n\nTo use the \"Edit the script\" feature, you need to specify an editor.\n"
+  find_bin "editor" "$EDIT"
+  EDIT="$BIN"
+  
+  select_algorithms
 }
+
 
 # -------------------------------------------------------------------------
 print_info_kde() {
 # -------------------------------------------------------------------------
   if (test $KDE -gt 1) then
     echo "Info:"
-    echo "  This installer can install $KDEPROGNAME."
+    echo "  This installer can install $KDE_PROGNAME."
     # if not root
     if ( test `id | cut -c5` -ne 0 ) then
-      echo "  If you want to install $KDEPROGNAME"
+      echo "  If you want to install $KDE_PROGNAME"
       echo "  for all users, run the script as root."
     else
-      echo "  If you want to install $KDEPROGNAME"
+      echo "  If you want to install $KDE_PROGNAME"
       echo "  only for one user, run the script as a normal user. If you have a Live CD,"
       echo "  you must run the script as normal user, because CDs are read only."
     fi
@@ -1146,17 +1095,32 @@ print_info_kde() {
   fi
 }
 
+
 # -------------------------------------------------------------------------
-algorithm_selection() {
+select_algorithms() {
 # ------------------------------------------------------------------------- 
-  YESNO=""
+  printf "\n\n"
+  local YESNO=""
   while ( test "$YESNO" != "y" ) && ( test "$YESNO" != "n" ) ; do
-    printf "Do you want to use all algorithms? Type n to use previous selection [y]: "
+    printf "Do you want to access some algorithms directly without the HashGarten GUI?\nType n to disable direct access to algorithms, type p or any other key to use the previous selection [n]: "
     read YESNO
-    test -z "$YESNO" && YESNO="y"
+    test -z "$YESNO" && YESNO="n"
     case "$YESNO" in
       "y")
-         ALGORITHMS="$ALGOALL"
+         if [ -z "$ALGOS_SUPPORTED" ]; then
+             ALGOS_SUPPORTED="$("$JAVA" -jar "$JACKSUM_JAR" -a all -l | xargs)"
+         fi
+         if [ "$ALGORITHMS" = "" ]; then
+             ALGORITHMS="$ALGOS_DIRECT_SUGGESTION"
+         fi
+         printf "\nJacksum %s supports the following algorithms:\n%s\n\n" "$JACKSUM_VERSION" "$ALGOS_SUPPORTED"
+         printf "Feel free to modify the selection again [%s]: " "$ALGORITHMS"
+         read ALGOS
+         test -z "$ALGOS" && ALGOS="$ALGORITHMS"
+         ALGORITHMS="$ALGOS"
+         ;;
+      "n")
+         ALGORITHMS=""
          ;;
         *)
          ;;
@@ -1164,27 +1128,28 @@ algorithm_selection() {
   done
 }
 
+
 # ------------------------------------------------------------------------- 
 install_interactive() {
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja or nemo
 # ------------------------------------------------------------------------- 
-  YESNO=""
+  local YESNO=""
   while [ "$YESNO" != "y" ]; do
-    print_params $1
-    printf "Do you want use the parameters above? [y]: "
+    print_params
+    printf "Do you want to use the parameters above? [y]: "
     read YESNO
     test -z "$YESNO" && YESNO="y"
 
     case "$YESNO" in
       "y")
-          echo
+          printf "\n"
           uninstall_silent $1
           install_script $1
           install_menu $1
           ;;
       "n")
-          change_params $1
+          modify_params
           ;;
         *)
           ;;
@@ -1196,12 +1161,14 @@ install_interactive() {
   install_done $1
 }
 
+
 # ------------------------------------------------------------------------- 
 restart_fb() {
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja or nemo
 # $2 Name of the file browser
 # ------------------------------------------------------------------------- 
+  local YESNO=""
   printf "Do you want to restart $2 so that changes can become active? [y]: "
   read YESNO
   test -z "$YESNO" && YESNO="y"
@@ -1222,6 +1189,7 @@ restart_fb() {
   esac
 }
 
+
 # ------------------------------------------------------------------------- 
 install_done() {
 # parameters:
@@ -1238,13 +1206,13 @@ install_done() {
           restart_fb caja "Caja"
           ;;
       kde)  
-          echo "Restart KDE Konqueror in order to make the change active."
+          echo "Please restart KDE Konqueror in order to make the change active."
           ;;
       rox)
           # no restart required for ROX-Filer :)
           ;;
    thunar)
-          echo "Restart Thunar in order to make the change active."
+          echo "Please restart Thunar in order to make the change active."
           ;;
       xfe)
           # no restart required for Xfe :)
@@ -1254,6 +1222,7 @@ install_done() {
   read DUMMY
 }
 
+
 # ------------------------------------------------------------------------- 
 install_generic() {
 # parameters:
@@ -1261,10 +1230,11 @@ install_generic() {
 # ------------------------------------------------------------------------- 
   set_env $1
   print_params $1
-  change_params $1
+  modify_params
   install_interactive $1
   EDIT=""
 }
+
 
 # ------------------------------------------------------------------------- 
 uninstall_generic() {
@@ -1274,6 +1244,23 @@ uninstall_generic() {
   set_env $1
   uninstall $1
 }
+
+
+# -------------------------------------------------------------------------
+init_editor() {
+# -------------------------------------------------------------------------
+  find_app gedit kate defaulttexteditor xfwrite pluma
+  EDIT="$APP"
+}
+
+
+# -------------------------------------------------------------------------
+init_viewer() {
+# -------------------------------------------------------------------------
+  find_app zenity gedit kate defaulttexteditor xfwrite pluma
+  VIEWER="$APP"
+}
+
 
 # -------------------------------------------------------------------------
 # MAIN
@@ -1285,6 +1272,8 @@ set_env thunar
 set_env xfe
 set_env nemo
 set_env caja
+init_editor
+init_viewer
 
 while :
 do
@@ -1292,7 +1281,7 @@ do
   print_header
   print_info_kde
   print_menu
-  printf "Select option 1-10 or 0 to quit: "
+  printf "Select option 1-14 or q to quit: "
   read OPTION
   case "$OPTION" in
     1) # in $KDE we have the major version
@@ -1365,7 +1354,7 @@ do
         uninstall_generic caja
       fi
       ;; 
-    0)
+    0 | q)    
       echo
       exit 0
       ;;

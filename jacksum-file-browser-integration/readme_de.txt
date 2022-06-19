@@ -1,8 +1,8 @@
-Description
------------
-Jacksum File Browser Integration 1.4.0
-fuer Linux und Unix Betriebssysteme (7. September 2020)
-Copyright (C) 2006-2020 Dipl.-Inf. (FH) Johann N. Loefflmann
+Beschreibung
+------------
+Jacksum File Browser Integration 2.0.0
+fuer GNU/Linux und Unix Betriebssysteme (19. Juni 2022)
+Copyright (C) 2006-2022 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,26 +16,35 @@ Dateibrowser unter GNU/Linux und Unix Betriebssystemen.
 Caja, Dolphin, Konqueror, Krusader, Nemo, Nautilus, ROX-Filer, Thunar und Xfe
 werden unterstuetzt.
 
-Um alle Funktionen von Jacksum benutzen zu koennen, lassen Sie Jacksum auf
+Um alle Funktionen von Jacksum benutzen zu k�nnen, lassen Sie Jacksum auf
 der Kommandozeile laufen.
 
 
 Voraussetzungen
 ---------------
-1) Ein Dateimanager
-   Caja, Dolphin, Konqueror, Krusader, Nemo, Nautilus, ROX-Filer, Thunar und
-   Xfe werden unterstuetzt
+1) Ein GNU/Linux oder Unix Betriebssystem mit einer grafischen Oberflaeche.
+   Ein headless-System ist nicht ausreichend.
 
-2) Eine Java Laufzeitumgebung, beziehen Sie diese aus dem Internet
-   - adoptopenjdk.net
-   - azul.com
-   - bell-sw.com/java
-   - java.com
-   - jdk.java.net
-   - www.oracle.com/java
+2) Einen Dateimanager: Caja, Dolphin, Konqueror, Krusader,
+   Nemo, Gnome Nautilus (Files), ROX-Filer, Thunar und Xfe werden unterstuetzt.
 
-3) jacksum.jar, mindestens Version 1.7.0 (in diesem Paket enthalten) oder 
-   eine neuere Version.
+3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 
+   Ein headless-OpenJDK ist nicht ausreichend.
+
+   Beziehen Sie ein passende Java Laufzeitumgebung (JRE oder JDK)
+   aus dem Internet:
+
+   https://adoptium.net
+   https://openjdk.java.net
+   https://www.azul.com/downloads/?package=jdk
+   https://bell-sw.com/pages/downloads/
+   https://www.microsoft.com/openjdk/
+   https://aws.amazon.com/de/corretto/
+   https://sapmachine.io
+   https://github.com/alibaba/dragonwell8
+   https://www.oracle.com/java
+
+4) jacksum-3.4.0.jar, and HashGarten-0.10.0.jar, und flatlaf-2.3.jar
    Besuchen Sie http://jacksum.net um die neueste Version zu bekommen.
 
 
@@ -49,6 +58,8 @@ Starten des Scripts
 -------------------
 ./jacksum-file-browser-integration.sh
 
+Sie können das Script so oft aufrufen wie sie wollen.
+
 
 Getestete Umgebungen
 --------------------
@@ -61,4 +72,5 @@ funktionieren.
 
 Fehler, Wuensche, Supportanfragen
 ---------------------------------
-Besuchen Sie http://sourceforge.net/projects/jacksum
+Besuchen Sie https://github.com/jonelo/jacksum-fbi-linux/issues
+
