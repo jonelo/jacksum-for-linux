@@ -14,14 +14,18 @@ The installer script can install Jacksum's primary features to the GNU/Linux Fil
 
 - jacksum-3.4.0.jar, HashGarten-0.10.0.jar, and flatlaf-2.3.jar which are all part of the tarball (see releases)
 
-## Extract the script
+## Download the latest install script
+
+Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar.bz2 file.
+
+## Extract the install script
 
 ```
 bunzip2 < jacksum*.tar.bz2 | tar xfv -
 cd jacksum-file-browser-integration/
 ```
 
-## Start the script
+## Start the install script
 
 ```
 ./jacksum-file-browser-integration.sh
@@ -29,11 +33,9 @@ cd jacksum-file-browser-integration/
 
 You can run the script as often as you want.
 
-
 ## Tested Environments
 
-The script has been tested successfully on many systems. See the head of the
-installer script for details.
+The script has been tested successfully on many systems. See the head of the installer script for details.
 
 ## Bugs, Feature Requests, Support Requests
 
