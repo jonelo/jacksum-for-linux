@@ -1,3 +1,5 @@
+![GitHub downloads](https://img.shields.io/github/downloads/jonelo/jacksum-fbi-linux/total?color=green)
+
 # Jacksum File Browser Integration on GNU/Linux
 
 The installer script can install Jacksum's primary features to the GNU/Linux File Browser's Script Menu.
