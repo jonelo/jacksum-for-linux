@@ -31,6 +31,7 @@
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #
 #    Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
+#    Files (known as Gnome Nautiulus) 3.26.4 on Ubuntu Linux 18.04
 #
 #    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
 #
@@ -334,7 +335,7 @@ set_env() {
               # Starting with Nautilus 2.x, the Nautilus config folder is
               PREFIX="$HOME/.gnome2"
               FB_SCRIPTFOLDER=nautilus-scripts
-          fi 
+          fi
         else
           # Starting with Nautilus 1.0.5, the Nautilus config folder is
           PREFIX="$HOME/.gnome"
@@ -561,7 +562,7 @@ uninstall_thunar() {
   fi
   printf "  Removing $NAME entries:           "
   # restore the backup
-  THUNARXML="$PREFIX/uca.xml"  
+  THUNARXML="$PREFIX/uca.xml"
   THUNARXMLBACKUP="$PREFIX/uca.before-jacksum.xml"
   if (test ! -f "$THUNARXMLBACKUP" )
   then
@@ -601,7 +602,7 @@ install_menu() {
 # -------------------------------------------------------------------------
 install_menu_kde() {
 # -------------------------------------------------------------------------
-  printf "  Creating a folder for servicemenus: "    
+  printf "  Creating a folder for servicemenus: "
 
   if ( test ! -d "$PREFIX$KDEPOSTFIX" )
   then
@@ -615,7 +616,7 @@ install_menu_kde() {
   DESKFILE="$PREFIX$KDEPOSTFIX$NAME.desktop"
   printf "  Installing %s.desktop:         " $NAME
 
-  # gather all action codes 
+  # gather all action codes
   for i in $COMMANDS
   do
     CMD=`echo $i | awk -F";" '{print $1 }'`
@@ -653,7 +654,7 @@ install_menu_kde() {
   done
 
   for i in $ALGORITHMS
-  do 
+  do
     echo "[Desktop Action $i]" >> $DESKFILE
     echo "Icon=binary" >> $DESKFILE
     echo "Name=$i" >> $DESKFILE
@@ -690,7 +691,7 @@ install_menu_gnome_shared() {
     echo "exec $JACKSUMSH $CMD \"\$@\"" >> "$SCRIPTFOLDER/$TXT"
     chmod +x "$SCRIPTFOLDER/$TXT"
   done
- 
+
   for i in $ALGORITHMS
   do
     echo "#!/bin/sh" > "$SCRIPTFOLDER/$i"
@@ -767,7 +768,7 @@ install_menu_rox() {
     echo "exec $JACKSUMSH $CMD \$@" >> "$SCRIPTFOLDER/$TXT"
     chmod +x "$SCRIPTFOLDER/$TXT"
   done
- 
+
   for i in $ALGORITHMS
   do
     echo "#!/bin/sh" > "$SCRIPTFOLDER/$i"
@@ -782,7 +783,7 @@ install_menu_rox() {
 # -------------------------------------------------------------------------
 install_menu_thunar() {
 # -------------------------------------------------------------------------
-  THUNARXML="$PREFIX/uca.xml"  
+  THUNARXML="$PREFIX/uca.xml"
   THUNARXMLBACKUP="$PREFIX/uca.before-jacksum.xml"
   printf "  Backing up uca.xml:                 "
   if (test ! -f "$THUNARXML" )
@@ -831,7 +832,7 @@ install_menu_thunar() {
   grep "xml encoding" $THUNARXMLBACKUP | grep version > $THUNARXML
   cat $MYTEMP | tr -d '\n' >> $THUNARXML
   echo "" >> $THUNARXML
- 
+
   echo "[  OK  ]"
 }
 
@@ -964,12 +965,12 @@ legacy message digests (avoid if possible):
 
   viewer "${OUTPUT}"
   ;;
-  
+
   "cmd_edit")
   "'"$EDIT"'" "'"${JACKSUMSH}"'"
   exit
   ;;
-  
+
   "cmd_help")
   "${JAVA}" -jar "${JACKSUM_JAR}" --help > "${OUTPUT}"
   viewer "${OUTPUT}"
@@ -1032,30 +1033,53 @@ print_params() {
   printf "\nCurrent parameters:\n"
   check_bin "java" "$JAVA"
   JAVA="$BIN"
-  
+
   check_file "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
   JACKSUM_JAR="$BIN"
-  
+
   check_file "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
   HASHGARTEN_JAR="$BIN"
 
   check_bin "Viewer" "$VIEWER"
   VIEWER="$BIN"
-  
+
   check_bin "Editor" "$EDIT"
   EDIT="$BIN"
-  
+
   printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
 }
 
+
+# -------------------------------------------------------------------------
+enter_java() {
+# -------------------------------------------------------------------------
+  JAVA_FOUND=0
+  while [ $JAVA_FOUND -eq 0 ]
+  do
+    find_bin "java" "$JAVA"
+    JAVA="$BIN"
+
+    JAVA_VERSION="$("$JAVA" -fullversion 2>&1)"
+    JAVA_VERSION="${JAVA_VERSION#*\"}"
+    JAVA_VERSION="${JAVA_VERSION%\"*}"
+    JAVA_VERSION="${JAVA_VERSION%%_*}"
+    JAVA_VERSION="${JAVA_VERSION%%+*}"
+
+    if [ $(version_value "$JAVA_VERSION") -lt $(version_value 11.0.0) ]; then
+       printf "Java version %s must be at least 11\n" "$JAVA_VERSION"
+    else
+       JAVA_FOUND=1
+    fi
+  done
+}
 
 # -------------------------------------------------------------------------
 modify_params() {
 # -------------------------------------------------------------------------
   printf "\nA complete JDK is required. If you use a headless JDK, you cannot use HashGarten which is a GUI for Jacksum.\n"
   printf "You could go to https://adoptium.net for example to obtain a full JDK.\n"
-  find_bin "java" "$JAVA"
-  JAVA="$BIN"
+
+  enter_java
 
   printf "\n\nThe jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but during runtime it expects those binaries to be there at the specified location after the installation.\n"
   find_bin "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
@@ -1363,4 +1387,3 @@ do
       ;;
   esac
 done
-
