@@ -23,8 +23,7 @@ Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar
 ## Extract the install script
 
 ```
-bunzip2 < jacksum*.tar.bz2 | tar xfv -
-cd jacksum-file-browser-integration/
+bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ```
 
 ## Start the install script
