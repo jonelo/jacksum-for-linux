@@ -12,7 +12,7 @@ The installer script can install Jacksum's primary features to the GNU/Linux Fil
 
 - bash
 
-- A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries. Note: a headless OpenJDK is not suitable to run the HashGarten GUI.
+- A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI.
 
 - jacksum-3.4.0.jar, HashGarten-0.10.0.jar, and flatlaf-2.3.jar which are all part of the tarball (see releases)
 
