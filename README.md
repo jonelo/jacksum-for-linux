@@ -32,7 +32,7 @@ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ./jacksum-file-browser-integration.sh
 ```
 
-You can run the script as often as you want.
+The script is interactive and allows you to install Jacksum and HashGarten at your file manager. It also allows you uninstall it again savely. You can run the script as often as you want.
 
 ## Tested Environments
 
