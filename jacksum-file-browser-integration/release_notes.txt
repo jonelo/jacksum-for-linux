@@ -1,11 +1,12 @@
 Release Notes
 -------------
-2.1.0-snapshot, TBD
-- added Java version check
+2.1.0, Jan 25, 2023
+- added java version check
+- bundled Jacksum 3.5.0, and HashGarten 0.12.0
 
-2.0.0, June 18, 2022
-- bundled Jacksum 3.4.0 which allows to select files and/or folders and comes with 472 algorithms
-- bundled HashGarten 0.10.0 for accessing Jacksum's features by a GUI
+2.0.0, Jun 18, 2022
+- bundled Jacksum 3.4.0, and HashGarten 0.10.0 for accessing Jacksum's features
+  by a GUI
 - one launch script for all file browsers
 
 1.4.0, Sep 7, 2020

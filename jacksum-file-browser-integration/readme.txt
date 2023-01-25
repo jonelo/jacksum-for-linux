@@ -1,8 +1,8 @@
 Description
 -----------
-Jacksum File Browser Integration 2.0.0
-for GNU/Linux and Unix Operating Systems (June 19, 2022)
-Copyright (C) 2006-2022 Dipl.-Inf. (FH) Johann N. Loefflmann
+Jacksum File Browser Integration
+for GNU/Linux and Unix Operating Systems v2.1.0 (Jan 28, 2023)
+Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,8 +44,7 @@ Requirements
    https://github.com/alibaba/dragonwell8
    https://www.oracle.com/java
 
-4) jacksum-3.4.0.jar, and HashGarten-0.10.0.jar, and flatlaf-2.3.jar
-   Go to https://jacksum.net in order to get the latest version.
+4) jacksum-3.5.0.jar, and HashGarten-0.12.0.jar, and flatlaf-3.0.jar
 
 
 Extract the script

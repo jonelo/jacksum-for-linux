@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 
 #  Jacksum File Browser Integration for Unix and GNU/Linux Operating Systems
-#  Copyright (c) 2006-2022 Dipl.-Inf. (FH) Johann N. Loefflmann
+#  Copyright (c) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -25,24 +25,29 @@
 #    which are part of the Jacksum file browser integration package for Linux since 2.0.0
 #    See also https://jacksum.net
 #
-#  * Version 2.0.0 of the script has been successfully tested on the following systems,
+#  * Version 2.1.0 of the script has been successfully tested on the following systems,
 #    and it should work on older platforms as well:
 #
 #    Caja 1.26.0 on Ubuntu Linux 22.04
+#    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
+#    Files (known as Gnome Nautiulus) 42.2 on Ubuntu Linux 22.04.1
 #    Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
 #    Files (known as Gnome Nautiulus) 3.26.4 on Ubuntu Linux 18.04
 #
 #    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
 #
-#    Nemo 5.24 on Ubuntu Linux 22.04
+#    Nemo 5.2.4 on Ubuntu Linux 22.04.1
+#    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
+#    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #    ROX Filer 2.11 on Ubuntu Linux 22.04
 #
+#    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
 #
 #
-#  * Version < 2.0.0 of the script has been successfully tested on the following systems,
+#  * Version 1.x of the script has been successfully tested on the following systems,
 #    and it should work on similar platforms was well:
 #
 #    Caja 1.12.0 on Linux Mint 17.3 Mate
@@ -82,10 +87,10 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.0.0"
+VERSION="2.1.0"
 NAME="jacksum"
-JACKSUM_VERSION="3.4.0"
-HASHGARTEN_VERSION="0.10.0"
+JACKSUM_VERSION="3.5.0"
+HASHGARTEN_VERSION="0.12.0"
 PROGNAME="Jacksum File Browser Integration"
 JACKSUM_JAR="`pwd`/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="`pwd`/HashGarten-${HASHGARTEN_VERSION}.jar"
@@ -859,7 +864,7 @@ install_script_sh() {
   echo '#!/bin/bash
 #
 # Jacksum File Browser Integration Script, https://jacksum.net
-# Copyright (c) 2006-2022 Johann N. Loefflmann, https://johann.loefflmann.net
+# Copyright (c) 2006-2023 Johann N. Loefflmann, https://johann.loefflmann.net
 # Code has been released under the conditions of the GPLv3+.
 #
 

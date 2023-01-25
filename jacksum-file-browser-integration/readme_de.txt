@@ -1,8 +1,8 @@
 Beschreibung
 ------------
 Jacksum File Browser Integration 2.0.0
-fuer GNU/Linux und Unix Betriebssysteme (19. Juni 2022)
-Copyright (C) 2006-2022 Dipl.-Inf. (FH) Johann N. Loefflmann
+fuer GNU/Linux und Unix Betriebssysteme v2.1.0 (28. Januar 2022)
+Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ der Kommandozeile laufen.
 
 Voraussetzungen
 ---------------
-1) Ein GNU/Linux oder Unix Betriebssystem mit einer grafischen Oberflaeche.
+1) Ein GNU/Linux oder Unix Betriebssystem mit grafischer Oberflaeche.
    Ein headless-System ist nicht ausreichend.
 
 2) Einen Dateimanager: Caja, Dolphin, Konqueror, Krusader,
@@ -44,8 +44,7 @@ Voraussetzungen
    https://github.com/alibaba/dragonwell8
    https://www.oracle.com/java
 
-4) jacksum-3.4.0.jar, and HashGarten-0.10.0.jar, und flatlaf-2.3.jar
-   Besuchen Sie http://jacksum.net um die neueste Version zu bekommen.
+4) jacksum-3.5.0.jar, and HashGarten-0.12.0.jar, und flatlaf-3.0.jar
 
 
 Entpacken des Scripts
