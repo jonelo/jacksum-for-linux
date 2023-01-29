@@ -49,13 +49,13 @@ Requirements
 
 Extract the script
 ------------------
-bunzip2 < jacksum*.tar.bz2 | tar xfv -
-cd jacksum-file-browser-integration/
+$ bunzip2 < jacksum*.tar.bz2 | tar xfv -
+$ cd jacksum-file-browser-integration/
 
 
 Start the script
 ----------------
-./jacksum-file-browser-integration.sh
+$ ./jacksum-file-browser-integration.sh
 
 You can run the script as often as you want.
 
@@ -71,4 +71,3 @@ The script should also work on many other Linux/Unix-platforms.
 Bugs, Feature Requests, Support Requests
 ----------------------------------------
 Go to https://github.com/jonelo/jacksum-fbi-linux/issues
-

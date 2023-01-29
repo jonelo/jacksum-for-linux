@@ -1,7 +1,7 @@
 Beschreibung
 ------------
 Jacksum File Browser Integration 2.0.0
-fuer GNU/Linux und Unix Betriebssysteme v2.1.0 (25. Januar 2022)
+für GNU/Linux und Unix Betriebssysteme v2.1.0 (25. Januar 2022)
 Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
@@ -9,24 +9,24 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 any later version.
 
-Das Jacksum File Browser Integration Script installiert die primaere Funktion
-von Jacksum (Berechnen von Pruefsummen, CRCs und Hashes) in Ihren bevorzugten
+Das Jacksum File Browser Integration Script installiert die primäre Funktion
+von Jacksum (Berechnen von Prüfsummen, CRCs und Hashes) in Ihren bevorzugten
 Dateibrowser unter GNU/Linux und Unix Betriebssystemen.
 
 Caja, Dolphin, Konqueror, Krusader, Nemo, Nautilus, ROX-Filer, Thunar und Xfe
-werden unterstuetzt.
+werden unterstützt.
 
-Um alle Funktionen von Jacksum benutzen zu k�nnen, lassen Sie Jacksum auf
+Um alle Funktionen von Jacksum benutzen zu können, lassen Sie Jacksum auf
 der Kommandozeile laufen.
 
 
 Voraussetzungen
 ---------------
-1) Ein GNU/Linux oder Unix Betriebssystem mit grafischer Oberflaeche.
+1) Ein GNU/Linux oder Unix Betriebssystem mit grafischer Oberfläche.
    Ein headless-System ist nicht ausreichend.
 
 2) Einen Dateimanager: Caja, Dolphin, Konqueror, Krusader,
-   Nemo, Gnome Nautilus (Files), ROX-Filer, Thunar und Xfe werden unterstuetzt.
+   Nemo, Gnome Nautilus (Files), ROX-Filer, Thunar und Xfe werden unterstützt.
 
 3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 
    Ein headless-OpenJDK ist nicht ausreichend.
@@ -49,13 +49,13 @@ Voraussetzungen
 
 Entpacken des Scripts
 ---------------------
-bunzip2 < jacksum*integration*.tar.bz2 | tar xfv -
-cd jacksum-file-browser-integration/
+$ bunzip2 < jacksum*integration*.tar.bz2 | tar xfv -
+$ cd jacksum-file-browser-integration/
 
 
 Starten des Scripts
 -------------------
-./jacksum-file-browser-integration.sh
+$ ./jacksum-file-browser-integration.sh
 
 Sie können das Script so oft aufrufen wie sie wollen.
 
@@ -65,11 +65,10 @@ Getestete Umgebungen
 Das Script wurde erfolgreich under vielen Systemen getestet. Details 
 entnehmen Sie bitte dem Kommentarkopf aus dem Script.
 
-Das Script sollte auch unter anderen GNU/Linux und Unix-Platformen
+Das Script sollte auch unter anderen GNU/Linux und Unix-Plattformen
 funktionieren.
 
 
-Fehler, Wuensche, Supportanfragen
+Fehler, Wünsche, Supportanfragen
 ---------------------------------
 Besuchen Sie https://github.com/jonelo/jacksum-fbi-linux/issues
-
