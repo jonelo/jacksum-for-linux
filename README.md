@@ -2,7 +2,7 @@
 
 # Jacksum File Browser Integration on GNU/Linux
 
-The installer script can install Jacksum's primary features to the GNU/Linux File Browser's Script Menu.
+The installer script installs Jacksum (https://github.com/jonelo/jacksum) and HashGarten (https://github.com/jonelo/HashGarten) which allows accessing Jacksum's primary features at the GNU/Linux File Browser's Script Menu.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ The installer script can install Jacksum's primary features to the GNU/Linux Fil
 
 - A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI. 
 
-- jacksum-3.4.0.jar, HashGarten-0.10.0.jar, and flatlaf-2.3.jar which are all part of the tarball (see releases)
+- jacksum-3.7.0.jar, HashGarten-0.14.0.jar, and flatlaf-2.3.jar which are all part of the tarball (see releases)
 
 ## Get the latest Java
 
