@@ -25,7 +25,7 @@
 #    which are part of the Jacksum file browser integration package for Linux since 2.0.0
 #    See also https://jacksum.net
 #
-#  * Version 2.1.0 of the script has been successfully tested on the following systems,
+#  * Version 2.2.0 of the script has been successfully tested on the following systems,
 #    and it should work on older platforms as well:
 #
 #    Caja 1.26.0 on Ubuntu Linux 22.04
