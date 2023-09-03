@@ -1,5 +1,8 @@
 Release Notes
 -------------
+2.2.0, Sep 3, 2023
+- bundled Jacksum 3.7.0, and HashGarten 0.14.0
+
 2.1.0, Jan 25, 2023
 - added java version check
 - bundled Jacksum 3.5.0, and HashGarten 0.12.0

@@ -31,6 +31,7 @@
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
+#    Files (known as Gnome Nautiulus) 42.6 on Ubuntu Linux 22.04.3
 #    Files (known as Gnome Nautiulus) 42.2 on Ubuntu Linux 22.04.1
 #    Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
 #    Files (known as Gnome Nautiulus) 3.26.4 on Ubuntu Linux 18.04
@@ -87,10 +88,10 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.1.0"
+VERSION="2.2.0"
 NAME="jacksum"
-JACKSUM_VERSION="3.5.0"
-HASHGARTEN_VERSION="0.12.0"
+JACKSUM_VERSION="3.7.0"
+HASHGARTEN_VERSION="0.14.0"
 PROGNAME="Jacksum File Browser Integration"
 JACKSUM_JAR="`pwd`/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="`pwd`/HashGarten-${HASHGARTEN_VERSION}.jar"
@@ -893,26 +894,44 @@ do
     if [ "$VIRGIN" -eq 1 ]; then
         VIRGIN=0
     else
-        printf "%s\n" "$i" >> "${FILE_LIST}"
+        # make sure that we get always absolute paths for both directories and files
+        if [ -d "$i" ]; then
+            ABSOLUTE="$(cd "$i" && pwd)"
+        else
+            ABSOLUTE="$(cd "$(dirname "$i")" && pwd)/$(basename "$i")"
+        fi
+        printf "%s\n" "${ABSOLUTE}" >> "${FILE_LIST}"
     fi
 done
-
+cd "$HOME"
 ALGO=$1
 shift
 case $ALGO in
 
   "cmd_calc")
-  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O ${CHECK_FILE} -U ${ERROR_LOG} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O relative -U ${ERROR_LOG} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  rm relative > /dev/null 2>&1
   if [ $? -eq 0 ]
   then
-    cat ${CHECK_FILE} ${ERRORL_LOG} > ${OUTPUT}
-    viewer "${OUTPUT}"
+      # Generate an output that contains both stdout and stderr in a file for the viewer
+      # CHECK_FILE contains the output file name that the user has been specified at the GUI
+  
+      CHECK_FILE=$(grep gui.output $HOME/.HashGarten.properties)
+      # We need to strip the key called gui.output= and undo any escapes done by Java''s properties API
+      CHECK_FILE=${CHECK_FILE#*=}
+ 
+      cat ${CHECK_FILE} ${ERROR_LOG} > ${OUTPUT}
+      viewer "${OUTPUT}"
   fi
   ;;
 
 
   "cmd_check")
-  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c ${CHECK_FILE} -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  if [ ! -f relative ]; then
+      touch relative
+  fi
+  "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c relative -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+  rm relative > /dev/null 2>&1
   if [ $? -eq 0 ]
   then
     viewer "${OUTPUT}"
@@ -972,7 +991,7 @@ legacy message digests (avoid if possible):
   ;;
 
   "cmd_edit")
-  "'"$EDIT"'" "'"${JACKSUMSH}"'"
+  "'"${EDIT}"'" "'"${JACKSUMSH}"'"
   exit
   ;;
 
@@ -990,7 +1009,7 @@ legacy message digests (avoid if possible):
 
 esac
 
-' >> "$JACKSUMSH"
+' >> "${JACKSUMSH}"
 }
 
 
