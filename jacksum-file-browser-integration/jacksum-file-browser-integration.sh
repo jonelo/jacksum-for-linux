@@ -41,8 +41,8 @@
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
-#    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #    ROX Filer 2.11 on Ubuntu Linux 22.04
+#    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
