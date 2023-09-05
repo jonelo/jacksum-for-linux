@@ -28,7 +28,7 @@ The install script has been tested successfully on many systems. See also the he
 | Dolphin              | 2.2 - 21.12.3   | KDE                  | Dolphin is the file manager of KDE.                                                                         |
 | Elementary Files     | 6.2.1           | Elementary Contracts | Elementary Files is the file manager at Elementary OS.                                                      |
 | Konqueror            | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
-| Krusader             |                 | KDE                  | Krusader is a file manager for KDE.                                                                         |
+| Krusader             | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
 | Nemo                 | 1.8.4 - 5.2.4   | Nemo                 | Nemo is the file manager of the desktop environment Cinnamon. It is a fork of Nautilus 3.4.                 |
 | Nautilus resp. Files | 2.6.1 - 24.6    | GNOME                | GNOME Files, formerly and internally known as Nautilus, is the official file manager for the GNOME desktop. |
 | ROX-Filer            | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
@@ -144,9 +144,24 @@ Press any key to continue ...
 
 ## FAQs
 
-## How do I get the latest Java?
+### Where can I file bugs, feature requests, and support requests?
 
-### Debian based Linux (e.g. Ubuntu)
+Please go to https://github.com/jonelo/jacksum-fbi-linux/issues
+
+
+### I have installed Krusader, but the installer marked it as DISABLED
+
+On systems without KDE, you need to install both the krusader and the kf5-config package in order to make it working.
+
+
+### The installer marked all entries as DISABLED
+
+Most likely you are running a non-supported file manager. If you think it should be supported, please file a feature request. 
+
+
+### How do I get the latest Java?
+
+#### Debian based Linux (e.g. Ubuntu)
 
 ```
 $ sudo apt install openjdk-17-jre
@@ -160,7 +175,7 @@ Type the absolute path to "java"
 and press "Enter" to continue [/usr/bin/java]: 
 ```
 
-### Other Linux
+#### Other Linux
 
 You could use the `update_jdk` script from the [bashberries](https://github.com/jonelo/bashberries) project in order to get a suitable JDK. The following example downloads Temurin 17 (that is the JDK 17 from adoptium), and installs it to `/opt/java/jdk_latest`:
 ```
@@ -175,10 +190,6 @@ Type the absolute path to "java"
 and press "Enter" to continue [/usr/bin/java]: /opt/java/jdk_latest/bin/java
 ```
 
-
-## Bugs, Feature Requests, Support Requests
-
-Go to https://github.com/jonelo/jacksum-fbi-linux/issues
 
 ## Further hints
 
