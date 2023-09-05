@@ -8,7 +8,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 - A GNU/Linux or Unix operating system
 
-- A a graphical user interface
+- A graphical desktop user interface
 
 - bash 3 or later
 
