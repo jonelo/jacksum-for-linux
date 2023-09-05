@@ -1,7 +1,7 @@
 Beschreibung
 ------------
-Jacksum File Browser Integration 2.2.0
-fuer GNU/Linux und Unix Betriebssysteme v2.2.0 (03.09.2023)
+Jacksum File Browser Integration
+fuer GNU/Linux und Unix Betriebssysteme v2.3.0 (05.09.2023)
 Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@ Das Jacksum File Browser Integration Script installiert die primaere Funktion
 von Jacksum (Berechnen von Pruefsummen, CRCs und Hashes) in Ihren bevorzugten
 Dateibrowser unter GNU/Linux und Unix Betriebssystemen.
 
-Caja, Dolphin, Konqueror, Krusader, Nemo, Nautilus, ROX-Filer, Thunar und Xfe
-werden unterstuetzt.
+Caja, elementary Files, Dolphin, Konqueror, Krusader, Nemo, Nautilus,
+ROX-Filer, Thunar und Xfe werden unterstuetzt.
 
 Um alle Funktionen von Jacksum benutzen zu können, lassen Sie Jacksum auf
 der Kommandozeile laufen.
@@ -25,7 +25,7 @@ Voraussetzungen
 1) Ein GNU/Linux oder Unix Betriebssystem mit grafischer Oberflaeche.
    Ein headless-System ist nicht ausreichend.
 
-2) Einen Dateimanager: Caja, Dolphin, Konqueror, Krusader,
+2) Einen Dateimanager: Caja, elementary Files, Dolphin, Konqueror, Krusader,
    Nemo, Gnome Nautilus (Files), ROX-Filer, Thunar und Xfe werden unterstuetzt.
 
 3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 

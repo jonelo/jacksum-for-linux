@@ -1,5 +1,8 @@
 Release Notes
 -------------
+2.3.0, Sep 5, 2003
+- added support for the file manager "Files" on elementary OS
+
 2.2.0, Sep 3, 2023
 - bundled Jacksum 3.7.0, and HashGarten 0.14.0
 

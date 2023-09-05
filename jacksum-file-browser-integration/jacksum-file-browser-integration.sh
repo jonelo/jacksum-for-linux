@@ -25,11 +25,13 @@
 #    which are part of the Jacksum file browser integration package for Linux since 2.0.0
 #    See also https://jacksum.net
 #
-#  * Version 2.2.0 of the script has been successfully tested on the following systems,
+#  * Version 2.x of the script has been successfully tested on the following systems,
 #    and it should work on older platforms as well:
 #
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
+#
+#    elementary Files 6.2.1 on elementary OS 7
 #
 #    Files (known as Gnome Nautiulus) 42.6 on Ubuntu Linux 22.04.3
 #    Files (known as Gnome Nautiulus) 42.2 on Ubuntu Linux 22.04.1
@@ -41,8 +43,8 @@
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
-#    ROX Filer 2.11 on Ubuntu Linux 22.04
 #    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
+#    ROX Filer 2.11 on Ubuntu Linux 22.04
 #
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
@@ -88,7 +90,7 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.2.0"
+VERSION="2.3.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
 HASHGARTEN_VERSION="0.14.0"
@@ -106,6 +108,7 @@ THUNAR_PROGNAME="Jacksum at Thunar"
 XFE_PROGNAME="Jacksum at Xfe"
 NEMO_PROGNAME="Jacksum at Nemo"
 CAJA_PROGNAME="Jacksum at Caja"
+ELEMENTARY_PROGNAME="Jacksum at Elementary Files"
 
 
 # -------------------------------------------------------------------------
@@ -130,20 +133,22 @@ print_header() {
 print_menu() {
 # -------------------------------------------------------------------------
   printf "Menu:\n"
-  printf "  1 - Install   %s for %s %s\n" "$KDE_PROGNAME"    "$USERS" "$KDE_DISABLED"
-  printf "  2 - Uninstall %s for %s %s\n" "$KDE_PROGNAME"    "$USERS" "$KDE_DISABLED"
-  printf "  3 - Install   %s for %s %s\n" "$GNOME_PROGNAME"  "$USERS" "$GNOME_DISABLED"
-  printf "  4 - Uninstall %s for %s %s\n" "$GNOME_PROGNAME"  "$USERS" "$GNOME_DISABLED"
-  printf "  5 - Install   %s for %s %s\n" "$ROX_PROGNAME"    "$USERS" "$ROX_DISABLED"
-  printf "  6 - Uninstall %s for %s %s\n" "$ROX_PROGNAME"    "$USERS" "$ROX_DISABLED"
-  printf "  7 - Install   %s for %s %s\n" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
-  printf "  8 - Uninstall %s for %s %s\n" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
-  printf "  9 - Install   %s for %s %s\n" "$XFE_PROGNAME"    "$USERS" "$XFE_DISABLED"
-  printf " 10 - Uninstall %s for %s %s\n" "$XFE_PROGNAME"    "$USERS" "$XFE_DISABLED"
-  printf " 11 - Install   %s for %s %s\n" "$NEMO_PROGNAME"   "$USERS" "$NEMO_DISABLED"
-  printf " 12 - Uninstall %s for %s %s\n" "$NEMO_PROGNAME"   "$USERS" "$NEMO_DISABLED"
-  printf " 13 - Install   %s for %s %s\n" "$CAJA_PROGNAME"   "$USERS" "$CAJA_DISABLED"
-  printf " 14 - Uninstall %s for %s %s\n" "$CAJA_PROGNAME"   "$USERS" "$CAJA_DISABLED"
+  printf "  1 - Install   %s for %s %s\n" "$KDE_PROGNAME"        "$USERS" "$KDE_DISABLED"
+  printf "  2 - Uninstall %s for %s %s\n" "$KDE_PROGNAME"        "$USERS" "$KDE_DISABLED"
+  printf "  3 - Install   %s for %s %s\n" "$GNOME_PROGNAME"      "$USERS" "$GNOME_DISABLED"
+  printf "  4 - Uninstall %s for %s %s\n" "$GNOME_PROGNAME"      "$USERS" "$GNOME_DISABLED"
+  printf "  5 - Install   %s for %s %s\n" "$ROX_PROGNAME"        "$USERS" "$ROX_DISABLED"
+  printf "  6 - Uninstall %s for %s %s\n" "$ROX_PROGNAME"        "$USERS" "$ROX_DISABLED"
+  printf "  7 - Install   %s for %s %s\n" "$THUNAR_PROGNAME"     "$USERS" "$THUNAR_DISABLED"
+  printf "  8 - Uninstall %s for %s %s\n" "$THUNAR_PROGNAME"     "$USERS" "$THUNAR_DISABLED"
+  printf "  9 - Install   %s for %s %s\n" "$XFE_PROGNAME"        "$USERS" "$XFE_DISABLED"
+  printf " 10 - Uninstall %s for %s %s\n" "$XFE_PROGNAME"        "$USERS" "$XFE_DISABLED"
+  printf " 11 - Install   %s for %s %s\n" "$NEMO_PROGNAME"       "$USERS" "$NEMO_DISABLED"
+  printf " 12 - Uninstall %s for %s %s\n" "$NEMO_PROGNAME"       "$USERS" "$NEMO_DISABLED"
+  printf " 13 - Install   %s for %s %s\n" "$CAJA_PROGNAME"       "$USERS" "$CAJA_DISABLED"
+  printf " 14 - Uninstall %s for %s %s\n" "$CAJA_PROGNAME"       "$USERS" "$CAJA_DISABLED"
+  printf " 15 - Install   %s for %s %s\n" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
+  printf " 16 - Uninstall %s for %s %s\n" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
   printf "\n"
   printf "  q - Quit the installer\n"
   print_line 80
@@ -247,7 +252,7 @@ version_value() {
 # -------------------------------------------------------------------------
 set_env() {
 # parameters:
-# $1 kde, gnome, xfe, rox, thunar, nemo, caja
+# $1 kde, gnome, xfe, rox, thunar, nemo, caja or elementary
 # -------------------------------------------------------------------------
   case $1 in
     kde)
@@ -422,6 +427,17 @@ set_env() {
         PREFIX="$HOME/.config/Thunar"
       fi
       ;;
+    elementary)
+      io.elementary.files --version > /dev/null 2>&1
+      if (test $? -ne 0 ) then
+        ELEMENTARY=0
+        ELEMENTARY_DISABLED="(DISABLED)"
+      else
+        ELEMENTARY=1
+        ELEMENTARY_DISABLED=""
+        PREFIX="$HOME/.local/share/contractor"
+      fi
+      ;;
   esac
 }
 
@@ -429,7 +445,7 @@ set_env() {
 # -------------------------------------------------------------------------
 uninstall() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # -------------------------------------------------------------------------
   uninstall_silent $1
   printf "\nUninstallation finished. Press any key to continue ... "
@@ -440,7 +456,7 @@ uninstall() {
 # -------------------------------------------------------------------------
 uninstall_silent() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # -------------------------------------------------------------------------
   case $1 in
       kde) uninstall_kde
@@ -456,6 +472,8 @@ uninstall_silent() {
      nemo) uninstall_nemo
            ;;
      caja) uninstall_caja
+           ;;
+     elementary) uninstall_elementary
            ;;
   esac
 }
@@ -582,9 +600,32 @@ uninstall_thunar() {
 
 
 # -------------------------------------------------------------------------
+uninstall_elementary() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME/"
+  SCRIPTS="$PREFIX"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if ( test -d "$SH" )
+  then
+    rm -r "$SH" && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
+  else
+    echo "[ NOT INSTALLED ]"
+  fi
+  printf "  Removing $NAME scripts:           "
+  if ( test -f "${SCRIPTS}/jacksum.cmd_calc.contract" )
+  then
+    rm "${SCRIPTS}"/jacksum.*.contract && echo "[  OK  ]" || { echo "[FAILED]"; exit 1; }
+  else
+    echo "[ NOT INSTALLED ]"
+  fi
+}
+
+
+# -------------------------------------------------------------------------
 install_menu() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # -------------------------------------------------------------------------
   case $1 in
       kde) install_menu_kde
@@ -600,6 +641,8 @@ install_menu() {
      nemo) install_menu_nemo
            ;;
      caja) install_menu_caja
+           ;;
+     elementary) install_menu_elementary
            ;;
   esac
 }
@@ -844,12 +887,56 @@ install_menu_thunar() {
 
 
 # -------------------------------------------------------------------------
+install_menu_elementary() {
+# -------------------------------------------------------------------------
+  SCRIPTFOLDER="$PREFIX"
+  printf "  Creating a folder for all scripts:  "
+  if ( test ! -d "$SCRIPTFOLDER" )
+  then
+    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
+    test -d "$SCRIPTFOLDER" &&
+    echo "[  OK  ]" || { echo "[FAILED]" ; exit 1; }
+  else
+    echo "[  OK  ]"
+  fi
+
+  printf "  Installing scripts:                 "
+
+  for i in $COMMANDS
+  do
+    CMD=`echo $i | awk -F";" '{print $1 }'`
+    TXT=`echo $i | awk -F";" '{print $2 }' | sed -e "s/_/ /g"`
+    OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${CMD}.contract"
+    echo "[Contractor Entry]" > "$OUTPUTFILE"
+    echo "Name=${TXT}" >> "$OUTPUTFILE"
+    echo "Description=${TXT}" >> "$OUTPUTFILE"
+    echo "MimeType=!inode/blockdevice;inode/chardevice;inode/fifo;inode/socket;" >> "$OUTPUTFILE"
+    echo "Exec=${JACKSUMSH} ${CMD} %F" >> "$OUTPUTFILE"
+    chmod +x "$OUTPUTFILE"
+  done
+
+  for i in $ALGORITHMS
+  do
+    OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${i}.contract"
+    echo "[Contractor Entry]" > "$OUTPUTFILE"
+    echo "Name=${i}" >> "$OUTPUTFILE"
+    echo "Description=${i}" >> "$OUTPUTFILE"
+    echo "MimeType=!inode/blockdevice;inode/chardevice;inode/fifo;inode/socket;" >> "$OUTPUTFILE"
+    echo "Exec=${JACKSUMSH} ${i} %F" >> "$OUTPUTFILE"
+    chmod +x "$OUTPUTFILE"    
+  done
+
+  echo "[  OK  ]"
+
+}
+
+# -------------------------------------------------------------------------
 install_script() {
 # parameters:
-# kde, gnome, rox, thunar, xfe, caja or nemo
+# kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # -------------------------------------------------------------------------
   case $1 in
-      kde|gnome|rox|thunar|xfe|nemo|caja) install_script_generic
+      kde|gnome|rox|thunar|xfe|nemo|caja|elementary) install_script_generic
            ;;
       *) printf "file browser $1 is not supported. Exit.\n"
          exit 1
@@ -1180,7 +1267,7 @@ select_algorithms() {
 # ------------------------------------------------------------------------- 
 install_interactive() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary
 # ------------------------------------------------------------------------- 
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -1213,7 +1300,7 @@ install_interactive() {
 # ------------------------------------------------------------------------- 
 restart_fb() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # $2 Name of the file browser
 # ------------------------------------------------------------------------- 
   local YESNO=""
@@ -1241,7 +1328,7 @@ restart_fb() {
 # ------------------------------------------------------------------------- 
 install_done() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # ------------------------------------------------------------------------- 
   case $1 in 
     gnome)
@@ -1265,6 +1352,10 @@ install_done() {
       xfe)
           # no restart required for Xfe :)
           ;;
+   elementary)
+          # restart_fb io.elementary.files "Elementary"
+          # no restart required for Elementary :)
+          ;;
   esac
   printf "Press any key to continue ... "
   read DUMMY
@@ -1274,7 +1365,7 @@ install_done() {
 # ------------------------------------------------------------------------- 
 install_generic() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # ------------------------------------------------------------------------- 
   set_env $1
   print_params $1
@@ -1287,7 +1378,7 @@ install_generic() {
 # ------------------------------------------------------------------------- 
 uninstall_generic() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja or nemo
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # ------------------------------------------------------------------------- 
   set_env $1
   uninstall $1
@@ -1297,7 +1388,7 @@ uninstall_generic() {
 # -------------------------------------------------------------------------
 init_editor() {
 # -------------------------------------------------------------------------
-  find_app gedit kate defaulttexteditor xfwrite pluma
+  find_app gedit kate defaulttexteditor xfwrite pluma io.elementary.code
   EDIT="$APP"
 }
 
@@ -1305,7 +1396,7 @@ init_editor() {
 # -------------------------------------------------------------------------
 init_viewer() {
 # -------------------------------------------------------------------------
-  find_app zenity gedit kate defaulttexteditor xfwrite pluma
+  find_app zenity gedit kate defaulttexteditor xfwrite pluma io.elementary.code
   VIEWER="$APP"
 }
 
@@ -1320,6 +1411,7 @@ set_env thunar
 set_env xfe
 set_env nemo
 set_env caja
+set_env elementary
 init_editor
 init_viewer
 
@@ -1329,7 +1421,7 @@ do
   print_header
   print_info_kde
   print_menu
-  printf "Select option 1-14 or q to quit: "
+  printf "Select option 1-16 or q to quit: "
   read OPTION
   case "$OPTION" in
     1) # in $KDE we have the major version
@@ -1401,8 +1493,18 @@ do
       if (test $CAJA -eq 1) then
         uninstall_generic caja
       fi
-      ;; 
-    0 | q)    
+      ;;
+   15)
+      if (test $ELEMENTARY -eq 1) then
+        install_generic elementary
+      fi
+      ;;
+   16)
+      if (test $ELEMENTARY -eq 1) then
+        uninstall_generic elementary
+      fi
+      ;;
+    0 | q)
       echo
       exit 0
       ;;
