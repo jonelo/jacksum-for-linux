@@ -55,12 +55,12 @@ If a file manager is not detected on your system, it is marked as DISABLED.
 
 ```
 $ ./jacksum-file-browser-integration.sh
-                - Jacksum File Browser Integration v2.2.0 -
+                - Jacksum File Browser Integration v2.3.0 -
                             https://jacksum.net
 
 Menu:
-  1 - Install   Jacksum at Dolphin/Konqueror/Krusader for user johann
-  2 - Uninstall Jacksum at Dolphin/Konqueror/Krusader for user johann
+  1 - Install   Jacksum at Dolphin/Konqueror/Krusader for user johann (DISABLED)
+  2 - Uninstall Jacksum at Dolphin/Konqueror/Krusader for user johann (DISABLED)
   3 - Install   Jacksum at Gnome Nautilus/Files for user johann (DISABLED)
   4 - Uninstall Jacksum at Gnome Nautilus/Files for user johann (DISABLED)
   5 - Install   Jacksum at ROX-Filer for user johann (DISABLED)
@@ -73,13 +73,73 @@ Menu:
  12 - Uninstall Jacksum at Nemo for user johann (DISABLED)
  13 - Install   Jacksum at Caja for user johann (DISABLED)
  14 - Uninstall Jacksum at Caja for user johann (DISABLED)
- 15 - Install   Jacksum at Elementary Files for user johann (DISABLED)
- 16 - Uninstall Jacksum at Elementary Files for user johann (DISABLED)
+ 15 - Install   Jacksum at Elementary Files for user johann 
+ 16 - Uninstall Jacksum at Elementary Files for user johann 
 
   q - Quit the installer
 --------------------------------------------------------------------------------
-Select option 1-16 or q to quit: 
+Select option 1-16 or q to quit: 15
 
+Current parameters:
+  [java]: /usr/bin/java
+  [jacksum-3.7.0.jar]: /home/johann/Downloads/jacksum-file-browser-integration/jacksum-3.7.0.jar
+  [HashGarten-0.14.0.jar]: /home/johann/Downloads/jacksum-file-browser-integration/HashGarten-0.14.0.jar
+  [Viewer]: /usr/bin/zenity
+  [Editor]: /usr/bin/gedit
+  [direct accessible algorithms]: 
+
+
+A complete JDK is required. If you use a headless JDK, you cannot use HashGarten which is a GUI for Jacksum.
+You could go to https://adoptium.net for example to obtain a full JDK.
+
+Type the absolute path to "java"
+and press "Enter" to continue [/usr/bin/java]: 
+
+
+The jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but during runtime it expects those binaries to be there at the specified location after the installation.
+
+Type the absolute path to "jacksum-3.7.0.jar"
+and press "Enter" to continue [/home/johann/Downloads/jacksum-file-browser-integration/jacksum-3.7.0.jar]: 
+
+Type the absolute path to "HashGarten-0.14.0.jar"
+and press "Enter" to continue [/home/johann/Downloads/jacksum-file-browser-integration/HashGarten-0.14.0.jar]: 
+
+
+To view text output, you need to specify a viewer or an editor.
+
+Type the absolute path to "viewer"
+and press "Enter" to continue [/usr/bin/zenity]: 
+
+
+To use the "Edit the script" feature, you need to specify an editor.
+
+Type the absolute path to "editor"
+and press "Enter" to continue [/usr/bin/gedit]: 
+
+
+Do you want to access some algorithms directly without the HashGarten GUI?
+Type n to disable direct access to algorithms, type p or any other key to use the previous selection [n]: 
+
+Current parameters:
+  [java]: /usr/bin/java
+  [jacksum-3.7.0.jar]: /home/johann/Downloads/jacksum-file-browser-integration/jacksum-3.7.0.jar
+  [HashGarten-0.14.0.jar]: /home/johann/Downloads/jacksum-file-browser-integration/HashGarten-0.14.0.jar
+  [Viewer]: /usr/bin/zenity
+  [Editor]: /usr/bin/gedit
+  [direct accessible algorithms]: 
+
+Do you want to use the parameters above? [y]: 
+
+
+  Removing jacksum.sh:                [ NOT INSTALLED ]
+  Removing jacksum scripts:           [ NOT INSTALLED ]
+  Found Jacksum 3.7.0:                [  OK  ]
+  Installing jacksum.sh:              [  OK  ]
+  Creating a folder for all scripts:  [  OK  ]
+  Installing scripts:                 [  OK  ]
+
+Installation finished.
+Press any key to continue ... 
 ```
 
 ## FAQs
