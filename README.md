@@ -24,15 +24,15 @@ The installation script has been tested successfully on many systems. See also t
 
 | File Browser         | Tested Versions | API                  | Comment                                                                                                     |
 |----------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
-| Caja                 | 1.12.0 - 1.26.0 | Caja                 | Caja is the stardard file manager of the desktop environment MATE. It is a fork of Nautilus version 2.32.   |
-| Dolphin              | 2.2 - 21.12.3   | KDE                  | Dolphin is the file manager of KDE.                                                                         |
+| Caja                 | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the MATE desktop environment. It is a fork of Nautilus version 2.32.     |
+| Dolphin              | 2.2 - 21.12.3   | KDE                  | Default file manager on KDE-powered distributions.                                                          |
 | Elementary Files     | 6.2.1           | Elementary Contracts | Elementary Files is the file manager at Elementary OS.                                                      |
 | Konqueror            | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
 | Krusader             | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
-| Nemo                 | 1.8.4 - 5.2.4   | Nemo                 | Nemo is the file manager of the desktop environment Cinnamon. It is a fork of Nautilus 3.4.                 |
-| Nautilus resp. Files | 2.6.1 - 24.6    | GNOME                | GNOME Files, formerly and internally known as Nautilus, is the official file manager for the GNOME desktop. |
+| Nemo                 | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
+| Nautilus resp. Files | 2.6.1 - 24.6    | GNOME                | Default file manager for GNOME-powered distributions like Fedora and Ubuntu.                                |
 | ROX-Filer            | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
-| Thunar               | 1.0.1 - 1.6.10  | Thunar               | Thunar is a file manager for Linux.                                                                         |
+| Thunar               | 1.0.1 - 1.6.10  | Thunar               | It is the default choice for Xfce-based distributions.                                                      |
 | Xfe                  | 1.37  -1.43.2   | Xfe                  | Xfe is a file manager for Linux.                                                                            |
 
 
