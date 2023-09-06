@@ -2,7 +2,7 @@
 
 # Jacksum File Browser Integration on GNU/Linux
 
-The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [HashGarten](https://github.com/jonelo/HashGarten) which allows accessing Jacksum's primary features at the GNU/Linux File Browser's script menu.
+The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [HashGarten](https://github.com/jonelo/HashGarten) which allow accessing Jacksum's primary features from the GNU/Linux file browser/file manager's script menu.
 
 ## System Requirements
 
@@ -20,7 +20,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 ### Supported File Browsers
 
-The install script has been tested successfully on many systems. See also the head of the installer script for details.
+The installation script has been tested successfully on many systems. See also the head of the installer script for details.
 
 | File Browser         | Tested Versions | API                  | Comment                                                                                                     |
 |----------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
@@ -38,20 +38,19 @@ The install script has been tested successfully on many systems. See also the he
 
 ## Get started
 
-### Download the latest install script
+### Download the latest installation script
 
 Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar.bz2 file.
 
-### Extract the install script
+### Extract the installation script
 
 ```
 $ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ```
 
-### Start the install script
+### Start the installation script
 
-The script is an interactive text user interface and allows to install Jacksum and HashGarten at your file manager. It also allows to uninstall it again savely. You can run the script as often as you want.
-If a file manager is not detected on your system, it is marked as DISABLED.
+The installation script is an interactive text user interface that allows you to install Jacksum and HashGarten in your file manager. It also allows uninstalling it again safely and completely. You can run the script as often as you want. If a file manager is not detected on your system, it is marked as DISABLED.
 
 ```
 $ ./jacksum-file-browser-integration.sh
@@ -151,12 +150,12 @@ Please go to https://github.com/jonelo/jacksum-fbi-linux/issues
 
 ### I have installed Krusader, but the installer marked it as DISABLED
 
-On systems without KDE, you need to install both the krusader and the kf5-config package in order to make it working.
+On systems without KDE, you need to install both the krusader and the kf5-config package in order to make it work.
 
 
 ### The installer marked all entries as DISABLED
 
-Most likely you are running a non-supported file manager. If you think it should be supported, please file a feature request. 
+Most likely, you are running a non-supported file manager. If you think it should be supported, please file a feature request. 
 
 
 ### How do I get the latest Java?
