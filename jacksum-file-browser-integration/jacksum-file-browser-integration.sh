@@ -31,20 +31,23 @@
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
+#    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
+#
 #    elementary Files 6.2.1 on elementary OS 7
 #
-#    Files (known as Gnome Nautiulus) 42.6 on Ubuntu Linux 22.04.3
-#    Files (known as Gnome Nautiulus) 42.2 on Ubuntu Linux 22.04.1
-#    Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
-#    Files (known as Gnome Nautiulus) 3.26.4 on Ubuntu Linux 18.04
-#
-#    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
+#    GNOME Files (known as Gnome Nautiulus) 42.6 on Ubuntu Linux 22.04.3
+#    GNOME Files (known as Gnome Nautiulus) 42.2 on Ubuntu Linux 22.04.1
+#    GNOME Files (known as Gnome Nautiulus) 42.1.1 on Ubuntu Linux 22.04
+#    GNOME Files (known as Gnome Nautiulus) 3.26.4 on Ubuntu Linux 18.04
 #
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
 #    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #    ROX Filer 2.11 on Ubuntu Linux 22.04
+#
+#    SpaceFM 1.0.6 on Ubuntu Linux 22.04.3
+#    SpaceFM 1.0.6 on elementary OS 7
 #
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
@@ -90,78 +93,81 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.3.0"
+VERSION="2.4.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
 HASHGARTEN_VERSION="0.14.0"
-PROGNAME="Jacksum File Browser Integration"
+PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="`pwd`/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="`pwd`/HashGarten-${HASHGARTEN_VERSION}.jar"
 ALGOS_DIRECT_SUGGESTION="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sha256 sha3-256 sumbsd sumsysv whirlpool"
 ALGORITHMS=""
 COMMANDS="cmd_calc;1)_Calc_hash_values cmd_check;2)_Check_data_integrity cmd_cust;3)_Customized_output cmd_edit;4)_Edit_script cmd_help;5)_Help"
 
-KDE_PROGNAME="Jacksum at Dolphin/Konqueror/Krusader"
-GNOME_PROGNAME="Jacksum at Gnome Nautilus/Files"
-ROX_PROGNAME="Jacksum at ROX-Filer"
-THUNAR_PROGNAME="Jacksum at Thunar"
-XFE_PROGNAME="Jacksum at Xfe"
-NEMO_PROGNAME="Jacksum at Nemo"
-CAJA_PROGNAME="Jacksum at Caja"
-ELEMENTARY_PROGNAME="Jacksum at Elementary Files"
+KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
+GNOME_PROGNAME="GNOME Files (Nautilus)"
+ROX_PROGNAME="ROX-Filer"
+THUNAR_PROGNAME="Thunar"
+XFE_PROGNAME="Xfe"
+NEMO_PROGNAME="Nemo"
+CAJA_PROGNAME="Caja"
+ELEMENTARY_PROGNAME="Elementary Files"
+SPACEFM_PROGNAME="SpaceFM"
 
 
 # -------------------------------------------------------------------------
-print_line() {
-# Prints a particular number of dashes.
+# Prints a line with dashes.
 #
-# $1 number of dashes in the line
+print_dashes() {
 # -------------------------------------------------------------------------
     printf -- '-%.0s' {1..80}; printf '\n'
 }
 
 
 # -------------------------------------------------------------------------
+# Prints the program header with name, version, and homepage.
+#
 print_header() {
 # -------------------------------------------------------------------------
-  printf "                - $PROGNAME v$VERSION -\n"
+  printf "          >>> $PROGNAME v$VERSION <<<\n"
   printf "                            https://jacksum.net\n\n"
 }
 
 
 # -------------------------------------------------------------------------
+# Prints the install/uninstall menu.
+#
 print_menu() {
+# parameter $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
   printf "Menu:\n"
-  printf "  1 - Install   %s for %s %s\n" "$KDE_PROGNAME"        "$USERS" "$KDE_DISABLED"
-  printf "  2 - Uninstall %s for %s %s\n" "$KDE_PROGNAME"        "$USERS" "$KDE_DISABLED"
-  printf "  3 - Install   %s for %s %s\n" "$GNOME_PROGNAME"      "$USERS" "$GNOME_DISABLED"
-  printf "  4 - Uninstall %s for %s %s\n" "$GNOME_PROGNAME"      "$USERS" "$GNOME_DISABLED"
-  printf "  5 - Install   %s for %s %s\n" "$ROX_PROGNAME"        "$USERS" "$ROX_DISABLED"
-  printf "  6 - Uninstall %s for %s %s\n" "$ROX_PROGNAME"        "$USERS" "$ROX_DISABLED"
-  printf "  7 - Install   %s for %s %s\n" "$THUNAR_PROGNAME"     "$USERS" "$THUNAR_DISABLED"
-  printf "  8 - Uninstall %s for %s %s\n" "$THUNAR_PROGNAME"     "$USERS" "$THUNAR_DISABLED"
-  printf "  9 - Install   %s for %s %s\n" "$XFE_PROGNAME"        "$USERS" "$XFE_DISABLED"
-  printf " 10 - Uninstall %s for %s %s\n" "$XFE_PROGNAME"        "$USERS" "$XFE_DISABLED"
-  printf " 11 - Install   %s for %s %s\n" "$NEMO_PROGNAME"       "$USERS" "$NEMO_DISABLED"
-  printf " 12 - Uninstall %s for %s %s\n" "$NEMO_PROGNAME"       "$USERS" "$NEMO_DISABLED"
-  printf " 13 - Install   %s for %s %s\n" "$CAJA_PROGNAME"       "$USERS" "$CAJA_DISABLED"
-  printf " 14 - Uninstall %s for %s %s\n" "$CAJA_PROGNAME"       "$USERS" "$CAJA_DISABLED"
-  printf " 15 - Install   %s for %s %s\n" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
-  printf " 16 - Uninstall %s for %s %s\n" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
+  printf "  1 - %-9s  in %s for %s %s\n" "${ACTION^}" "$KDE_PROGNAME"        "$USERS" "$KDE_DISABLED"
+  printf "  2 - %-9s  in %s for %s %s\n" "${ACTION^}" "$GNOME_PROGNAME"      "$USERS" "$GNOME_DISABLED"
+  printf "  3 - %-9s  in %s for %s %s\n" "${ACTION^}" "$ROX_PROGNAME"        "$USERS" "$ROX_DISABLED"
+  printf "  4 - %-9s  in %s for %s %s\n" "${ACTION^}" "$THUNAR_PROGNAME"     "$USERS" "$THUNAR_DISABLED"
+  printf "  5 - %-9s  in %s for %s %s\n" "${ACTION^}" "$XFE_PROGNAME"        "$USERS" "$XFE_DISABLED"
+  printf "  6 - %-9s  in %s for %s %s\n" "${ACTION^}" "$NEMO_PROGNAME"       "$USERS" "$NEMO_DISABLED"
+  printf "  7 - %-9s  in %s for %s %s\n" "${ACTION^}" "$CAJA_PROGNAME"       "$USERS" "$CAJA_DISABLED"
+  printf "  8 - %-9s  in %s for %s %s\n" "${ACTION^}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
+  printf "  9 - %-9s  in %s for %s %s\n" "${ACTION^}" "$SPACEFM_PROGNAME"    "$USERS" "$SPACEFM_DISABLED"
   printf "\n"
+  if [ "$ACTION" = "install" ]; then
+    printf "  u - Show the uninstall menu\n"
+  else
+    printf "  i - Show the install menu\n"      
+  fi
   printf "  q - Quit the installer\n"
-  print_line 80
+  print_dashes
 }
 
 
 # -------------------------------------------------------------------------
 check_env() {
-# -------------------------------------------------------------------------
+#
 # parameters:
-# - $1 = Description
-# - $2 = Default location
-# - $3 = Fallback
+# $1 = Description
+# $2 = Default location
+# $3 = Fallback
 # -------------------------------------------------------------------------
   if ( test -d "$2" ) then
     DIR="$2"
@@ -182,9 +188,10 @@ check_env() {
 
 # -------------------------------------------------------------------------
 check_bin() {
+#
 # parameters:
-# - $1 = Binary name
-# - $2 = Default location
+# $1 = Binary name
+# $2 = Default location
 # -------------------------------------------------------------------------
   BIN=""
   WHICH="`which "$1" 2> /dev/null`"
@@ -202,9 +209,10 @@ check_bin() {
 
 # -------------------------------------------------------------------------
 check_file() {
+#
 # parameters:
-# - $1 = file name
-# - $2 = Default location
+# $1 = file name
+# $2 = Default location
 # -------------------------------------------------------------------------
   BIN=""
   if ( test -f "$2" ) then
@@ -218,9 +226,10 @@ check_file() {
 
 # -------------------------------------------------------------------------
 find_bin() {
+#
 # parameters:
-# - $1 = Description for the binary
-# - $2 = Default location
+# $1 = Description for the binary
+# $2 = Default location
 # -------------------------------------------------------------------------
   printf "\n"
   BIN=""
@@ -240,8 +249,10 @@ find_bin() {
 
 
 # -------------------------------------------------------------------------
+# Normalizes the version and returns a comparable version as a number.
+#
 version_value() {
-# normalizes the version and returns a comparable version as a number
+#
 # parameters:
 # $1 version, e.g. 12.34.567
 # -------------------------------------------------------------------------
@@ -251,6 +262,7 @@ version_value() {
 
 # -------------------------------------------------------------------------
 set_env() {
+#
 # parameters:
 # $1 kde, gnome, xfe, rox, thunar, nemo, caja or elementary
 # -------------------------------------------------------------------------
@@ -438,14 +450,27 @@ set_env() {
         PREFIX="$HOME/.local/share/contractor"
       fi
       ;;
+    spacefm)
+      spacefm --version > /dev/null 2>&1
+      if (test $? -ne 0 ) then
+        SPACEFM=0
+        SPACEFM_DISABLED="(DISABLED)"
+      else
+        SPACEFM=1
+        SPACEFM_DISABLED=""
+        PREFIX="$HOME/.config/spacefm/"
+      fi
+      ;;
+      
   esac
 }
 
 
 # -------------------------------------------------------------------------
 uninstall() {
+#
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary or spacefm
 # -------------------------------------------------------------------------
   uninstall_silent $1
   printf "\nUninstallation finished. Press any key to continue ... "
@@ -455,8 +480,9 @@ uninstall() {
 
 # -------------------------------------------------------------------------
 uninstall_silent() {
+#
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary or spacefm
 # -------------------------------------------------------------------------
   case $1 in
       kde) uninstall_kde
@@ -474,6 +500,8 @@ uninstall_silent() {
      caja) uninstall_caja
            ;;
      elementary) uninstall_elementary
+           ;;
+     spacefm) uninstall_spacefm
            ;;
   esac
 }
@@ -623,7 +651,57 @@ uninstall_elementary() {
 
 
 # -------------------------------------------------------------------------
+clean_spacefm_session_file() {
+#
+# parameters:
+# $1 SpaceFM's session file
+# $3 text
+# -------------------------------------------------------------------------
+  local SESSION_FILE="$1"
+  local HANDLER_PREFIX="hand_f_jacksum"
+  
+  # get the registered handlers
+  local HANDLERS=$(grep ^open_hand-s ${SESSION_FILE})   # e.g. open_hand-s=hand_f_3aa02120 hand_f_28b4b240
+
+  # clean the handlers property
+  HANDLERS="${HANDLERS//hand_f_jacksum[^ ]*/}"      # remove all strings that start with hand_f_jacksum
+
+  # update the session file  
+  local TEMP_FILE="/tmp/jacksum.$$.session"
+  grep -v ^${HANDLER_PREFIX} "${SESSION_FILE}" | grep -v ^open_hand-s > "$TEMP_FILE"
+  printf "%s\n" "$HANDLERS" >> "$TEMP_FILE"
+  cat "${TEMP_FILE}" > "${SESSION_FILE}"
+  rm "${TEMP_FILE}"
+}
+
+
+# -------------------------------------------------------------------------
+uninstall_spacefm() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME"
+  SCRIPTS="$PREFIX/scripts"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if ( test -d "$SH" )
+  then
+    rm -r "$SH" && echo "[  OK  ]" || { printf "[FAILED]\n"; exit 1; }
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+  printf "  Removing $NAME scripts:           "
+  if ( test -d "${SCRIPTS}/hand_f_jacksum_cmd_calc" )
+  then
+    rm -R "${SCRIPTS}"/hand_f_jacksum* && printf "[  OK  ]\n" || { printf "[FAILED]\n"; exit 1; }
+    clean_spacefm_session_file "${PREFIX}/session" 
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+}
+
+
+# -------------------------------------------------------------------------
 install_menu() {
+#
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
 # -------------------------------------------------------------------------
@@ -643,6 +721,8 @@ install_menu() {
      caja) install_menu_caja
            ;;
      elementary) install_menu_elementary
+           ;;
+     spacefm) install_menu_spacefm
            ;;
   esac
 }
@@ -717,8 +797,9 @@ install_menu_kde() {
 
 
 # -------------------------------------------------------------------------
+# Function for Nautilus, Xfe and Nemo.
+#
 install_menu_gnome_shared() {
-# function for Nautilus, Xfe and Nemo
 # -------------------------------------------------------------------------
   printf "  Creating a folder for all scripts:  "
   if ( test ! -d "$SCRIPTFOLDER" )
@@ -926,17 +1007,133 @@ install_menu_elementary() {
     chmod +x "$OUTPUTFILE"    
   done
 
-  echo "[  OK  ]"
-
+  printf "[  OK  ]\n"
 }
+
+
+# -------------------------------------------------------------------------
+update_spacefm_session_file() {
+#
+# parameters:
+# $1 SpaceFM's session file
+# $2 handler name
+# $3 text
+# -------------------------------------------------------------------------
+  local SESSION_FILE="$1"
+  local HANDLER="$2"
+  local TXT="$3"
+
+  # get the registered handlers
+  local HANDLERS=$(grep ^open_hand-s ${SESSION_FILE})   # e.g. open_hand-s=hand_f_3aa02120 hand_f_28b4b240
+
+  # clean the handlers property
+  HANDLERS="${HANDLERS//${HANDLER}/}"             # e.g. open_hand-s=hand_f_3aa02120
+  HANDLERS="${HANDLERS//  /}"                     # remove all double blanks
+
+  # update the session file  
+  local TEMP_FILE="/tmp/jacksum.$$.session"
+  grep -v ^${HANDLER} "${SESSION_FILE}" | grep -v ^open_hand-s > "$TEMP_FILE"
+  printf "%s %s\n"       "$HANDLERS" "$HANDLER" >> "$TEMP_FILE"
+  printf "%s-s=%s\n"     "$HANDLER" "" >> "$TEMP_FILE"
+  printf "%s-x=%s\n"     "$HANDLER" "*" >> "$TEMP_FILE"
+  printf "%s-label=%s\n" "$HANDLER" "${TXT}" >> "$TEMP_FILE"
+  printf "%s-icon=%s\n"  "$HANDLER" "" >> "$TEMP_FILE"
+  printf "%s-keep=%s\n"  "$HANDLER" "1" >> "$TEMP_FILE"
+  cat "${TEMP_FILE}" > "${SESSION_FILE}"
+  rm "${TEMP_FILE}"
+}
+
+
+# -------------------------------------------------------------------------
+install_menu_spacefm() {
+# -------------------------------------------------------------------------
+  SESSION_FILE="${PREFIX}/session"
+
+  # if session file does not exist, the user need to call spacefm once.
+  if ( test ! -f "$SESSION_FILE" )
+  then
+      printf "  Note: In the next step I will try to open SpaceFM so the required session file gets generated.\n"
+      printf "        Please hit any key when you are ready: "
+      read DUMMY
+      spacefm > /dev/null 2>&1 &
+  fi
+   
+  printf "  Note: Please close all SpaceFM instances manually.\n"
+  printf "        Please hit any key when you are ready: "
+  read DUMMY
+  # if the user didn't read the instruction it could still work if a session file is there already.
+  pkill -HUP spacefm
+  
+  if ( test ! -f "$SESSION_FILE" )
+  then
+      printf "  Error: SpaceFM session file not found.\n" "$SESSION_FILE"
+      printf "         Please follow the instructions.\n"
+      exit 1
+  fi
+  
+  # backup the "session" file
+  cp "${SESSION_FILE}" "${SESSION_FILE}.backup"
+
+  SCRIPTFOLDER="${PREFIX}/scripts/"
+  printf "  Creating a folder for all scripts:  "
+  if ( test ! -d "$SCRIPTFOLDER" )
+  then
+    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
+    test -d "$SCRIPTFOLDER" &&
+    echo "[  OK  ]" || { echo "[FAILED]" ; exit 1; }
+  else
+    echo "[  OK  ]"
+  fi
+
+  # The actual scripts in .sh format
+  printf "  Installing scripts:                 "
+
+  for i in $COMMANDS
+  do
+    CMD=`echo $i | awk -F";" '{print $1 }'`
+    TXT=`echo $i | awk -F";" '{print $2 }' | sed -e "s/_/ /g"`
+
+    HANDLER="hand_f_jacksum_${CMD}"
+    SCRIPTFOLDER="${PREFIX}/scripts/${HANDLER}"
+    #OUTPUTFILE="${SCRIPTFOLDER}/hand-jacksum.${CMD}.sh"
+    # probably a bug in SpaceFM. It works only if the file handler is called "hand-file-mount.sh"
+    OUTPUTFILE="${SCRIPTFOLDER}/hand-file-mount.sh"
+    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
+
+    printf "%s\n" '#!/bin/bash' > "$OUTPUTFILE"
+    printf "%s %s %s\n" "${JACKSUMSH}" "${CMD}" "%F" >> "$OUTPUTFILE"
+    chmod +x "$OUTPUTFILE"
+    
+    update_spacefm_session_file "$SESSION_FILE" "$HANDLER" "$TXT"
+  done
+
+  for i in $ALGORITHMS
+  do
+    HANDLER="hand_f_jacksum_${i}"
+    SCRIPTFOLDER="${PREFIX}/scripts/${HANDLER}"
+    # OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${i}.sh"
+    # probably a bug in SpaceFM. It works only if the file handler is called "hand-file-mount.sh"
+    OUTPUTFILE="${SCRIPTFOLDER}/hand-file-mount.sh"   
+    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
+
+    printf "%s\n" '#!/bin/bash' > "$OUTPUTFILE"
+    printf "%s %s %s\n" "${JACKSUMSH}" "${i}" "%F" >> "$OUTPUTFILE"
+    chmod +x "$OUTPUTFILE"
+    
+    update_spacefm_session_file "$SESSION_FILE" "$HANDLER" "$i"
+  done
+
+  printf "[  OK  ]\n"
+}
+
 
 # -------------------------------------------------------------------------
 install_script() {
 # parameters:
-# kde, gnome, rox, thunar, xfe, caja, nemo or elementary
+# kde, gnome, rox, thunar, xfe, caja, nemo, elementary or spacefm
 # -------------------------------------------------------------------------
   case $1 in
-      kde|gnome|rox|thunar|xfe|nemo|caja|elementary) install_script_generic
+      kde|gnome|rox|thunar|xfe|nemo|caja|elementary|spacefm) install_script_generic
            ;;
       *) printf "file browser $1 is not supported. Exit.\n"
          exit 1
@@ -1187,8 +1384,8 @@ enter_java() {
 # -------------------------------------------------------------------------
 modify_params() {
 # -------------------------------------------------------------------------
-  printf "\nA complete JDK is required. If you use a headless JDK, you cannot use HashGarten which is a GUI for Jacksum.\n"
-  printf "You could go to https://adoptium.net for example to obtain a full JDK.\n"
+  printf "\nA JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten which is a GUI for Jacksum.\n"
+  printf "You could go to https://adoptium.net for example to obtain a full JDK/JRE.\n"
 
   enter_java
 
@@ -1215,18 +1412,17 @@ modify_params() {
 print_info_kde() {
 # -------------------------------------------------------------------------
   if (test $KDE -gt 1) then
-    echo "Info:"
-    echo "  This installer can install $KDE_PROGNAME."
+    printf "Info:\n"
     # if not root
     if ( test `id | cut -c5` -ne 0 ) then
-      echo "  If you want to install $KDE_PROGNAME"
-      echo "  for all users, run the script as root."
+      printf "  If you want to install Jacksum/HashGarten in %s\n" "$KDE_PROGNAME"
+      printf "  for all users, please run this script as root.\n"
     else
-      echo "  If you want to install $KDE_PROGNAME"
-      echo "  only for one user, run the script as a normal user. If you have a Live CD,"
-      echo "  you must run the script as normal user, because CDs are read only."
+      printf "  If you want to install Jacksum/HashGarten %s\n" "$KDE_PROGNAME"
+      printf "  only for one user, run the script as a normal user. If you have a Live CD,\n"
+      printf "  you must run the script as normal user, because CDs are read only.\n"
     fi
-    print_line 80
+    print_dashes
   fi
 }
 
@@ -1267,7 +1463,7 @@ select_algorithms() {
 # ------------------------------------------------------------------------- 
 install_interactive() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm
 # ------------------------------------------------------------------------- 
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -1341,13 +1537,13 @@ install_done() {
           restart_fb caja "Caja"
           ;;
       kde)  
-          echo "Please restart KDE Konqueror in order to make the change active."
+          printf "Please restart KDE Konqueror in order to make the change active.\n"
           ;;
       rox)
           # no restart required for ROX-Filer :)
           ;;
    thunar)
-          echo "Please restart Thunar in order to make the change active."
+          printf "Please restart Thunar in order to make the change active.\n"
           ;;
       xfe)
           # no restart required for Xfe :)
@@ -1356,6 +1552,9 @@ install_done() {
           # restart_fb io.elementary.files "Elementary"
           # no restart required for Elementary :)
           ;;
+   spacefm)
+          # no restart required for SpaceFM :)
+          ;;   
   esac
   printf "Press any key to continue ... "
   read DUMMY
@@ -1412,104 +1611,75 @@ set_env xfe
 set_env nemo
 set_env caja
 set_env elementary
+set_env spacefm
 init_editor
 init_viewer
+ACTION="install"
 
 while :
 do
   clear
   print_header
   print_info_kde
-  print_menu
-  printf "Select option 1-16 or q to quit: "
+  print_menu $ACTION
+  printf "Enter option: "
   read OPTION
   case "$OPTION" in
+    u) ACTION="uninstall"
+       ;;
+    i) ACTION="install"
+       ;;
     1) # in $KDE we have the major version
-      if (test $KDE -gt 1) then
-        install_generic kde
-      fi
-      ;;
-    2) # in $KDE we have the major version
-      if (test $KDE -gt 1) then
-        uninstall_generic kde
-      fi
-      ;;
+       if (test $KDE -gt 1) then         
+         ${ACTION}_generic kde
+       fi
+       ;;
+    2)
+       if (test $GNOME -eq 1) then
+         ${ACTION}_generic gnome
+       fi
+       ;;
     3)
-      if (test $GNOME -eq 1) then
-        install_generic gnome
-      fi
-      ;;
+       if (test $ROX -eq 1) then
+         ${ACTION}_generic rox
+       fi
+       ;;
     4)
-      if (test $GNOME -eq 1) then
-        uninstall_generic gnome
-      fi
-      ;;
+       if (test $THUNAR -eq 1) then
+         ${ACTION}_generic thunar
+       fi
+       ;;
     5)
-      if (test $ROX -eq 1) then
-        install_generic rox
-      fi
-      ;;
+       if (test $XFE -eq 1) then
+         ${ACTION}_generic xfe
+       fi
+       ;;
     6)
-      if (test $ROX -eq 1) then
-        uninstall_generic rox
-      fi
-      ;;
+       if (test $NEMO -eq 1) then
+         ${ACTION}_generic nemo
+       fi
+       ;;
     7)
-      if (test $THUNAR -eq 1) then
-        install_generic thunar
-      fi
-      ;;
+       if (test $CAJA -eq 1) then
+         ${ACTION}_generic caja
+       fi
+       ;;
     8)
-      if (test $THUNAR -eq 1) then
-        uninstall_generic thunar
-      fi
-      ;;
+       if (test $ELEMENTARY -eq 1) then
+         ${ACTION}_generic elementary
+       fi
+       ;;
     9)
-      if (test $XFE -eq 1) then
-        install_generic xfe
-      fi
-      ;;
-   10)
-      if (test $XFE -eq 1) then
-        uninstall_generic xfe
-      fi
-      ;;
-   11)
-      if (test $NEMO -eq 1) then
-        install_generic nemo
-      fi
-      ;;
-   12)
-      if (test $NEMO -eq 1) then
-        uninstall_generic nemo
-      fi
-      ;; 
-   13)
-      if (test $CAJA -eq 1) then
-        install_generic caja
-      fi
-      ;;
-   14)
-      if (test $CAJA -eq 1) then
-        uninstall_generic caja
-      fi
-      ;;
-   15)
-      if (test $ELEMENTARY -eq 1) then
-        install_generic elementary
-      fi
-      ;;
-   16)
-      if (test $ELEMENTARY -eq 1) then
-        uninstall_generic elementary
-      fi
-      ;;
+       if (test $SPACEFM -eq 1) then
+         ${ACTION}_generic spacefm
+       fi
+       ;;
     0 | q)
-      echo
+      printf "\n"
       exit 0
       ;;
     *)
-      echo
+      printf "\n"
       ;;
   esac
 done

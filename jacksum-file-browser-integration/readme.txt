@@ -1,7 +1,7 @@
 Description
 -----------
 Jacksum File Browser Integration
-for GNU/Linux and Unix Operating Systems v2.3.0 (Sep 5, 2023)
+for GNU/Linux and Unix Operating Systems v2.4.0 (Sep 10, 2023)
 Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@ function (compute checksums, CRCs, and hashes) at your favorite file
 browser on GNU/Linux and Unix operating systems:
 
 Caja, elementary Files, Dolphin, Konqueror, Krusader, Nemo, Nautilus,
-ROX-Filer, Thunar and Xfe
+ROX-Filer, SpaceFM, Thunar and Xfe.
 
 In order to get all the features Jacksum can offer, run Jacksum
 on the command line.
@@ -26,7 +26,7 @@ Requirements
    (non-headless)
 
 2) A file browser: Caja, elementary Files, Dolphin, Konqueror, Krusader,
-   Nemo, Nautilus, ROX-Filer, Thunar and Xfe are supported
+   Nemo, Nautilus, ROX-Filer, SpaceFM, Thunar and Xfe are supported
 
 3) A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK)
    with graphical libraries.
