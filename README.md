@@ -20,7 +20,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 ### Supported File Browsers
 
-The installation script has been tested successfully on many systems. See also the head of the installer script for details.
+The installation script has been tested successfully for many file browsers on many systems. See also the head of the installer script for details.
 
 | File Browser           | Tested Versions | API                  | Comment                                                                                                     |
 |------------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
@@ -32,8 +32,9 @@ The installation script has been tested successfully on many systems. See also t
 | Nemo                   | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
 | GNOME Files (Nautilus) | 2.6.1 - 24.6    | GNOME                | Default file manager for GNOME-powered distributions like Fedora and Ubuntu.                                |
 | ROX-Filer              | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
+| SpaceFM                | 1.0.6           | SpaceFM              | SpaceFM is a file manager on Linux.                                                                         |
 | Thunar                 | 1.0.1 - 1.6.10  | Thunar               | It is the default choice for Xfce-based distributions.                                                      |
-| X File Explorer (Xfe)  | 1.37  -1.43.2   | Xfe                  | Xfe is a file manager for Linux.                                                                            |
+| Xfe                    | 1.37  -1.43.2   | Xfe                  | X File Explorer (Xfe) is a file manager on Linux.                                                                             |
 
 
 ## Get started
@@ -54,30 +55,28 @@ The installation script is an interactive text user interface that allows you to
 
 ```
 $ ./jacksum-file-browser-integration.sh
-                - Jacksum File Browser Integration v2.3.0 -
+          >>> Jacksum/HashGarten File Browser Integration v2.4.0 <<<
                             https://jacksum.net
 
+Info:
+  If you want to install Jacksum/HashGarten in Dolphin, Konqueror, or Krusader
+  for all users, please run this script as root.
+--------------------------------------------------------------------------------
 Menu:
-  1 - Install   Jacksum at Dolphin/Konqueror/Krusader for user johann (DISABLED)
-  2 - Uninstall Jacksum at Dolphin/Konqueror/Krusader for user johann (DISABLED)
-  3 - Install   Jacksum at Gnome Nautilus/Files for user johann (DISABLED)
-  4 - Uninstall Jacksum at Gnome Nautilus/Files for user johann (DISABLED)
-  5 - Install   Jacksum at ROX-Filer for user johann (DISABLED)
-  6 - Uninstall Jacksum at ROX-Filer for user johann (DISABLED)
-  7 - Install   Jacksum at Thunar for user johann (DISABLED)
-  8 - Uninstall Jacksum at Thunar for user johann (DISABLED)
-  9 - Install   Jacksum at Xfe for user johann (DISABLED)
- 10 - Uninstall Jacksum at Xfe for user johann (DISABLED)
- 11 - Install   Jacksum at Nemo for user johann (DISABLED)
- 12 - Uninstall Jacksum at Nemo for user johann (DISABLED)
- 13 - Install   Jacksum at Caja for user johann (DISABLED)
- 14 - Uninstall Jacksum at Caja for user johann (DISABLED)
- 15 - Install   Jacksum at Elementary Files for user johann 
- 16 - Uninstall Jacksum at Elementary Files for user johann 
+  1 - Install    in Dolphin, Konqueror, or Krusader for user johann 
+  2 - Install    in GNOME Files (Nautilus) for user johann (DISABLED)
+  3 - Install    in ROX-Filer for user johann (DISABLED)
+  4 - Install    in Thunar for user johann (DISABLED)
+  5 - Install    in Xfe for user johann (DISABLED)
+  6 - Install    in Nemo for user johann (DISABLED)
+  7 - Install    in Caja for user johann (DISABLED)
+  8 - Install    in Elementary Files for user johann 
+  9 - Install    in SpaceFM for user johann 
 
+  u - Show the uninstall menu
   q - Quit the installer
 --------------------------------------------------------------------------------
-Select option 1-16 or q to quit: 15
+Enter option: 9
 
 Current parameters:
   [java]: /usr/bin/java
@@ -88,8 +87,8 @@ Current parameters:
   [direct accessible algorithms]: 
 
 
-A complete JDK is required. If you use a headless JDK, you cannot use HashGarten which is a GUI for Jacksum.
-You could go to https://adoptium.net for example to obtain a full JDK.
+A JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten which is a GUI for Jacksum.
+You could go to https://adoptium.net for example to obtain a full JDK/JRE.
 
 Type the absolute path to "java"
 and press "Enter" to continue [/usr/bin/java]: 
@@ -134,11 +133,13 @@ Do you want to use the parameters above? [y]:
   Removing jacksum scripts:           [ NOT INSTALLED ]
   Found Jacksum 3.7.0:                [  OK  ]
   Installing jacksum.sh:              [  OK  ]
+  Note: Please close all SpaceFM instances manually.
+        Please hit any key when you are ready: 
   Creating a folder for all scripts:  [  OK  ]
   Installing scripts:                 [  OK  ]
 
 Installation finished.
-Press any key to continue ... 
+Press any key to continue ...
 ```
 
 ## FAQs
@@ -155,7 +156,8 @@ On systems without KDE, you need to install both the krusader and the kf5-config
 
 ### The installer marked all entries as DISABLED
 
-Most likely, you are running a non-supported file manager. If you think it should be supported, please file a feature request. 
+Most likely, you are running a non-supported file manager. If you think it should be supported, please file a feature request.
+Please note that the file browser must support sending highlighted files or directories or selected files or directories to a 3rd party application such as a script.
 
 
 ### How do I get the latest Java?
