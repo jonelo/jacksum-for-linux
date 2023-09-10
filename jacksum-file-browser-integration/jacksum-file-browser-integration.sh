@@ -1066,7 +1066,7 @@ install_menu_spacefm() {
   
   if ( test ! -f "$SESSION_FILE" )
   then
-      printf "  Error: SpaceFM session file not found.\n" "$SESSION_FILE"
+      printf "  Error: SpaceFM session file not found.\n"
       printf "         Please follow the instructions.\n"
       exit 1
   fi
