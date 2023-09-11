@@ -45,6 +45,12 @@ Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar
 
 ### Extract the installation script
 
+On most GNU/Linux derivates you can use
+```
+$ tar xfvj jacksum*.tar.bz2 ; cd jacksum-file-browser-integration/
+```
+
+On Sun/Oracle Solaris you should use
 ```
 $ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ```
