@@ -24,17 +24,17 @@ The installation script has been tested successfully for many file browsers on m
 
 | File Browser           | Tested Versions | API                  | Comment                                                                                                     |
 |------------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
-| Caja                   | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the MATE desktop environment. It is a fork of Nautilus version 2.32.     |
-| Dolphin                | 2.2 - 21.12.3   | KDE                  | Default file manager on KDE-powered distributions.                                                          |
-| elementary files       | 6.2.1           | elementary contracts | "elementary files" is the file manager used by the elementary OS.                                           |
-| Konqueror              | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
-| Krusader               | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
-| Nemo                   | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
-| GNOME Files (Nautilus) | 2.6.1 - 24.6    | GNOME                | Default file manager for GNOME-powered distributions like Fedora and Ubuntu.                                |
-| ROX-Filer              | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
-| SpaceFM                | 1.0.6           | SpaceFM              | SpaceFM is a file manager on Linux.                                                                         |
-| Thunar                 | 1.0.1 - 1.6.10  | Thunar               | It is the default choice for Xfce-based distributions.                                                      |
-| Xfe                    | 1.37  -1.43.2   | Xfe                  | X File Explorer (Xfe) is a file manager on Linux.                                                                             |
+| [Caja](https://github.com/mate-desktop/caja)          | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the MATE desktop environment. It is a fork of Nautilus version 2.32.     |
+| [Dolphin](https://apps.kde.org/de/dolphin/)           | 2.2 - 21.12.3   | KDE                  | Default file manager on KDE-powered distributions.                                                          |
+| [elementary files](https://github.com/elementary/files) | 6.2.1           | elementary contracts | "elementary files" is the file manager used by the elementary OS.                                         |
+| [Konqueror](https://apps.kde.org/de/konqueror/)       | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
+| [Krusader](https://krusader.org/)                     | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
+| [Nemo](https://github.com/linuxmint/nemo)             | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
+| [GNOME Files (Nautilus)](https://gitlab.gnome.org/GNOME/nautilus) | 2.6.1 - 24.6    | GNOME                | Default file manager for GNOME-powered distributions like Fedora and Ubuntu.                    |
+| [ROX-Filer](https://github.com/rox-desktop/rox-filer) | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
+| [SpaceFM](https://github.com/IgnorantGuru/spacefm)    | 1.0.6           | SpaceFM              | SpaceFM is a file manager on Linux.                                                                         |
+| [Thunar](https://gitlab.xfce.org/xfce/thunar)         | 1.0.1 - 1.6.10  | Thunar               | It is the default choice for Xfce-based distributions.                                                      |
+| [Xfe](https://sourceforge.net/projects/xfe/)          | 1.37 - 1.43.2   | Xfe                  | X File Explorer (Xfe) is a file manager on Linux.                                                           |
 
 
 ## Get started
@@ -45,6 +45,12 @@ Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar
 
 ### Extract the installation script
 
+On most GNU/Linux derivates you can use
+```
+$ tar xfvj jacksum*.tar.bz2 ; cd jacksum-file-browser-integration/
+```
+
+On Sun/Oracle Solaris you should use
 ```
 $ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ```
