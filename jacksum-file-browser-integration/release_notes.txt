@@ -1,5 +1,12 @@
 Release Notes
 -------------
+2.5.0, Sep 16, 2023
+- added ascon-hash to the customized output menu item
+- added integration support for the file manager zzzFM
+- added also support for modern releases of Thunar
+- fixed all shellcheck warnings
+- refactored and beautified the code
+
 2.4.0, Sep 10, 2023
 - added support for SpaceFM
 - two separate menus for installation and uninstallation
