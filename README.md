@@ -10,13 +10,13 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 - A graphical desktop user interface
 
-- bash 3 or later
+- bash v3 or later, or zsh
 
 - At least one of the supported file browsers below
 
-- A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI. 
+- A Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI. 
 
-- jacksum-3.7.0.jar, HashGarten-0.14.0.jar and flatlaf-2.3.jar (all are part of the installation tarball)
+- jacksum-3.7.0.jar, HashGarten-0.14.0.jar and flatlaf-2.3.jar (all jars are part of the installation tarball)
 
 ### Supported File Browsers
 
@@ -46,12 +46,12 @@ Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar
 
 ### Extract the installation script
 
-On most GNU/Linux derivates you can use
+On most GNU/Linux derivates, and on macOS you can enter
 ```
 $ tar xfvj jacksum*.tar.bz2 ; cd jacksum-file-browser-integration/
 ```
 
-On Sun/Oracle Solaris you should use
+On most Unix derivates, such as Sun/Oracle Solaris you can enter
 ```
 $ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
 ```
