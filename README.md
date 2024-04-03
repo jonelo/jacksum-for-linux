@@ -20,7 +20,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 ### Supported File Browsers
 
-The installation script has been tested successfully for many file browsers on many systems. See also the head of the installer script for details.
+The installation script has been tested successfully for many file browsers on many systems. If the API has not changed, the script should work with later [minor or patch versions](https://semver.org) as well. See also the head of the installer script for details.
 
 | File Browser           | Tested Versions | API                  | Comment                                                                                                     |
 |------------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
