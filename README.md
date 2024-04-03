@@ -29,7 +29,7 @@ The installation script has been tested successfully for many file browsers on m
 | [elementary files](https://github.com/elementary/files) | 6.2.1 - 6.5.2 | elementary contracts | "elementary files" is the file manager used by the elementary OS.                                         |
 | [Konqueror](https://apps.kde.org/de/konqueror/)       | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
 | [Krusader](https://krusader.org/)                     | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
-| [Nemo](https://github.com/linuxmint/nemo)             | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
+| [Nemo](https://github.com/linuxmint/nemo)             | 1.8.4 - 6.0.2   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
 | [GNOME Files (Nautilus)](https://gitlab.gnome.org/GNOME/nautilus) | 2.6.1 - 24.6    | GNOME                | Default file manager for GNOME-powered distributions like Fedora and Ubuntu.                    |
 | [ROX-Filer](https://github.com/rox-desktop/rox-filer) | 2.5 - 2.24.33   | ROX                  | ROX-Filer is the file manager for the desktop environment "ROX Desktop".                                    |
 | [SpaceFM](https://github.com/IgnorantGuru/spacefm)    | 1.0.6           | SpaceFM              | SpaceFM is a file manager on Linux.                                                                         |
