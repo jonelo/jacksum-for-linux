@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 #  Jacksum File Browser Integration for Unix and GNU/Linux Operating Systems
-#  Copyright (c) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
+#  Copyright (c) 2006-2024 Dipl.-Inf. (FH) Johann N. Loefflmann
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #
 #    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
 #
+#    elementary Files 6.5.2 on elementary OS 7.1
 #    elementary Files 6.2.1 on elementary OS 7
 #
 #    GNOME Files (known as Gnome Nautilus) 42.6 on Ubuntu Linux 22.04.3
@@ -41,6 +42,7 @@
 #    GNOME Files (known as Gnome Nautilus) 42.1.1 on Ubuntu Linux 22.04
 #    GNOME Files (known as Gnome Nautilus) 3.26.4 on Ubuntu Linux 18.04
 #
+#    Nemo 6.0.2 on Linux Mint 21.3
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
@@ -98,16 +100,16 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.5.0"
+VERSION="2.6.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
-HASHGARTEN_VERSION="0.14.0"
+HASHGARTEN_VERSION="0.16.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
 ALGOS_DIRECT_SUGGESTION="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sha256 sha3-256 sumbsd sumsysv whirlpool"
 ALGORITHMS=""
-COMMANDS="cmd_calc;1)_Calc_hash_values cmd_check;2)_Check_data_integrity cmd_cust;3)_Customized_output cmd_edit;4)_Edit_script cmd_help;5)_Help"
+COMMANDS="cmd_calc;1)_Calc_hash_values cmd_check;2)_Check_data_integrity cmd_cust;3)_Customized_output cmd_edit;4)_Edit_script"
 
 KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
 GNOME_PROGNAME="GNOME Files (Nautilus)"
@@ -147,16 +149,16 @@ print_menu() {
 # $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
   printf "Menu:\n"
-  printf "  1 - %-9s  in %s for %s %s\n" "${ACTION^}" "$KDE_PROGNAME" "$USERS" "$KDE_DISABLED"
-  printf "  2 - %-9s  in %s for %s %s\n" "${ACTION^}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
-  printf "  3 - %-9s  in %s for %s %s\n" "${ACTION^}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
-  printf "  4 - %-9s  in %s for %s %s\n" "${ACTION^}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
-  printf "  5 - %-9s  in %s for %s %s\n" "${ACTION^}" "$XFE_PROGNAME" "$USERS" "$XFE_DISABLED"
-  printf "  6 - %-9s  in %s for %s %s\n" "${ACTION^}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
-  printf "  7 - %-9s  in %s for %s %s\n" "${ACTION^}" "$CAJA_PROGNAME" "$USERS" "$CAJA_DISABLED"
-  printf "  8 - %-9s  in %s for %s %s\n" "${ACTION^}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
-  printf "  9 - %-9s  in %s for %s %s\n" "${ACTION^}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
-  printf " 10 - %-9s  in %s for %s %s\n" "${ACTION^}" "$ZZZFM_PROGNAME" "$USERS" "$ZZZFM_DISABLED"
+  printf "  1 - %-9s  in %s for %s %s\n" "${ACTION}" "$KDE_PROGNAME" "$USERS" "$KDE_DISABLED"
+  printf "  2 - %-9s  in %s for %s %s\n" "${ACTION}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
+  printf "  3 - %-9s  in %s for %s %s\n" "${ACTION}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
+  printf "  4 - %-9s  in %s for %s %s\n" "${ACTION}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
+  printf "  5 - %-9s  in %s for %s %s\n" "${ACTION}" "$XFE_PROGNAME" "$USERS" "$XFE_DISABLED"
+  printf "  6 - %-9s  in %s for %s %s\n" "${ACTION}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
+  printf "  7 - %-9s  in %s for %s %s\n" "${ACTION}" "$CAJA_PROGNAME" "$USERS" "$CAJA_DISABLED"
+  printf "  8 - %-9s  in %s for %s %s\n" "${ACTION}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
+  printf "  9 - %-9s  in %s for %s %s\n" "${ACTION}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
+  printf " 10 - %-9s  in %s for %s %s\n" "${ACTION}" "$ZZZFM_PROGNAME" "$USERS" "$ZZZFM_DISABLED"
   printf "\n"
   if [ "$ACTION" = "install" ]; then
     printf "  u - Show the uninstall menu\n"
@@ -1217,7 +1219,7 @@ install_script_sh() {
 #!/bin/bash
 #
 # Jacksum File Browser Integration Script, https://jacksum.net
-# Copyright (c) 2006-2023 Johann N. Loefflmann, https://johann.loefflmann.net
+# Copyright (c) 2006-2024 Johann N. Loefflmann, https://johann.loefflmann.net
 # Code has been released under the conditions of the GPLv3+.
 #
 
@@ -1272,19 +1274,6 @@ case $ALGO in
 
   "cmd_calc")
     "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O relative -U ${ERROR_LOG} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
-    rm relative > /dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
-      # Generate an output that contains both stdout and stderr in a file for the viewer
-      # CHECK_FILE contains the output file name that the user has been specified at the GUI
-  
-      CHECK_FILE=$(grep gui.output $HOME/.HashGarten.properties)
-      # We need to strip the key called gui.output= and undo any escapes done by Java''s properties API
-      CHECK_FILE=${CHECK_FILE#*=}
- 
-      cat ${CHECK_FILE} ${ERROR_LOG} > ${OUTPUT}
-      viewer "${OUTPUT}"
-    fi
     ;;
 
   "cmd_check")
@@ -1292,14 +1281,9 @@ case $ALGO in
       touch relative
     fi
     "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c relative -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
-    rm relative > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      viewer "${OUTPUT}"
-    fi
     ;;
 
   "cmd_cust")
-    cat /dev/null > "${OUTPUT}"
     ALGOS="md5+sha1+ripemd160+tiger+\
 sha256+sha512/256+sha3-256+shake128+ascon-hash+sm3+streebog256+kupyna-256+lsh-256-256+blake3+k12+keccak256+\
 sha512+sha3-512+shake256+streebog512+kupyna-512+lsh-512-512+blake2b-512+keccak512+m14+skein-512-512+whirlpool"
@@ -1437,7 +1421,11 @@ print_params() {
   check_bin "Editor" "$EDIT"
   EDIT="$BIN"
 
-  printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
+  if [ -z $ALGORITHMS ]; then
+    printf "  [direct accessible algorithms]: %s\n\n" "n/a"
+  else
+    printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
+  fi
 }
 
 # -------------------------------------------------------------------------
@@ -1467,6 +1455,7 @@ modify_params() {
 # -------------------------------------------------------------------------
   printf "\nA JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten which is a GUI for Jacksum.\n"
   printf "You could go to https://adoptium.net for example to obtain a full JDK/JRE.\n"
+  printf "On Debian based derivates you could install by 'sudo apt install default-jdk'\n"
 
   enter_java
 
@@ -1666,14 +1655,14 @@ uninstall_generic() {
 # -------------------------------------------------------------------------
 init_editor() {
 # -------------------------------------------------------------------------
-  find_app gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany
+  find_app gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
   EDIT="$APP"
 }
 
 # -------------------------------------------------------------------------
 init_viewer() {
 # -------------------------------------------------------------------------
-  find_app zenity gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany
+  find_app zenity gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
   VIEWER="$APP"
 }
 

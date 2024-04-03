@@ -2,7 +2,7 @@ Beschreibung
 ------------
 Jacksum File Browser Integration 2.5.0
 fuer GNU/Linux und Unix Betriebssysteme (16.09.2023)
-Copyright (C) 2006-2023 Dipl.-Inf. (FH) Johann N. Loefflmann
+Copyright (C) 2006-2024 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@ Das Jacksum File Browser Integration Script installiert die primaere Funktion
 von Jacksum (Berechnen von Pruefsummen, CRCs und Hashes) in Ihren bevorzugten
 Dateibrowser unter GNU/Linux und Unix Betriebssystemen.
 
-Um alle Funktionen von Jacksum benutzen zu koennen, lassen Sie Jacksum auf
+Um alle Funktionen von Jacksum benutzen zu können, lassen Sie Jacksum auf
 der Kommandozeile laufen.
 
 
@@ -42,7 +42,7 @@ Voraussetzungen
    https://github.com/alibaba/dragonwell8
    https://www.oracle.com/java
 
-4) jacksum-3.7.0.jar, and HashGarten-0.14.0.jar, und flatlaf-3.2.jar
+4) jacksum-3.7.0.jar, and HashGarten-0.16.0.jar, und flatlaf-3.4.1.jar
 
 
 Entpacken des Scripts
@@ -55,7 +55,7 @@ Starten des Scripts
 -------------------
 ./jacksum-file-browser-integration.sh
 
-Sie kï¿½nnen das Script so oft aufrufen wie sie wollen.
+Sie können das Script so oft aufrufen wie sie wollen.
 
 
 Getestete Umgebungen
@@ -70,3 +70,4 @@ funktionieren.
 Fehler, Wuensche, Supportanfragen
 ---------------------------------
 Besuchen Sie https://github.com/jonelo/jacksum-fbi-linux/issues
+

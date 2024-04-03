@@ -1,5 +1,10 @@
 Release Notes
 -------------
+2.6.0, Apr 3, 2024
+- added folder to the .tar.bz2 again
+- added xed, and pluma for editor selection
+- bundled HashGarten 0.16.0
+
 2.5.0, Sep 16, 2023
 - added ascon-hash to the customized output menu item
 - added integration support for the file manager zzzFM
