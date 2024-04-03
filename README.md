@@ -35,7 +35,7 @@ The installation script has been tested successfully for many file browsers on m
 | [SpaceFM](https://github.com/IgnorantGuru/spacefm)    | 1.0.6           | SpaceFM              | SpaceFM is a file manager on Linux.                                                                         |
 | [Thunar](https://gitlab.xfce.org/xfce/thunar)         | 1.0.1 - 1.6.10  | Thunar               | It is the default choice for Xfce-based distributions.                                                      |
 | [Xfe](https://sourceforge.net/projects/xfe/)          | 1.37 - 1.43.2   | Xfe                  | X File Explorer (Xfe) is a file manager on Linux.                                                           |
-| [zzzFM](https://gitlab.com/antix-contribs/zzzfm/)     | 1.0.7           | zzzFM                | A file manager for the antiX Linux                                                                          |
+| [zzzFM](https://gitlab.com/antix-contribs/zzzfm/)     | 1.0.7           | zzzFM                | A file manager for the antiX Linux.                                                                         |
 
 
 ## Get started
