@@ -26,7 +26,7 @@ The installation script has been tested successfully for many file browsers on m
 |------------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
 | [Caja](https://github.com/mate-desktop/caja)          | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the MATE desktop environment. It is a fork of Nautilus version 2.32.     |
 | [Dolphin](https://apps.kde.org/de/dolphin/)           | 2.2 - 21.12.3   | KDE                  | Default file manager on KDE-powered distributions.                                                          |
-| [elementary files](https://github.com/elementary/files) | 6.2.1         | elementary contracts | "elementary files" is the file manager used by the elementary OS.                                         |
+| [elementary files](https://github.com/elementary/files) | 6.2.1 - 6.5.2 | elementary contracts | "elementary files" is the file manager used by the elementary OS.                                         |
 | [Konqueror](https://apps.kde.org/de/konqueror/)       | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for KDE before it was replaced by Dolphin starting with KDE 4.               |
 | [Krusader](https://krusader.org/)                     | 2.7.2           | KDE                  | Krusader is a file manager for KDE.                                                                         |
 | [Nemo](https://github.com/linuxmint/nemo)             | 1.8.4 - 5.2.4   | Nemo                 | Nemo is Linux Mint's default file manager in Cinnamon desktop edition. It is a fork of Nautilus 3.4.        |
