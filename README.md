@@ -16,7 +16,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 - A Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI. 
 
-- jacksum-3.7.0.jar, HashGarten-0.14.0.jar and flatlaf-2.3.jar (all jars are part of the installation tarball)
+- jacksum-3.7.0.jar, HashGarten-0.16.0.jar and flatlaf-3.4.1.jar (all jars are part of the installation tarball)
 
 ### Supported File Browsers
 
@@ -172,7 +172,7 @@ Please note that the file browser must support sending highlighted files or dire
 #### Debian based Linux (e.g. Ubuntu)
 
 ```
-$ sudo apt install openjdk-17-jre
+$ sudo apt install openjdk-21-jre
 ```
 
 You just need to enter `/usr/bin/java` (or hit Enter) if the `jacksum-file-browser-integration.sh` asks you for the java command:
@@ -185,9 +185,9 @@ and press "Enter" to continue [/usr/bin/java]:
 
 #### Other Linux
 
-You could use the `update_jdk` script from the [bashberries](https://github.com/jonelo/bashberries) project in order to get a suitable JDK. The following example downloads Temurin 17 (that is the JDK 17 from adoptium), and installs it to `/opt/java/jdk_latest`:
+You could use the `update_jdk` script from the [bashberries](https://github.com/jonelo/bashberries) project in order to get a suitable JDK. The following example downloads Temurin 21 (that is the JDK 21 from adoptium), and installs it to `/opt/java/jdk_latest`:
 ```
-$ sudo ./update_jdk -s "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.6%2B10/OpenJDK17U-jdk_x64_linux_hotspot_17.0.6_10.tar.gz" -t jdk /opt/java
+$ sudo ./update_jdk -s "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz" -t jdk /opt/java
 ```
 You just need to enter `/opt/java/jdk_latest/bin/java` if the `jacksum-file-browser-integration.sh` asks you for the java command:
 
