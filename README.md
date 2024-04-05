@@ -22,6 +22,8 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 The installation script has been tested successfully for many file browsers on many systems. If the API has not changed, the script should work with later [minor or patch versions](https://semver.org) as well. See also the head of the installer script for details.
 
+If your preferred file manager is not listed below, chances are high that your file manager supports at least **drag & drop**, so you could use drag & drop to transfer file/directory-paths from your file manager to the HashGarten GUI where you can process data further, e. g. calculate hashes from file/directory-paths.
+
 | File Browser           | Tested Versions | API                  | Comment                                                                                                     |
 |------------------------|-----------------|----------------------|-------------------------------------------------------------------------------------------------------------|
 | [Caja](https://github.com/mate-desktop/caja)          | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the [MATE](https://mate-desktop.org/) desktop environment. It is a fork of Nautilus version 2.32.     |
