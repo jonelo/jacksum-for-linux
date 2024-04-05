@@ -42,6 +42,8 @@
 #    GNOME Files (known as Gnome Nautilus) 42.1.1 on Ubuntu Linux 22.04
 #    GNOME Files (known as Gnome Nautilus) 3.26.4 on Ubuntu Linux 18.04
 #
+#    muCommander 1.3.0 on Ubuntu 22.04.4 LTS
+#
 #    Nemo 6.0.2 on Linux Mint 21.3
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
@@ -100,7 +102,7 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.6.0"
+VERSION="2.7.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
 HASHGARTEN_VERSION="0.16.0"
@@ -121,6 +123,7 @@ CAJA_PROGNAME="Caja"
 ELEMENTARY_PROGNAME="Elementary Files"
 SPACEFM_PROGNAME="SpaceFM"
 ZZZFM_PROGNAME="zzzFM"
+MUCOMMANDER_PROGNAME="muCommander"
 
 # -------------------------------------------------------------------------
 # Prints a line with dashes.
@@ -149,16 +152,17 @@ print_menu() {
 # $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
   printf "Menu:\n"
-  printf "  1 - %-9s  in %s for %s %s\n" "${ACTION}" "$KDE_PROGNAME" "$USERS" "$KDE_DISABLED"
-  printf "  2 - %-9s  in %s for %s %s\n" "${ACTION}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
-  printf "  3 - %-9s  in %s for %s %s\n" "${ACTION}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
-  printf "  4 - %-9s  in %s for %s %s\n" "${ACTION}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
-  printf "  5 - %-9s  in %s for %s %s\n" "${ACTION}" "$XFE_PROGNAME" "$USERS" "$XFE_DISABLED"
-  printf "  6 - %-9s  in %s for %s %s\n" "${ACTION}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
-  printf "  7 - %-9s  in %s for %s %s\n" "${ACTION}" "$CAJA_PROGNAME" "$USERS" "$CAJA_DISABLED"
-  printf "  8 - %-9s  in %s for %s %s\n" "${ACTION}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
-  printf "  9 - %-9s  in %s for %s %s\n" "${ACTION}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
-  printf " 10 - %-9s  in %s for %s %s\n" "${ACTION}" "$ZZZFM_PROGNAME" "$USERS" "$ZZZFM_DISABLED"
+  printf "  c - %-9s  in %s for %s %s\n" "${ACTION}" "$CAJA_PROGNAME" "$USERS" "$CAJA_DISABLED"
+  printf "  d - %-9s  in %s for %s %s\n" "${ACTION}" "$KDE_PROGNAME" "$USERS" "$KDE_DISABLED"
+  printf "  e - %-9s  in %s for %s %s\n" "${ACTION}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
+  printf "  g - %-9s  in %s for %s %s\n" "${ACTION}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
+  printf "  m - %-9s  in %s for %s %s\n" "${ACTION}" "$MUCOMMANDER_PROGNAME" "$USERS" "$MUCOMMANDER_DISABLED"
+  printf "  n - %-9s  in %s for %s %s\n" "${ACTION}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
+  printf "  r - %-9s  in %s for %s %s\n" "${ACTION}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
+  printf "  s - %-9s  in %s for %s %s\n" "${ACTION}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
+  printf "  t - %-9s  in %s for %s %s\n" "${ACTION}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
+  printf "  x - %-9s  in %s for %s %s\n" "${ACTION}" "$XFE_PROGNAME" "$USERS" "$XFE_DISABLED"
+  printf "  z - %-9s  in %s for %s %s\n" "${ACTION}" "$ZZZFM_PROGNAME" "$USERS" "$ZZZFM_DISABLED"
   printf "\n"
   if [ "$ACTION" = "install" ]; then
     printf "  u - Show the uninstall menu\n"
@@ -471,6 +475,17 @@ set_env() {
       PREFIX="$HOME/.config/zzzfm/"
     fi
     ;;
+    
+  mucommander)
+   if [ ! -f "/opt/mucommander/bin/muCommander" ]; then
+      MUCOMMANDER=0
+      MUCOMMANDER_DISABLED="(DISABLED)"
+    else
+      MUCOMMANDER=1
+      MUCOMMANDER_DISABLED=""
+      PREFIX="$HOME/.mucommander/"
+    fi
+    ;;
 
   esac
 }
@@ -479,7 +494,8 @@ set_env() {
 uninstall() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary spacefm or zzzfm
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary spacefm, zzzfm
+# or mucommander
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press enter key to continue ... "
@@ -490,7 +506,8 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm, zzzfm
+# or mucommander
 # -------------------------------------------------------------------------
   case $1 in
   kde)
@@ -522,6 +539,9 @@ uninstall_silent() {
     ;;
   zzzfm)
     uninstall_xxxfm
+    ;;
+  mucommander)
+    uninstall_mucommander
     ;;
   esac
 }
@@ -666,6 +686,36 @@ uninstall_thunar() {
   fi
 }
 
+
+# -------------------------------------------------------------------------
+uninstall_mucommander() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME/"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if [ -d "$SH" ]; then
+    if rm -r "$SH"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+  printf "  Removing %s entries:           " "$NAME"
+  # restore the backup
+  XML="$PREFIX/commands.xml"
+  XMLBACKUP="$PREFIX/commands.before-jacksum.xml"
+  if [ ! -f "$XMLBACKUP" ]; then
+    printf "[ NOT INSTALLED ]\n"
+  else
+    cp "$XMLBACKUP" "$XML"
+    rm "$XMLBACKUP"
+    printf "[  OK  ]\n"
+  fi
+}
+
 # -------------------------------------------------------------------------
 uninstall_elementary() {
 # -------------------------------------------------------------------------
@@ -756,7 +806,8 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm, zzzfm
+# or mucommander
 # -------------------------------------------------------------------------
   case $1 in
   kde)
@@ -788,6 +839,9 @@ install_menu() {
     ;;
   zzzfm)
     install_menu_xxxfm xxxfm
+    ;;
+  mucommander)
+    install_menu_mucommander
     ;;
   esac
 }
@@ -1076,6 +1130,49 @@ install_menu_elementary() {
 }
 
 # -------------------------------------------------------------------------
+install_menu_mucommander() {
+# -------------------------------------------------------------------------
+  XML="$PREFIX/commands.xml"
+  XMLBACKUP="$PREFIX/commands.before-jacksum.xml"
+  printf "  Backing up commands.xml:            "
+  if [ ! -f "$XML" ]; then
+    printf "[ NOT FOUND ]\n"
+    # Put a default file here
+    printf '<?xml version="1.0" encoding="UTF-8"?><commands></commands>\n' >"$XML"
+    cp "$XML" "$XMLBACKUP"
+  else
+    cp "$XML" "$XMLBACKUP"
+    printf "[  OK  ]\n"
+  fi
+
+  printf "  Installing entries:                 "
+
+  MYTEMP=/tmp/jacksum.$$.temp
+  # xml without the closing </commands> tag
+  sed 's/<\/commands>//' "$XML" >"$MYTEMP"
+
+  for i in $COMMANDS; do
+    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+    {
+      printf '<command alias="Jacksum - %s" value="%s %s $f" />\n' "$TXT" "${JACKSUMSH}" "${CMD}"
+    } >>"$MYTEMP"
+  done
+
+  for i in $ALGORITHMS; do
+    {
+      printf '<command alias="Jacksum - %s" value="%s %s $f" />\n' "$i" "$JACKSUMSH" "$i"
+    } >>"$MYTEMP"
+  done
+
+  printf '</commands>\n' >>"$MYTEMP"
+  cp "$MYTEMP" "$XML"
+  rm "$MYTEMP"
+  printf "[  OK  ]\n"
+}
+
+
+
+# -------------------------------------------------------------------------
 update_xxxfm_session_file() {
 #
 # parameters:
@@ -1200,7 +1297,7 @@ install_script() {
 # kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  kde | gnome | rox | thunar | xfe | nemo | caja | elementary | spacefm | zzzfm)
+  kde | gnome | rox | thunar | xfe | nemo | caja | elementary | spacefm | zzzfm | mucommander)
     install_script_generic
     ;;
   *)
@@ -1351,6 +1448,7 @@ legacy message digests (avoid if possible):
     ;;
 
 esac
+exit 0
 EOF
 }  >"$JACKSUMSH"
 
@@ -1532,6 +1630,7 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
+# or mucommander
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -1590,7 +1689,7 @@ restart_fb() {
 # -------------------------------------------------------------------------
 install_done() {
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, mucommander
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -1624,6 +1723,9 @@ install_done() {
   zzzfm)
     # no restart required for zzzFM :)
     ;;
+  mucommander)
+    printf "Please restart muCommander in order to make the change active.\n"
+    ;;
   esac
   printf "Press enter to continue ... "
   read -r
@@ -1633,7 +1735,7 @@ install_done() {
 install_generic() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
+# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary, or mucommander
 # -------------------------------------------------------------------------
   set_env "$1"
   print_params "$1"
@@ -1679,6 +1781,7 @@ set_env caja
 set_env elementary
 set_env spacefm
 set_env zzzfm
+set_env mucommander
 init_editor
 init_viewer
 ACTION="install"
@@ -1698,56 +1801,62 @@ while :; do
   i)
     ACTION="install"
     ;;
-  1) # in $KDE we have the major version
+  d) # in $KDE we have the major version
     if [ $KDE -gt 1 ]; then
       ${ACTION}_generic kde
     fi
     ;;
-  2)
+  g)
     if [ $GNOME -eq 1 ]; then
       ${ACTION}_generic gnome
     fi
     ;;
-  3)
+  r)
     if [ $ROX -eq 1 ]; then
       ${ACTION}_generic rox
     fi
     ;;
-  4)
+  t)
     if [ $THUNAR -eq 1 ]; then
       ${ACTION}_generic thunar
     fi
     ;;
-  5)
+  x)
     if [ $XFE -eq 1 ]; then
       ${ACTION}_generic xfe
     fi
     ;;
-  6)
+  n)
     if [ $NEMO -eq 1 ]; then
       ${ACTION}_generic nemo
     fi
     ;;
-  7)
+  c)
     if [ $CAJA -eq 1 ]; then
       ${ACTION}_generic caja
     fi
     ;;
-  8)
+  e)
     if [ $ELEMENTARY -eq 1 ]; then
       ${ACTION}_generic elementary
     fi
     ;;
-  9)
+  s)
     if [ $SPACEFM -eq 1 ]; then
       ${ACTION}_generic spacefm
     fi
     ;;
-  10)
+  z)
     if [ $ZZZFM -eq 1 ]; then
       ${ACTION}_generic zzzfm
     fi
     ;;
+  m)
+    if [ $MUCOMMANDER -eq 1 ]; then
+      ${ACTION}_generic mucommander
+    fi
+    ;;
+  
   0 | q)
     printf "\n"
     exit 0

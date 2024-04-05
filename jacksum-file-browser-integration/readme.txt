@@ -1,7 +1,7 @@
 Description
 -----------
 Jacksum File Browser Integration
-for GNU/Linux and Unix Operating Systems v2.5.0 (Sep 16, 2023)
+for GNU/Linux and Unix Operating Systems v2.7.0 (Apr 5, 2024)
 Copyright (C) 2006-2024 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,9 @@ Requirements
 1) A GNU/Linux or Unix operating system with a graphical user interface
    (non-headless)
 
-2) A file browser: Caja, Dolphin, elementary Files, Konqueror, Krusader,
-   Nemo, Nautilus, ROX-Filer, SpaceFM, Thunar, Xfe, and zzzFM are supported
+2) A file browser: Caja, Dolphin, elementary Files, GNOME Nautilus (Files),
+   Konqueror, Krusader, muCommander, Nemo, ROX-Filer, SpaceFM, Thunar, Xfe,
+   and zzzFM are supported
 
 3) A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK)
    with graphical libraries.
