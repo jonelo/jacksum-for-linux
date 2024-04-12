@@ -48,6 +48,9 @@
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
+#    PCManFM 1.3.2 on Ubuntu 22.04.4
+#    PCManFM-Qt 0.17 on Ubuntu 22.04.4
+# 
 #    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #    ROX Filer 2.11 on Ubuntu Linux 22.04
 #
@@ -117,9 +120,9 @@ CAJA_PROGNAME="Caja"
 ELEMENTARY_PROGNAME="Elementary Files"
 GNOME_PROGNAME="GNOME Files (Nautilus)"
 KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
-GNOME_PROGNAME="GNOME Files (Nautilus)"
 MUCOMMANDER_PROGNAME="muCommander"
 NEMO_PROGNAME="Nemo"
+PCMANFM_PROGNAME="PCManFM, PCManFM-Qt"
 ROX_PROGNAME="ROX-Filer"
 SPACEFM_PROGNAME="SpaceFM"
 THUNAR_PROGNAME="Thunar"
@@ -159,6 +162,7 @@ print_menu() {
   printf "  g - %-9s  in %s for %s %s\n" "${ACTION}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
   printf "  m - %-9s  in %s for %s %s\n" "${ACTION}" "$MUCOMMANDER_PROGNAME" "$USERS" "$MUCOMMANDER_DISABLED"
   printf "  n - %-9s  in %s for %s %s\n" "${ACTION}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
+  printf "  p - %-9s  in %s for %s %s\n" "${ACTION}" "$PCMANFM_PROGNAME" "$USERS" "$PCMANFM_DISABLED"
   printf "  r - %-9s  in %s for %s %s\n" "${ACTION}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
   printf "  s - %-9s  in %s for %s %s\n" "${ACTION}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
   printf "  t - %-9s  in %s for %s %s\n" "${ACTION}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
@@ -479,13 +483,24 @@ set_env() {
     ;;
     
   mucommander)
-   if [ ! -f "/opt/mucommander/bin/muCommander" ]; then
-      MUCOMMANDER=0
-      MUCOMMANDER_DISABLED="(DISABLED)"
-    else
+    if [ -f "/opt/mucommander/bin/muCommander" ]; then
       MUCOMMANDER=1
       MUCOMMANDER_DISABLED=""
       PREFIX="$HOME/.mucommander/"
+    else
+      MUCOMMANDER=0
+      MUCOMMANDER_DISABLED="(DISABLED)"
+    fi
+    ;;
+    
+  pcmanfm)
+    if [ -f "$(which pcmanfm 2>/dev/null)" ] || [ -f "$(which pcmanfm-qt 2>/dev/null)" ]; then
+      PCMANFM=1
+      PCMANFM_DISABLED=""
+      PREFIX="$HOME/.local/share/file-manager/"
+    else
+      PCMANFM=0
+      PCMANFM_DISABLED="(DISABLED)"
     fi
     ;;
 
@@ -550,6 +565,38 @@ uninstall_kde() {
     printf "[ NOT INSTALLED ]\n"
   fi
 }
+
+
+# -------------------------------------------------------------------------
+uninstall_pcmanfm() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX"
+  DESKTOP_FILES="$PREFIX/actions/"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if [ -d "$SH" ]; then
+    if rm -r "$SH"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+  printf "  Removing %s*.desktop:          " "$NAME"
+  if [ -d "$DESKTOP_FILES" ]; then
+    if rm "$DESKTOP_FILES/*"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+}
+
 
 # -------------------------------------------------------------------------
 uninstall_gnome() {
@@ -867,6 +914,60 @@ install_menu_kde() {
     printf "[FAILED]\n"
     exit 1
   fi
+}
+
+# -------------------------------------------------------------------------
+install_menu_pcmanfm_sub() {
+# -------------------------------------------------------------------------
+    DESKFILE="${PREFIX}/actions/${NAME}_${CMD}.desktop"
+    printf "  Installing %s:         " "$DESKFILE"
+
+    {
+      printf "[Desktop Entry]\n"
+      printf "Type=Action\n"
+      printf "Name=%s\n" "$TXT"
+      printf "Profiles=%s_%s\n" "$NAME" "$CMD"
+      printf "\n"
+      printf "[X-Action-Profile %s_%s]\n" "$NAME" "$CMD"
+      printf "Exec=%s %s %s\n" "$JACKSUMSH" "$CMD" "%F"
+      printf "\n"
+    } >"$DESKFILE"
+    if [ -f "$DESKFILE" ]; then
+      chmod +x "$DESKFILE"
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+}
+
+# -------------------------------------------------------------------------
+install_menu_pcmanfm() {
+# -------------------------------------------------------------------------
+  printf "  Creating a folder for servicemenus: "
+
+  if [ ! -d "$PREFIX/actions" ]; then
+    mkdir -p "$PREFIX/actions" 2>/dev/null
+    if [ -d "$PREFIX/actions" ]; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[  OK  ]\n"
+  fi
+
+  for i in $COMMANDS; do
+    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+    install_menu_pcmanfm_sub
+  done
+
+  for i in $ALGORITHMS; do
+    CMD="${i}"; TXT="${CMD}"
+    install_menu_pcmanfm_sub
+  done
+
 }
 
 # -------------------------------------------------------------------------
@@ -1674,6 +1775,8 @@ install_done() {
   mucommander)
     printf "Please restart muCommander in order to make the change active.\n"
     ;;
+  pcmanfm)
+    ;;
   esac
   printf "Press enter to continue ... "
   read -r
@@ -1730,6 +1833,8 @@ set_env elementary
 set_env spacefm
 set_env zzzfm
 set_env mucommander
+set_env pcmanfm
+
 init_editor
 init_viewer
 ACTION="install"
@@ -1778,6 +1883,11 @@ while :; do
   n)
     if [ $NEMO -eq 1 ]; then
       ${ACTION}_generic nemo
+    fi
+    ;;
+  p)
+    if [ $PCMANFM -eq 1 ]; then
+      ${ACTION}_generic pcmanfm
     fi
     ;;
   r)
