@@ -32,6 +32,7 @@
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
+#    Dolphin 24.02.1 on KDE Neon 6.0, Release 22.04
 #    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
 #
 #    elementary Files 6.5.2 on elementary OS 7.1
@@ -282,6 +283,26 @@ set_env() {
   case $1 in
   kde)
     KDE=""
+    if [ "$KDE" = "" ]; then
+      if type kded6 &>/dev/null; then
+        # KDE Framework 6.x
+        KDE=6
+        KDE_DISABLED=""
+        if [ "$(id | cut -c5)" -ne 0 ]; then
+          # non-root user
+          LOCAL=""
+          check_env "KDE config folder" "$LOCAL" "$HOME/.local"
+          USERS="user "$(whoami)
+        else
+          SYSTEM=""
+          check_env "KDE install prefix" "$SYSTEM" "/usr"
+          USERS="all users"
+        fi
+        PREFIX="$DIR"
+        KDEPOSTFIX="/share/kio/servicemenus/"
+      fi
+    fi
+
     if [ "$KDE" = "" ]; then
       if type kf5-config &>/dev/null; then
         # KDE Framework 5.x
@@ -909,6 +930,7 @@ install_menu_kde() {
   done
 
   if [ -f "$DESKFILE" ]; then
+    chmod +x "$DESKFILE"
     printf "[  OK  ]\n"
   else
     printf "[FAILED]\n"
@@ -1752,7 +1774,7 @@ install_done() {
     restart_fb caja "Caja"
     ;;
   kde)
-    printf "Please restart KDE Konqueror in order to make the change active.\n"
+    printf "Please restart Dolphin, Konqueror, or Krusader in order to make the change active.\n"
     ;;
   rox)
     # no restart required for ROX-Filer :)
