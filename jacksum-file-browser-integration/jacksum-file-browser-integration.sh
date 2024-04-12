@@ -1446,9 +1446,6 @@ case $ALGO in
     ;;
 
   "cmd_check")
-    if [ ! -f relative ]; then
-      touch relative
-    fi
     "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c relative -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
     ;;
 
