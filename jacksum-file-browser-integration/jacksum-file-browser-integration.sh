@@ -1154,13 +1154,16 @@ install_menu_mucommander() {
   for i in $COMMANDS; do
     CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
     {
-      printf '<command alias="Jacksum - %s" value="%s %s $f" />\n' "$TXT" "${JACKSUMSH}" "${CMD}"
+      # $f is the placeholder for muCommander, therefore it must not be evaluated
+      # shellcheck disable=SC2016
+      printf '<command alias="Jacksum - %s" value="%s %s %s" />\n' "$TXT" "${JACKSUMSH}" "${CMD}" '$f'
     } >>"$MYTEMP"
   done
 
   for i in $ALGORITHMS; do
     {
-      printf '<command alias="Jacksum - %s" value="%s %s $f" />\n' "$i" "$JACKSUMSH" "$i"
+      # shellcheck disable=SC2016
+      printf '<command alias="Jacksum - %s" value="%s %s %s" />\n' "$i" "$JACKSUMSH" "$i" '$f'
     } >>"$MYTEMP"
   done
 
