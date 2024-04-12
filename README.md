@@ -124,3 +124,8 @@ For more information about Jacksum see also https://jacksum.net or https://githu
 For more information about HashGarten see also https://jacksum.net or https://github.com/jonelo/HashGarten
 
 There are also File Browser Integration scripts available for both Microsoft Windows, see also https://github.com/jonelo/jacksum-fbi-windows, and macOS, see also https://github.com/jonelo/jacksum-fbi-macos
+
+
+## Show your support
+
+Please ⭐️ this repository if this project helped you!
