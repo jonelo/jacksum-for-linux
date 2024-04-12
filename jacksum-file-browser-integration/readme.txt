@@ -1,7 +1,7 @@
 Description
 -----------
 Jacksum File Browser Integration
-for GNU/Linux and Unix Operating Systems v2.7.0 (Apr 5, 2024)
+for GNU/Linux and Unix Operating Systems v2.8.0 (Apr 12, 2024)
 Copyright (C) 2006-2024 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify

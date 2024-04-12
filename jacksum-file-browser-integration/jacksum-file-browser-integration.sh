@@ -102,7 +102,7 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.7.0"
+VERSION="2.8.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
 HASHGARTEN_VERSION="0.16.0"
@@ -1519,7 +1519,7 @@ print_params() {
   check_bin "Editor" "$EDIT"
   EDIT="$BIN"
 
-  if [ -z $ALGORITHMS ]; then
+  if [ -z "$ALGORITHMS" ]; then
     printf "  [direct accessible algorithms]: %s\n\n" "n/a"
   else
     printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
