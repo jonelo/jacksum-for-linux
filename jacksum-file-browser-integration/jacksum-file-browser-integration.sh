@@ -21,7 +21,7 @@
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
 #    See also https://www.linux-apps.com/p/998451
 #
-#  * This script requires jacksum-3.7.0.jar and HashGarten-0.14.0.jar
+#  * This script requires jacksum-3.7.0.jar and HashGarten-0.16.0.jar
 #    which are part of the Jacksum file browser integration package for Linux
 #    since 2.0.0
 #    See also https://jacksum.net
@@ -111,19 +111,20 @@ JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
 ALGOS_DIRECT_SUGGESTION="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sha256 sha3-256 sumbsd sumsysv whirlpool"
 ALGORITHMS=""
-COMMANDS="cmd_calc;1)_Calc_hash_values cmd_check;2)_Check_data_integrity cmd_cust;3)_Customized_output cmd_edit;4)_Edit_script"
+COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cust;3)_Customized_Output cmd_edit;4)_Edit_Script"
 
-KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
-GNOME_PROGNAME="GNOME Files (Nautilus)"
-ROX_PROGNAME="ROX-Filer"
-THUNAR_PROGNAME="Thunar"
-XFE_PROGNAME="Xfe"
-NEMO_PROGNAME="Nemo"
 CAJA_PROGNAME="Caja"
 ELEMENTARY_PROGNAME="Elementary Files"
-SPACEFM_PROGNAME="SpaceFM"
-ZZZFM_PROGNAME="zzzFM"
+GNOME_PROGNAME="GNOME Files (Nautilus)"
+KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
+GNOME_PROGNAME="GNOME Files (Nautilus)"
 MUCOMMANDER_PROGNAME="muCommander"
+NEMO_PROGNAME="Nemo"
+ROX_PROGNAME="ROX-Filer"
+SPACEFM_PROGNAME="SpaceFM"
+THUNAR_PROGNAME="Thunar"
+XFE_PROGNAME="Xfe"
+ZZZFM_PROGNAME="zzzFM"
 
 # -------------------------------------------------------------------------
 # Prints a line with dashes.
@@ -271,7 +272,8 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 kde, gnome, xfe, rox, thunar, nemo, caja, elementary, spacefm or zzzfm
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   kde)
@@ -345,10 +347,7 @@ set_env() {
     ;;
 
   gnome)
-    if ! nautilus --version >/dev/null 2>&1; then
-      GNOME=0
-      GNOME_DISABLED="(DISABLED)"
-    else
+    if nautilus --version >/dev/null 2>&1; then
       GNOME=1
       GNOME_DISABLED=""
       if [ "$(nautilus --version | cut -c16)" -ge 2 ]; then
@@ -367,14 +366,14 @@ set_env() {
         PREFIX="$HOME/.gnome"
         FB_SCRIPTFOLDER=nautilus-scripts
       fi
+    else
+      GNOME=0
+      GNOME_DISABLED="(DISABLED)"
     fi
     ;;
 
   nemo)
-    if ! nemo --version >/dev/null 2>&1; then
-      NEMO=0
-      NEMO_DISABLED="(DISABLED)"
-    else
+    if nemo --version >/dev/null 2>&1; then
       NEMO=1
       NEMO_DISABLED=""
       NEMOVER=$(nemo --version | cut -f2 -d' ')
@@ -387,14 +386,14 @@ set_env() {
         PREFIX="$HOME/.gnome2"
         FB_SCRIPTFOLDER=nemo-scripts
       fi
+    else
+      NEMO=0
+      NEMO_DISABLED="(DISABLED)"
     fi
     ;;
 
   xfe)
-    if ! xfe --version >/dev/null 2>&1; then
-      XFE=0
-      XFE_DISABLED="(DISABLED)"
-    else
+    if xfe --version >/dev/null 2>&1; then
       XFEVER=$(xfe --version | cut -f3 -d' ')
       # script folder is supported starting with Xfe 1.35
       if [ "$(version_value "$XFEVER")" -ge "$(version_value 1.35)" ]; then
@@ -406,73 +405,76 @@ set_env() {
         XFE=0
         XFE_DISABLED="(DISABLED)"
       fi
+    else
+      XFE=0
+      XFE_DISABLED="(DISABLED)"
     fi
     ;;
 
   caja)
-    if ! caja --version >/dev/null 2>&1; then
-      CAJA=0
-      CAJA_DISABLED="(DISABLED)"
-    else
+    if caja --version >/dev/null 2>&1; then
       CAJA=1
       CAJA_DISABLED=""
       PREFIX="$HOME/.config/caja"
       FB_SCRIPTFOLDER=scripts
+    else
+      CAJA=0
+      CAJA_DISABLED="(DISABLED)"
     fi
     ;;
 
   rox)
-    if ! rox --version >/dev/null 2>&1; then
-      ROX=0
-      ROX_DISABLED="(DISABLED)"
-    else
+    if rox --version >/dev/null 2>&1; then
       ROX=1
       ROX_DISABLED=""
       PREFIX="$HOME/.config/rox.sourceforge.net"
+    else
+      ROX=0
+      ROX_DISABLED="(DISABLED)"
     fi
     ;;
 
   thunar)
-    if ! thunar --version >/dev/null 2>&1; then
-      THUNAR=0
-      THUNAR_DISABLED="(DISABLED)"
-    else
+    if thunar --version >/dev/null 2>&1; then
       THUNAR=1
       THUNAR_DISABLED=""
       PREFIX="$HOME/.config/Thunar"
+    else
+      THUNAR=0
+      THUNAR_DISABLED="(DISABLED)"
     fi
     ;;
 
   elementary)
-    if ! io.elementary.files --version >/dev/null 2>&1; then
-      ELEMENTARY=0
-      ELEMENTARY_DISABLED="(DISABLED)"
-    else
+    if io.elementary.files --version >/dev/null 2>&1; then
       ELEMENTARY=1
       ELEMENTARY_DISABLED=""
       PREFIX="$HOME/.local/share/contractor"
+    else
+      ELEMENTARY=0
+      ELEMENTARY_DISABLED="(DISABLED)"
     fi
     ;;
 
   spacefm)
-    if ! spacefm --version >/dev/null 2>&1; then
-      SPACEFM=0
-      SPACEFM_DISABLED="(DISABLED)"
-    else
+    if spacefm --version >/dev/null 2>&1; then
       SPACEFM=1
       SPACEFM_DISABLED=""
       PREFIX="$HOME/.config/spacefm/"
+    else
+      SPACEFM=0
+      SPACEFM_DISABLED="(DISABLED)"
     fi
     ;;
 
   zzzfm)
-    if ! zzzfm --version >/dev/null 2>&1; then
-      ZZZFM=0
-      ZZZFM_DISABLED="(DISABLED)"
-    else
+    if zzzfm --version >/dev/null 2>&1; then
       ZZZFM=1
       ZZZFM_DISABLED=""
       PREFIX="$HOME/.config/zzzfm/"
+    else
+      ZZZFM=0
+      ZZZFM_DISABLED="(DISABLED)"
     fi
     ;;
     
@@ -494,8 +496,8 @@ set_env() {
 uninstall() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary spacefm, zzzfm
-# or mucommander
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press enter key to continue ... "
@@ -506,42 +508,15 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm, zzzfm
-# or mucommander
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  kde)
-    uninstall_kde
+  caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | thunar | xfe)
+    uninstall_$1
     ;;
-  gnome)
-    uninstall_gnome
-    ;;
-  rox)
-    uninstall_rox
-    ;;
-  thunar)
-    uninstall_thunar
-    ;;
-  xfe)
-    uninstall_xfe
-    ;;
-  nemo)
-    uninstall_nemo
-    ;;
-  caja)
-    uninstall_caja
-    ;;
-  elementary)
-    uninstall_elementary
-    ;;
-  spacefm)
+  spacefm | zzzfm)
     uninstall_xxxfm
-    ;;
-  zzzfm)
-    uninstall_xxxfm
-    ;;
-  mucommander)
-    uninstall_mucommander
     ;;
   esac
 }
@@ -686,7 +661,6 @@ uninstall_thunar() {
   fi
 }
 
-
 # -------------------------------------------------------------------------
 uninstall_mucommander() {
 # -------------------------------------------------------------------------
@@ -806,42 +780,15 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm, zzzfm
-# or mucommander
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  kde)
-    install_menu_kde
+  caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | thunar | xfe)
+    install_menu_$1
     ;;
-  gnome)
-    install_menu_gnome
-    ;;
-  rox)
-    install_menu_rox
-    ;;
-  thunar)
-    install_menu_thunar
-    ;;
-  xfe)
-    install_menu_xfe
-    ;;
-  nemo)
-    install_menu_nemo
-    ;;
-  caja)
-    install_menu_caja
-    ;;
-  elementary)
-    install_menu_elementary
-    ;;
-  spacefm)
-    install_menu_xxxfm spacefm
-    ;;
-  zzzfm)
-    install_menu_xxxfm xxxfm
-    ;;
-  mucommander)
-    install_menu_mucommander
+  spacefm | zzzfm)
+    install_menu_xxxfm $1
     ;;
   esac
 }
@@ -1173,8 +1120,6 @@ install_menu_mucommander() {
   printf "[  OK  ]\n"
 }
 
-
-
 # -------------------------------------------------------------------------
 update_xxxfm_session_file() {
 #
@@ -1296,11 +1241,12 @@ install_menu_xxxfm() {
 
 # -------------------------------------------------------------------------
 install_script() {
-# parameters:
-# kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
+# parameters: 
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  kde | gnome | rox | thunar | xfe | nemo | caja | elementary | spacefm | zzzfm | mucommander)
+    caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | spacefm | thunar | xfe | zzzfm)
     install_script_generic
     ;;
   *)
@@ -1665,7 +1611,7 @@ install_interactive() {
 restart_fb() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary
+# $1 Name of the executable
 # $2 Name of the file browser
 # -------------------------------------------------------------------------
   local YESNO=""
@@ -1691,8 +1637,8 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, mucommander
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -1717,7 +1663,6 @@ install_done() {
     # no restart required for Xfe :)
     ;;
   elementary)
-    # restart_fb io.elementary.files "Elementary"
     # no restart required for Elementary :)
     ;;
   spacefm)
@@ -1737,8 +1682,8 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary, or mucommander
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   print_params "$1"
@@ -1750,8 +1695,8 @@ install_generic() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo or elementary
+# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+#    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   uninstall "$1"
@@ -1804,9 +1749,20 @@ while :; do
   i)
     ACTION="install"
     ;;
-  d) # in $KDE we have the major version
+
+  c)
+    if [ $CAJA -eq 1 ]; then
+      ${ACTION}_generic caja
+    fi
+    ;;
+  d) # in the $KDE variable we have stored the major version
     if [ $KDE -gt 1 ]; then
       ${ACTION}_generic kde
+    fi
+    ;;
+  e)
+    if [ $ELEMENTARY -eq 1 ]; then
+      ${ACTION}_generic elementary
     fi
     ;;
   g)
@@ -1814,9 +1770,24 @@ while :; do
       ${ACTION}_generic gnome
     fi
     ;;
+  m)
+    if [ $MUCOMMANDER -eq 1 ]; then
+      ${ACTION}_generic mucommander
+    fi
+    ;;
+  n)
+    if [ $NEMO -eq 1 ]; then
+      ${ACTION}_generic nemo
+    fi
+    ;;
   r)
     if [ $ROX -eq 1 ]; then
       ${ACTION}_generic rox
+    fi
+    ;;
+  s)
+    if [ $SPACEFM -eq 1 ]; then
+      ${ACTION}_generic spacefm
     fi
     ;;
   t)
@@ -1829,34 +1800,9 @@ while :; do
       ${ACTION}_generic xfe
     fi
     ;;
-  n)
-    if [ $NEMO -eq 1 ]; then
-      ${ACTION}_generic nemo
-    fi
-    ;;
-  c)
-    if [ $CAJA -eq 1 ]; then
-      ${ACTION}_generic caja
-    fi
-    ;;
-  e)
-    if [ $ELEMENTARY -eq 1 ]; then
-      ${ACTION}_generic elementary
-    fi
-    ;;
-  s)
-    if [ $SPACEFM -eq 1 ]; then
-      ${ACTION}_generic spacefm
-    fi
-    ;;
   z)
     if [ $ZZZFM -eq 1 ]; then
       ${ACTION}_generic zzzfm
-    fi
-    ;;
-  m)
-    if [ $MUCOMMANDER -eq 1 ]; then
-      ${ACTION}_generic mucommander
     fi
     ;;
   
