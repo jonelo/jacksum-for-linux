@@ -21,7 +21,7 @@
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
 #    See also https://www.linux-apps.com/p/998451
 #
-#  * This script requires jacksum-3.7.0.jar and HashGarten-0.16.0.jar
+#  * This script requires jacksum-3.7.0.jar and HashGarten-0.17.0.jar
 #    which are part of the Jacksum file browser integration package for Linux
 #    since 2.0.0
 #    See also https://jacksum.net
@@ -39,6 +39,7 @@
 #    elementary Files 6.5.2 on elementary OS 7.1
 #    elementary Files 6.2.1 on elementary OS 7
 #
+#    GNOME Files (known as Gnome Nautilus) 46.0 on Ubuntu Linux 24.04
 #    GNOME Files (known as Gnome Nautilus) 42.6 on Ubuntu Linux 22.04.3
 #    GNOME Files (known as Gnome Nautilus) 42.2 on Ubuntu Linux 22.04.1
 #    GNOME Files (known as Gnome Nautilus) 42.1.1 on Ubuntu Linux 22.04
@@ -110,7 +111,7 @@
 VERSION="2.8.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
-HASHGARTEN_VERSION="0.16.0"
+HASHGARTEN_VERSION="0.17.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
@@ -1828,14 +1829,14 @@ uninstall_generic() {
 # -------------------------------------------------------------------------
 init_editor() {
 # -------------------------------------------------------------------------
-  find_app gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
+  find_app gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
   EDIT="$APP"
 }
 
 # -------------------------------------------------------------------------
 init_viewer() {
 # -------------------------------------------------------------------------
-  find_app zenity gedit kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
+  find_app zenity gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
   VIEWER="$APP"
 }
 
