@@ -1,11 +1,12 @@
 Release Notes
 -------------
-2.8.0, Apr 12, 2024
+2.8.0, Oct 20, 2024
 - added support for KDE 6
 - added support for PCManFM and PCManFM-Qt
 - bug fix: line 1522: too many arguments (regression was introduced in 2.6.0)
 - disabled shellcheck warnings for $f evaluation because it is a literal used by muCommander
 - refactored the code a little
+- bundled HashGarten 0.17.0
 
 2.7.0, Apr 6, 2024
 - added support for muCommander 1.3.0+

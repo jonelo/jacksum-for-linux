@@ -32,6 +32,7 @@
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
+#    Dolphin 24.08.1 (KDE Framework 6.6.0) on Kubuntu 24.10
 #    Dolphin 24.02.1 on KDE Neon 6.0, Release 22.04
 #    Dolphin 21.12.3 (KDE Framework 5.92) on Kubuntu 22.04
 #
@@ -1771,7 +1772,7 @@ install_done() {
     restart_fb caja "Caja"
     ;;
   kde)
-    printf "Please restart Dolphin, Konqueror, or Krusader in order to make the change active.\n"
+    printf "Please restart %s in order to make the change active.\n" "$KDE_PROGNAME"
     ;;
   rox)
     # no restart required for ROX-Filer :)
