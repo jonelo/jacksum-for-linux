@@ -29,7 +29,7 @@ If your preferred file manager is not listed below, chances are high that your f
 | [Caja](https://github.com/mate-desktop/caja)                      | 1.12.0 - 1.26.0 | Caja                 | It is the default file manager for the [MATE](https://mate-desktop.org/) desktop environment. It is a fork of Nautilus version 2.32. |
 | [Dolphin](https://apps.kde.org/de/dolphin/)                       | 2.2 - 24.08.1   | KDE                  | Default file manager on [KDE](https://kde.org/)-powered distributions.                                                              |
 | [elementary files](https://github.com/elementary/files)           | 6.2.1 - 6.5.2   | elementary contracts | "elementary files" is the file manager used by the [elementary OS](https://elementary.io).                                          |
-| [GNOME Files (Nautilus)](https://gitlab.gnome.org/GNOME/nautilus) | 2.6.1 - 24.6    | GNOME                | Default file manager for [GNOME](https://www.gnome.org/)-powered distributions like Fedora, Ubuntu or Zorin OS.                     |
+| [GNOME Files (Nautilus)](https://gitlab.gnome.org/GNOME/nautilus) | 2.6.1 - 46.0    | GNOME                | Default file manager for [GNOME](https://www.gnome.org/)-powered distributions like Fedora, Ubuntu or Zorin OS.                     |
 | [Konqueror](https://apps.kde.org/de/konqueror/)                   | 3.4.1 - 4.4.2   | KDE                  | Konqueror was the file manager for [KDE](https://kde.org/) before it was replaced by Dolphin starting with KDE 4.                   |
 | [Krusader](https://krusader.org/)                                 | 2.7.2           | KDE                  | Krusader is a file manager for [KDE](https://kde.org/).                                                                             |
 | [muCommander](https://www.mucommander.com/)                       | 1.3.0           | muCommander          | muCommander is a cross platform file manager written in Java.                                                                       | 
@@ -123,7 +123,7 @@ For more information about Jacksum see also https://jacksum.net or https://githu
 
 For more information about HashGarten see also https://jacksum.net or https://github.com/jonelo/HashGarten
 
-There are also File Browser Integration scripts available for both Microsoft Windows, see also https://github.com/jonelo/jacksum-fbi-windows, and macOS, see also https://github.com/jonelo/jacksum-fbi-macos
+There are also File Browser Integration scripts available for both Microsoft Windows, see also https://github.com/jonelo/jacksum-for-windows, and macOS, see also https://github.com/jonelo/jacksum-for-macos
 
 
 ## Show your support
