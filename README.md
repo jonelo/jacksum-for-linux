@@ -16,7 +16,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 - A Java Runtime Environment (JRE) or Java Developement Kit (JDK) with graphical libraries, version 11 or later. Note: a headless OpenJDK is not suitable to run the HashGarten GUI. 
 
-- jacksum-3.7.0.jar, HashGarten-0.17.0.jar and flatlaf-3.4.1.jar (all jars are part of the installation tarball)
+- jacksum-3.7.0.jar, HashGarten-0.18.0.jar and flatlaf-3.5.2.jar (all jars are part of the installation tarball)
 
 ### Supported File Browsers
 
