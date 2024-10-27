@@ -18,7 +18,7 @@ The installer script installs [Jacksum](https://github.com/jonelo/jacksum) and [
 
 - jacksum-3.7.0.jar, HashGarten-0.18.0.jar and flatlaf-3.5.2.jar (all jars are part of the installation tarball)
 
-### Supported File Browsers
+### Supported File Browsers / File Managers
 
 The installation script has been tested successfully for many file browsers on many systems. If the API has not changed, the script should work with later [minor or patch versions](https://semver.org) as well. See also the head of the installer script for details.
 
@@ -47,18 +47,18 @@ If your preferred file manager is not listed below, chances are high that your f
 
 ### Download the latest installation script
 
-Go to https://github.com/jonelo/jacksum-fbi-linux/releases and download the .tar.bz2 file.
+Go to https://github.com/jonelo/jacksum-for-linux/releases and download the .tar.bz2 file.
 
 ### Extract the installation script
 
 On most GNU/Linux derivates, and on macOS you can enter
 ```
-$ tar xfvj jacksum*.tar.bz2 ; cd jacksum-file-browser-integration/
+$ tar xfvj jacksum*.tar.bz2 ; cd jacksum-for-linux/
 ```
 
 On most Unix derivates, such as Sun/Oracle Solaris you can enter
 ```
-$ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-file-browser-integration/
+$ bunzip2 < jacksum*.tar.bz2 | tar xfv - ; cd jacksum-for-linux/
 ```
 
 ### Start the installation script
@@ -71,7 +71,7 @@ The installation script is an interactive text user interface that allows you to
 
 ### Where can I file bugs, feature requests, and support requests?
 
-Please go to https://github.com/jonelo/jacksum-fbi-linux/issues
+Please go to https://github.com/jonelo/jacksum-for-linux/issues
 
 
 ### I have installed Krusader, but the installer marked it as DISABLED
@@ -95,7 +95,7 @@ $ sudo apt install openjdk-21-jre
 
 You just need to enter `/usr/bin/java` (or hit Enter) if the `jacksum-file-browser-integration.sh` asks you for the java command:
 ```
-$ ./jacksum-file-browser-integration.sh
+$ ./jacksum-for-linux.sh
 ...
 Type the absolute path to "java"
 and press "Enter" to continue [/usr/bin/java]: 
@@ -110,7 +110,7 @@ $ sudo ./update_jdk -s "https://github.com/adoptium/temurin21-binaries/releases/
 You just need to enter `/opt/java/jdk_latest/bin/java` if the `jacksum-file-browser-integration.sh` asks you for the java command:
 
 ```
-$ ./jacksum-file-browser-integration.sh
+$ ./jacksum-for-linux.sh
 ...
 Type the absolute path to "java"
 and press "Enter" to continue [/usr/bin/java]: /opt/java/jdk_latest/bin/java

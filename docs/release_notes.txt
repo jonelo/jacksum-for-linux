@@ -1,5 +1,10 @@
 Release Notes
 -------------
+2.9.0, Oct 27, 2024
+- bundled HashGarten 0.18 and FlatLaf 3.5.2
+- added deploy.sh script to make a tar.bz2 for easy deployment
+- replaced name jacksum-file-browser-integration with jacksum-for-linux
+
 2.8.0, Oct 20, 2024
 - added support for KDE 6
 - added support for PCManFM and PCManFM-Qt

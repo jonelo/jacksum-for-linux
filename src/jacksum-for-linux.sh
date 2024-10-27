@@ -108,10 +108,10 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.8.0"
+VERSION="2.9.0"
 NAME="jacksum"
 JACKSUM_VERSION="3.7.0"
-HASHGARTEN_VERSION="0.17.0"
+HASHGARTEN_VERSION="0.18.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
