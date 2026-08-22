@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 #  Jacksum File Browser Integration for Unix and GNU/Linux Operating Systems
-#  Copyright (c) 2006-2024 Dipl.-Inf. (FH) Johann N. Loefflmann
+#  Copyright (c) 2006-2026 Dipl.-Inf. (FH) Johann N. Loefflmann
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -108,10 +108,10 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.9.0"
+VERSION="2.10.0"
 NAME="jacksum"
-JACKSUM_VERSION="3.7.0"
-HASHGARTEN_VERSION="0.18.0"
+JACKSUM_VERSION="4.0.0"
+HASHGARTEN_VERSION="0.19.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
@@ -1390,7 +1390,7 @@ install_script_sh() {
 #!/bin/bash
 #
 # Jacksum File Browser Integration Script, https://jacksum.net
-# Copyright (c) 2006-2024 Johann N. Loefflmann, https://johann.loefflmann.net
+# Copyright (c) 2006-2026 Johann N. Loefflmann, https://johann.loefflmann.net
 # Code has been released under the conditions of the GPLv3+.
 #
 
@@ -1452,46 +1452,44 @@ case $ALGO in
     ;;
 
   "cmd_cust")
-    ALGOS="md5+sha1+ripemd160+tiger+\
+    ALGOS="md5+sha1+ripemd160+\
 sha256+sha512/256+sha3-256+shake128+ascon-hash+sm3+streebog256+kupyna-256+lsh-256-256+blake3+k12+keccak256+\
-sha512+sha3-512+shake256+streebog512+kupyna-512+lsh-512-512+blake2b-512+keccak512+m14+skein-512-512+whirlpool"
+sha512+sha3-512+shake256+kupyna-512+lsh-512-512+blake2b-512+keccak512+m14+skein-512-512+whirlpool"
   TEMPLATE='File info:
     name:                      #FILENAME{name}
     path:                      #FILENAME{path}
     size:                      #FILESIZE bytes
 
-legacy message digests (avoid if possible):
-    MD5 (128 bit):             #HASH{md5}
-    SHA1 (160 bit):            #HASH{sha1}
-    RIPEMD-160 (160 bit):      #HASH{ripemd160}
-    TIGER (192 bit):           #HASH{tiger}
-
 256 bit message digests (hex):
+    SHA3-256 (USA):            #HASH{sha3-256}
     SHA-256 (USA):             #HASH{sha256}
     SHA-512/256 (USA):         #HASH{sha512/256}
-    SHA3-256 (USA):            #HASH{sha3-256}
     SHAKE128 (USA):            #HASH{shake128}
-    Ascon-Hash (USA):          #HASH{ascon-hash}
-    SM3 (China):               #HASH{sm3}
-    STREEBOG 256 (Russia):     #HASH{streebog256}
-    Kupyna256 (Ukraine):       #HASH{kupyna-256}
-    LSH-256-256 (South Korea): #HASH{lsh-256-256}
     BLAKE3:                    #HASH{blake3}
     KangarooTwelve:            #HASH{k12}
     KECCAK256:                 #HASH{keccak256}
+    Kupyna256 (Ukraine):       #HASH{kupyna-256}
+    LSH-256-256 (South Korea): #HASH{lsh-256-256}
+    SM3 (China):               #HASH{sm3}
+    STREEBOG 256 (Russia):     #HASH{streebog256}
 
 512 bit message digests (base64, no padding):
-    SHA-512 (USA):             #HASH{sha512,base64-nopadding}
     SHA3-512 (USA):            #HASH{sha3-512,base64-nopadding}
+    SHA-512 (USA):             #HASH{sha512,base64-nopadding}
     SHAKE256 (USA):            #HASH{shake256,base64-nopadding}
-    STREEBOG 512 (Russia):     #HASH{streebog512,base64-nopadding}
-    KUPYNA-512 (Ukraine):      #HASH{kupyna-512,base64-nopadding}
-    LSH-512-512 (South Korea): #HASH{lsh-512-512,base64-nopadding}
     BLAKE2b-512:               #HASH{blake2b-512,base64-nopadding}
     KECCAK512:                 #HASH{keccak512,base64-nopadding}
+    KUPYNA-512 (Ukraine):      #HASH{kupyna-512,base64-nopadding}
+    LSH-512-512 (South Korea): #HASH{lsh-512-512,base64-nopadding}
     MarsupilamiFourteen:       #HASH{m14,base64-nopadding}
     SKEIN-512-512:             #HASH{skein-512-512,base64-nopadding}
     WHIRLPOOL:                 #HASH{whirlpool,base64-nopadding}
+
+Legacy message digests (avoid if possible):
+    MD5 (128 bit):             #HASH{md5}
+    RIPEMD-160 (160 bit):      #HASH{ripemd160}
+    SHA1 (160 bit):            #HASH{sha1}
+
 '
 
     "${JAVA}" -jar "${JACKSUM_JAR}" -a "${ALGOS}" -E hex --format "${TEMPLATE}" \
