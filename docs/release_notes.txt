@@ -1,5 +1,8 @@
 Release Notes
 -------------
+2.10.0, Aug 22, 2026
+- bundled Jacksum 4.0.0, HashGarten 0.19 and FlatLaf 3.7.2
+
 2.9.0, Oct 27, 2024
 - bundled HashGarten 0.18 and FlatLaf 3.5.2
 - added deploy.sh script to make a tar.bz2 for easy deployment
