@@ -60,6 +60,8 @@
 #    PCManFM 1.3.2 on Ubuntu 22.04.4
 #    PCManFM-Qt 0.17 on Ubuntu 22.04.4
 # 
+#    Ranger 1.9.4 on Ubuntu Linux 26.04
+#
 #    ROX Filer 2.24.33 on Ubuntu Linux 22.04.1
 #    ROX Filer 2.11 on Ubuntu Linux 22.04
 #
@@ -71,6 +73,8 @@
 #
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
+#
+#    Yazi 26.9.1 on Ubuntu Linux 26.04
 #
 #    zzzFM 1.0.7 on antiX Linux 23
 #
