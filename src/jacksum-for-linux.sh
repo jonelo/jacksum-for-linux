@@ -139,6 +139,7 @@ ROX_PROGNAME="ROX-Filer"
 SPACEFM_PROGNAME="SpaceFM"
 THUNAR_PROGNAME="Thunar"
 XFE_PROGNAME="Xfe"
+YAZI_PROGNAME="Yazi"
 ZZZFM_PROGNAME="zzzFM"
 
 # -------------------------------------------------------------------------
@@ -198,6 +199,7 @@ print_menu() {
   print_menu_item s "$SPACEFM_PROGNAME" "$SPACEFM_DISABLED"
   print_menu_item t "$THUNAR_PROGNAME" "$THUNAR_DISABLED"
   print_menu_item x "$XFE_PROGNAME" "$XFE_DISABLED"
+  print_menu_item y "$YAZI_PROGNAME" "$YAZI_DISABLED"
   print_menu_item z "$ZZZFM_PROGNAME" "$ZZZFM_DISABLED"
   printf "\n"
   if [ -z "$HIDE_DISABLED" ]; then
@@ -313,7 +315,7 @@ set_env() {
 #
 # parameters:
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   kde)
@@ -585,6 +587,18 @@ set_env() {
     fi
     ;;
 
+  yazi)
+    if type yazi &>/dev/null; then
+      YAZI=1
+      YAZI_DISABLED=""
+      # Yazi's own override var takes precedence, then XDG, like Yazi itself does
+      PREFIX="${YAZI_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yazi}"
+    else
+      YAZI=0
+      YAZI_DISABLED="(DISABLED)"
+    fi
+    ;;
+
   esac
 }
 
@@ -593,7 +607,7 @@ uninstall() {
 #
 # parameters:
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press enter key to continue ... "
@@ -605,10 +619,10 @@ uninstall_silent() {
 #
 # parameters:
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
     uninstall_$1
     ;;
   spacefm | zzzfm)
@@ -741,13 +755,13 @@ uninstall_nnn() {
 
   printf "  Removing %s plugins:           " "$NAME"
   # plugins live flat in the shared nnn plugins folder (see install_menu_nnn),
-  # so only remove the ones with our "jacksum--" prefix, not the whole folder
+  # so only remove the ones with our "Jacksum  " prefix, not the whole folder
   FOUND=""
-  for f in "$SCRIPTS"/jacksum--*; do
+  for f in "$SCRIPTS"/Jacksum\ \ *; do
     [ -e "$f" ] && FOUND=1 && break
   done
   if [ -n "$FOUND" ]; then
-    if rm -f "$SCRIPTS"/jacksum--*; then
+    if rm -f "$SCRIPTS"/Jacksum\ \ *; then
       printf "[  OK  ]\n"
     else
       printf "[FAILED]\n"
@@ -851,6 +865,35 @@ uninstall_ranger() {
   else
     cp "$RANGERRCBACKUP" "$RANGERRC"
     rm "$RANGERRCBACKUP"
+    printf "[  OK  ]\n"
+  fi
+}
+
+# -------------------------------------------------------------------------
+uninstall_yazi() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME/"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if [ -d "$SH" ]; then
+    if rm -r "$SH"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+  printf "  Removing %s entries:           " "$NAME"
+  # restore the backup
+  YAZIKEYMAP="$PREFIX/keymap.toml"
+  YAZIKEYMAPBACKUP="$PREFIX/keymap.before-jacksum.toml"
+  if [ ! -f "$YAZIKEYMAPBACKUP" ]; then
+    printf "[ NOT INSTALLED ]\n"
+  else
+    cp "$YAZIKEYMAPBACKUP" "$YAZIKEYMAP"
+    rm "$YAZIKEYMAPBACKUP"
     printf "[  OK  ]\n"
   fi
 }
@@ -975,10 +1018,10 @@ install_menu() {
 #
 # parameters:
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
     install_menu_$1
     ;;
   spacefm | zzzfm)
@@ -1193,7 +1236,7 @@ install_menu_caja() {
 # nnn's plugins folder; an entry inside a subfolder is just opened with the
 # default file opener/editor instead of executed. So, unlike the other
 # browsers' dedicated "jacksum" scripts folder, plugins must be written flat
-# into $SCRIPTFOLDER, with a "jacksum--" prefix (double dash to visually
+# into $SCRIPTFOLDER, with a "Jacksum  " prefix (two spaces to visually
 # separate it from the entry name) to keep them identifiable and to not
 # collide with the user's other, unrelated nnn plugins.
 #
@@ -1201,7 +1244,7 @@ install_menu_nnn_plugin() {
 #
 # parameters (via globals set by the caller loop): $CMD, $TXT
 # -------------------------------------------------------------------------
-  PLUGIN="$SCRIPTFOLDER/jacksum--$TXT"
+  PLUGIN="$SCRIPTFOLDER/Jacksum  $TXT"
   {
     printf '#!/usr/bin/env bash\n'
     printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
@@ -1406,6 +1449,91 @@ install_menu_ranger() {
     fi
     if [ "$N" -gt 5 ]; then
       printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a ranger key binding)\n" "$i"
+      break
+    fi
+    printf "    b%d - %s\n" "$N" "$i"
+  done
+}
+
+# -------------------------------------------------------------------------
+# Yazi's %h (hovered) and %s (selected) are independent placeholders with no
+# built-in "selection, else hovered" fallback (unlike ranger's %p) - so a
+# small resolver picks %s if any files were selected, else falls back to %h,
+# before forwarding to jacksum.sh. Only the four fixed $COMMANDS get key
+# bindings, plus the first 5 selected $ALGORITHMS (b1..b5) - see ranger.
+#
+install_menu_yazi() {
+# -------------------------------------------------------------------------
+  YAZIKEYMAP="$PREFIX/keymap.toml"
+  YAZIKEYMAPBACKUP="$PREFIX/keymap.before-jacksum.toml"
+  printf "  Backing up keymap.toml:              "
+  if [ ! -f "$YAZIKEYMAP" ]; then
+    printf "[ NOT FOUND ]\n"
+    mkdir -p "$PREFIX" 2>/dev/null
+    : >"$YAZIKEYMAP"
+    cp "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP"
+  else
+    cp "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP"
+    printf "[  OK  ]\n"
+  fi
+
+  YAZIRUN="$(dirname "$JACKSUMSH")/yazi-run.sh"
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
+    cat <<'EOF'
+CMD="$1"; shift
+HOVERED="$1"; shift
+if [ "$#" -gt 0 ]; then
+  exec "$JACKSUMSH" "$CMD" "$@"
+elif [ -n "$HOVERED" ]; then
+  exec "$JACKSUMSH" "$CMD" "$HOVERED"
+else
+  exec "$JACKSUMSH" "$CMD"
+fi
+EOF
+  } >"$YAZIRUN"
+  chmod +x "$YAZIRUN"
+
+  printf "  Installing key bindings:            "
+  {
+    printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
+    for i in $COMMANDS; do
+      CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+      case "$CMD" in
+        cmd_calc) KEY=c ;;
+        cmd_check) KEY=k ;;
+        cmd_cust) KEY=o ;;
+        cmd_edit) KEY=e ;;
+      esac
+      printf '\n[[mgr.prepend_keymap]]\n'
+      printf 'on = [ "b", "%s" ]\n' "$KEY"
+      # %h is single-quoted so an empty hovered file still arrives as one (empty) arg
+      printf "run = \"shell -- %s %s '%%h' %%s\"\n" "$YAZIRUN" "$CMD"
+      printf 'desc = "Jacksum - %s"\n' "$TXT"
+    done
+    N=0
+    for i in $ALGORITHMS; do
+      N=$((N + 1))
+      if [ "$N" -gt 5 ]; then
+        break
+      fi
+      printf '\n[[mgr.prepend_keymap]]\n'
+      printf 'on = [ "b", "%d" ]\n' "$N"
+      printf "run = \"shell -- %s %s '%%h' %%s\"\n" "$YAZIRUN" "$i"
+      printf 'desc = "Jacksum - %s"\n' "$i"
+    done
+  } >>"$YAZIKEYMAP"
+  printf "[  OK  ]\n"
+
+  N=0
+  for i in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$N" -eq 1 ]; then
+      printf "  Direct algorithm key bindings:\n"
+    fi
+    if [ "$N" -gt 5 ]; then
+      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a key binding)\n" "$i"
       break
     fi
     printf "    b%d - %s\n" "$N" "$i"
@@ -1626,10 +1754,10 @@ install_menu_xxxfm() {
 install_script() {
 # parameters: 
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | zzzfm)
+    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | yazi | zzzfm)
     install_script_generic
     ;;
   *)
@@ -1921,13 +2049,23 @@ print_info_kde() {
 }
 
 # -------------------------------------------------------------------------
+read_key() {
+# reads a single keypress without waiting for Enter, echoes it back
+# (since -s suppresses the terminal's own echo), and stores it in $KEY
+# -------------------------------------------------------------------------
+  IFS= read -rsn1 KEY
+  printf "%s\n" "$KEY"
+}
+
+# -------------------------------------------------------------------------
 select_algorithms() {
 # -------------------------------------------------------------------------
   printf "\n\n"
   local YESNO=""
   while [ "$YESNO" != "y" ] && [ "$YESNO" != "n" ]; do
     printf "Do you want to access some algorithms directly without the HashGarten GUI?\nType n to disable direct access to algorithms, type p or any other key to use the previous selection [n]: "
-    read -r YESNO
+    read_key
+    YESNO="$KEY"
     test -z "$YESNO" && YESNO="n"
     case "$YESNO" in
     "y")
@@ -1957,13 +2095,14 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or mucommander or nnn
+# or mucommander or nnn or ranger or yazi
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
     print_params
     printf "Do you want to use the parameters above? [y]: "
-    read -r YESNO
+    read_key
+    YESNO="$KEY"
     test -z "$YESNO" && YESNO="y"
 
     case "$YESNO" in
@@ -1994,7 +2133,8 @@ restart_fb() {
 # -------------------------------------------------------------------------
   local YESNO=""
   printf "Do you want to restart %s so that changes can become active? [y]: " "$2"
-  read -r YESNO
+  read_key
+  YESNO="$KEY"
   test -z "$YESNO" && YESNO="y"
   case "$YESNO" in
   "y") # redirecting standard error into standard output
@@ -2016,7 +2156,7 @@ restart_fb() {
 # -------------------------------------------------------------------------
 install_done() {
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -2064,6 +2204,13 @@ install_done() {
     printf "  bo - Customized Output\n"
     printf "  be - Edit Script\n"
     ;;
+  yazi)
+    printf "Please restart yazi, then use these key bindings:\n"
+    printf "  bc - Calc Hash Values\n"
+    printf "  bk - Check Data Integrity\n"
+    printf "  bo - Customized Output\n"
+    printf "  be - Edit Script\n"
+    ;;
   esac
   printf "Press enter to continue ... "
   read -r
@@ -2073,7 +2220,7 @@ install_done() {
 install_generic() {
 #
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   print_params "$1"
@@ -2086,7 +2233,7 @@ install_generic() {
 uninstall_generic() {
 #
 # $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe or zzzfm
+#    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   uninstall "$1"
@@ -2123,6 +2270,7 @@ set_env ranger
 set_env mucommander
 set_env nnn
 set_env pcmanfm
+set_env yazi
 
 init_editor
 init_viewer
@@ -2136,7 +2284,8 @@ while :; do
   print_info_kde
   print_menu $ACTION
   printf "Enter option: "
-  read -r OPTION
+  read_key
+  OPTION="$KEY"
   case "$OPTION" in
   u)
     ACTION="uninstall"
@@ -2215,6 +2364,11 @@ while :; do
   x)
     if [ $XFE -eq 1 ]; then
       ${ACTION}_generic xfe
+    fi
+    ;;
+  y)
+    if [ $YAZI -eq 1 ]; then
+      ${ACTION}_generic yazi
     fi
     ;;
   z)
