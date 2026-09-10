@@ -19,9 +19,9 @@
 #
 #  * credit: this shell script is based on the bash script called
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
-#    See also https://www.linux-apps.com/p/998451
+#    See also https://web.archive.org/web/20170706050025/https://www.linux-apps.com/p/998451/
 #
-#  * This script requires jacksum-3.7.0.jar and HashGarten-0.17.0.jar
+#  * This script requires jacksum-4.0.0.jar and HashGarten-0.19.0.jar
 #    which are part of the Jacksum file browser integration package for Linux
 #    since 2.0.0
 #    See also https://jacksum.net
@@ -29,6 +29,7 @@
 #  * Version 2.x of the script has been successfully tested on the following
 #    systems, and it should work on older platforms as well:
 #
+#    Caja 1.26.4 on Ubuntu Linux 26.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
 #
@@ -39,6 +40,7 @@
 #    elementary Files 6.5.2 on elementary OS 7.1
 #    elementary Files 6.2.1 on elementary OS 7
 #
+#    GNOME Files (known as Gnome Nautilus) 50.2.2 on Ubuntu Linux 26.04
 #    GNOME Files (known as Gnome Nautilus) 46.0 on Ubuntu Linux 24.04
 #    GNOME Files (known as Gnome Nautilus) 42.6 on Ubuntu Linux 22.04.3
 #    GNOME Files (known as Gnome Nautilus) 42.2 on Ubuntu Linux 22.04.1
@@ -47,10 +49,12 @@
 #
 #    muCommander 1.3.0 on Ubuntu 22.04.4 LTS
 #
+#    Nemo 6.4.5 on Ubuntu Linux 26.04
 #    Nemo 6.0.2 on Linux Mint 21.3
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
+#    PCManFM 1.4.0 on Ubuntu 26.04
 #    PCManFM 1.3.2 on Ubuntu 22.04.4
 #    PCManFM-Qt 0.17 on Ubuntu 22.04.4
 # 
@@ -60,6 +64,7 @@
 #    SpaceFM 1.0.6 on Ubuntu Linux 22.04.3
 #    SpaceFM 1.0.6 on elementary OS 7
 #
+#    Thunar 4.20.7 on Ubuntu Linux 26.04
 #    Thunar 4.18.4 on MX-Linux 23
 #
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
