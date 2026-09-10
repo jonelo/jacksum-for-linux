@@ -113,7 +113,7 @@
 #    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
 #    servicemenus for KDE
 
-VERSION="2.10.0"
+VERSION="2.11.0"
 NAME="jacksum"
 JACKSUM_VERSION="4.0.0"
 HASHGARTEN_VERSION="0.19.0"
@@ -130,6 +130,7 @@ GNOME_PROGNAME="GNOME Files (Nautilus)"
 KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
 MUCOMMANDER_PROGNAME="muCommander"
 NEMO_PROGNAME="Nemo"
+NNN_PROGNAME="nnn"
 PCMANFM_PROGNAME="PCManFM, PCManFM-Qt"
 ROX_PROGNAME="ROX-Filer"
 SPACEFM_PROGNAME="SpaceFM"
@@ -186,7 +187,8 @@ print_menu() {
   print_menu_item e "$ELEMENTARY_PROGNAME" "$ELEMENTARY_DISABLED"
   print_menu_item g "$GNOME_PROGNAME" "$GNOME_DISABLED"
   print_menu_item m "$MUCOMMANDER_PROGNAME" "$MUCOMMANDER_DISABLED"
-  print_menu_item n "$NEMO_PROGNAME" "$NEMO_DISABLED"
+  print_menu_item n "$NNN_PROGNAME" "$NNN_DISABLED"
+  print_menu_item o "$NEMO_PROGNAME" "$NEMO_DISABLED"
   print_menu_item p "$PCMANFM_PROGNAME" "$PCMANFM_DISABLED"
   print_menu_item r "$ROX_PROGNAME" "$ROX_DISABLED"
   print_menu_item s "$SPACEFM_PROGNAME" "$SPACEFM_DISABLED"
@@ -306,7 +308,7 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
@@ -542,7 +544,20 @@ set_env() {
       MUCOMMANDER_DISABLED="(DISABLED)"
     fi
     ;;
-    
+
+  nnn)
+    if type nnn &>/dev/null; then
+      NNN=1
+      NNN_DISABLED=""
+      # nnn's config folder, honoring XDG_CONFIG_HOME like nnn itself does
+      PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/nnn"
+      FB_SCRIPTFOLDER=plugins
+    else
+      NNN=0
+      NNN_DISABLED="(DISABLED)"
+    fi
+    ;;
+
   pcmanfm)
     if [ -f "$(which pcmanfm 2>/dev/null)" ] || [ -f "$(which pcmanfm-qt 2>/dev/null)" ]; then
       PCMANFM=1
@@ -561,7 +576,7 @@ set_env() {
 uninstall() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
@@ -573,11 +588,11 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | thunar | xfe)
     uninstall_$1
     ;;
   spacefm | zzzfm)
@@ -688,6 +703,43 @@ uninstall_xfe() {
 uninstall_nemo() {
 # -------------------------------------------------------------------------
   uninstall_gnome
+}
+
+# -------------------------------------------------------------------------
+uninstall_nnn() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME/"
+  SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if [ -d "$SH" ]; then
+    if rm -r "$SH"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+
+  printf "  Removing %s plugins:           " "$NAME"
+  # plugins live flat in the shared nnn plugins folder (see install_menu_nnn),
+  # so only remove the ones with our "jacksum--" prefix, not the whole folder
+  FOUND=""
+  for f in "$SCRIPTS"/jacksum--*; do
+    [ -e "$f" ] && FOUND=1 && break
+  done
+  if [ -n "$FOUND" ]; then
+    if rm -f "$SCRIPTS"/jacksum--*; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
 }
 
 # -------------------------------------------------------------------------
@@ -877,11 +929,11 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | thunar | xfe)
     install_menu_$1
     ;;
   spacefm | zzzfm)
@@ -1083,6 +1135,78 @@ install_menu_caja() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
   install_menu_gnome_shared
+}
+
+# -------------------------------------------------------------------------
+# Writes one nnn plugin script that forwards the current selection (or the
+# hovered file, if nothing is explicitly selected) to jacksum.sh. Unlike the
+# Nautilus-family scripts, nnn does not pass selected files as "$@" - plugins
+# get $1=hovered file, $2=working dir, and must read nnn's own NUL-separated
+# ".selection" file for a multi-file selection.
+#
+# The plugin picker (';' then Enter) only runs entries that sit directly in
+# nnn's plugins folder; an entry inside a subfolder is just opened with the
+# default file opener/editor instead of executed. So, unlike the other
+# browsers' dedicated "jacksum" scripts folder, plugins must be written flat
+# into $SCRIPTFOLDER, with a "jacksum--" prefix (double dash to visually
+# separate it from the entry name) to keep them identifiable and to not
+# collide with the user's other, unrelated nnn plugins.
+#
+install_menu_nnn_plugin() {
+#
+# parameters (via globals set by the caller loop): $CMD, $TXT
+# -------------------------------------------------------------------------
+  PLUGIN="$SCRIPTFOLDER/jacksum--$TXT"
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
+    printf 'CMD="%s"\n' "$CMD"
+    cat <<'EOF'
+# $1 = hovered file, $2 = working directory (nnn plugin convention)
+SEL="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection"
+FILES=()
+if [ -s "$SEL" ]; then
+  # "|| [ -n "$f" ]" also picks up the last entry when the selection file
+  # has no trailing NUL after it (read would otherwise fail and drop it)
+  while IFS= read -r -d '' f || [ -n "$f" ]; do
+    FILES+=("$f")
+  done < "$SEL"
+else
+  FILES=("$2/$1")
+fi
+exec "$JACKSUMSH" "$CMD" "${FILES[@]}"
+EOF
+  } >"$PLUGIN"
+  chmod +x "$PLUGIN"
+}
+
+# -------------------------------------------------------------------------
+install_menu_nnn() {
+# -------------------------------------------------------------------------
+  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER"
+  printf "  Creating a folder for all plugins:  "
+  if [ ! -d "$SCRIPTFOLDER" ]; then
+    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
+    if [ -d "$SCRIPTFOLDER" ]; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[  OK  ]\n"
+  fi
+
+  printf "  Installing plugins:                 "
+  for i in $COMMANDS; do
+    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+    install_menu_nnn_plugin
+  done
+  for i in $ALGORITHMS; do
+    CMD="$i"; TXT="$i"
+    install_menu_nnn_plugin
+  done
+  printf "[  OK  ]\n"
 }
 
 # -------------------------------------------------------------------------
@@ -1394,11 +1518,11 @@ install_menu_xxxfm() {
 # -------------------------------------------------------------------------
 install_script() {
 # parameters: 
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-    caja | elementary | gnome | kde | mucommander | nemo | pcmanfm | rox | spacefm | thunar | xfe | zzzfm)
+    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | spacefm | thunar | xfe | zzzfm)
     install_script_generic
     ;;
   *)
@@ -1726,7 +1850,7 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or mucommander
+# or mucommander or nnn
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -1784,7 +1908,7 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
@@ -1821,6 +1945,9 @@ install_done() {
   mucommander)
     printf "Please restart muCommander in order to make the change active.\n"
     ;;
+  nnn)
+    # no restart required for nnn :)
+    ;;
   pcmanfm)
     ;;
   esac
@@ -1831,7 +1958,7 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
@@ -1844,7 +1971,7 @@ install_generic() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
@@ -1879,6 +2006,7 @@ set_env elementary
 set_env spacefm
 set_env zzzfm
 set_env mucommander
+set_env nnn
 set_env pcmanfm
 
 init_editor
@@ -1935,6 +2063,11 @@ while :; do
     fi
     ;;
   n)
+    if [ $NNN -eq 1 ]; then
+      ${ACTION}_generic nnn
+    fi
+    ;;
+  o)
     if [ $NEMO -eq 1 ]; then
       ${ACTION}_generic nemo
     fi
