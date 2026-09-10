@@ -156,6 +156,23 @@ print_header() {
 }
 
 # -------------------------------------------------------------------------
+# Prints one file-manager menu line, unless it is DISABLED and disabled
+# entries are currently hidden.
+#
+print_menu_item() {
+#
+# parameters:
+# $1 = menu letter
+# $2 = progname
+# $3 = disabled flag (empty or "(DISABLED)")
+# -------------------------------------------------------------------------
+  if [ -n "$3" ] && [ -n "$HIDE_DISABLED" ]; then
+    return
+  fi
+  printf "  %s - %-9s  in %s for %s %s\n" "$1" "${ACTION}" "$2" "$USERS" "$3"
+}
+
+# -------------------------------------------------------------------------
 # Prints the install/uninstall menu.
 #
 print_menu() {
@@ -164,19 +181,24 @@ print_menu() {
 # $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
   printf "Menu:\n"
-  printf "  c - %-9s  in %s for %s %s\n" "${ACTION}" "$CAJA_PROGNAME" "$USERS" "$CAJA_DISABLED"
-  printf "  d - %-9s  in %s for %s %s\n" "${ACTION}" "$KDE_PROGNAME" "$USERS" "$KDE_DISABLED"
-  printf "  e - %-9s  in %s for %s %s\n" "${ACTION}" "$ELEMENTARY_PROGNAME" "$USERS" "$ELEMENTARY_DISABLED"
-  printf "  g - %-9s  in %s for %s %s\n" "${ACTION}" "$GNOME_PROGNAME" "$USERS" "$GNOME_DISABLED"
-  printf "  m - %-9s  in %s for %s %s\n" "${ACTION}" "$MUCOMMANDER_PROGNAME" "$USERS" "$MUCOMMANDER_DISABLED"
-  printf "  n - %-9s  in %s for %s %s\n" "${ACTION}" "$NEMO_PROGNAME" "$USERS" "$NEMO_DISABLED"
-  printf "  p - %-9s  in %s for %s %s\n" "${ACTION}" "$PCMANFM_PROGNAME" "$USERS" "$PCMANFM_DISABLED"
-  printf "  r - %-9s  in %s for %s %s\n" "${ACTION}" "$ROX_PROGNAME" "$USERS" "$ROX_DISABLED"
-  printf "  s - %-9s  in %s for %s %s\n" "${ACTION}" "$SPACEFM_PROGNAME" "$USERS" "$SPACEFM_DISABLED"
-  printf "  t - %-9s  in %s for %s %s\n" "${ACTION}" "$THUNAR_PROGNAME" "$USERS" "$THUNAR_DISABLED"
-  printf "  x - %-9s  in %s for %s %s\n" "${ACTION}" "$XFE_PROGNAME" "$USERS" "$XFE_DISABLED"
-  printf "  z - %-9s  in %s for %s %s\n" "${ACTION}" "$ZZZFM_PROGNAME" "$USERS" "$ZZZFM_DISABLED"
+  print_menu_item c "$CAJA_PROGNAME" "$CAJA_DISABLED"
+  print_menu_item d "$KDE_PROGNAME" "$KDE_DISABLED"
+  print_menu_item e "$ELEMENTARY_PROGNAME" "$ELEMENTARY_DISABLED"
+  print_menu_item g "$GNOME_PROGNAME" "$GNOME_DISABLED"
+  print_menu_item m "$MUCOMMANDER_PROGNAME" "$MUCOMMANDER_DISABLED"
+  print_menu_item n "$NEMO_PROGNAME" "$NEMO_DISABLED"
+  print_menu_item p "$PCMANFM_PROGNAME" "$PCMANFM_DISABLED"
+  print_menu_item r "$ROX_PROGNAME" "$ROX_DISABLED"
+  print_menu_item s "$SPACEFM_PROGNAME" "$SPACEFM_DISABLED"
+  print_menu_item t "$THUNAR_PROGNAME" "$THUNAR_DISABLED"
+  print_menu_item x "$XFE_PROGNAME" "$XFE_DISABLED"
+  print_menu_item z "$ZZZFM_PROGNAME" "$ZZZFM_DISABLED"
   printf "\n"
+  if [ -z "$HIDE_DISABLED" ]; then
+    printf "  h - Hide the DISABLED entries\n"
+  else
+    printf "  h - Unhide the DISABLED entries\n"
+  fi
   if [ "$ACTION" = "install" ]; then
     printf "  u - Show the uninstall menu\n"
   else
@@ -1863,6 +1885,7 @@ init_editor
 init_viewer
 ACTION="install"
 OPTION=0
+HIDE_DISABLED=""
 
 while :; do
   clear
@@ -1877,6 +1900,13 @@ while :; do
     ;;
   i)
     ACTION="install"
+    ;;
+  h)
+    if [ -z "$HIDE_DISABLED" ]; then
+      HIDE_DISABLED=1
+    else
+      HIDE_DISABLED=""
+    fi
     ;;
 
   c)
