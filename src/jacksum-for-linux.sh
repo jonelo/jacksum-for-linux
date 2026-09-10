@@ -54,6 +54,8 @@
 #    Nemo 5.2.4 on Ubuntu Linux 22.04.1
 #    Nemo 5.2.4 on Ubuntu Linux 22.04
 #
+#    nnn 5.1 on Ubuntu Linux 26.04
+#
 #    PCManFM 1.4.0 on Ubuntu 26.04
 #    PCManFM 1.3.2 on Ubuntu 22.04.4
 #    PCManFM-Qt 0.17 on Ubuntu 22.04.4
