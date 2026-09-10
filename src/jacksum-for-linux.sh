@@ -1397,7 +1397,7 @@ install_menu_thunar() {
 # ranger has no browsable plugin/menu folder like nnn; its only extension
 # point for this is key bindings in its own rc.conf (backed up/restored the
 # same way Thunar's uca.xml is). The four fixed $COMMANDS get key bindings
-# b[c|k|o|e]; of $ALGORITHMS (open-ended, user-selectable) only the first 5
+# b[h|c|o|e]; of $ALGORITHMS (open-ended, user-selectable) only the first 5
 # also get one (b1..b5), since an unbounded list doesn't scale to individual
 # key bindings - the rest remain reachable via HashGarten's own GUI as usual.
 #
@@ -1422,8 +1422,8 @@ install_menu_ranger() {
     for i in $COMMANDS; do
       CMD="${i%;*}"
       case "$CMD" in
-        cmd_calc) KEY=c ;;
-        cmd_check) KEY=k ;;
+        cmd_calc) KEY=h ;;
+        cmd_check) KEY=c ;;
         cmd_cust) KEY=o ;;
         cmd_edit) KEY=e ;;
       esac
@@ -1501,8 +1501,8 @@ EOF
     for i in $COMMANDS; do
       CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
       case "$CMD" in
-        cmd_calc) KEY=c ;;
-        cmd_check) KEY=k ;;
+        cmd_calc) KEY=h ;;
+        cmd_check) KEY=c ;;
         cmd_cust) KEY=o ;;
         cmd_edit) KEY=e ;;
       esac
@@ -2199,15 +2199,15 @@ install_done() {
     ;;
   ranger)
     printf "Please restart ranger, then use these key bindings:\n"
-    printf "  bc - Calc Hash Values\n"
-    printf "  bk - Check Data Integrity\n"
+    printf "  bh - Calc Hash Values\n"
+    printf "  bc - Check Data Integrity\n"
     printf "  bo - Customized Output\n"
     printf "  be - Edit Script\n"
     ;;
   yazi)
     printf "Please restart yazi, then use these key bindings:\n"
-    printf "  bc - Calc Hash Values\n"
-    printf "  bk - Check Data Integrity\n"
+    printf "  bh - Calc Hash Values\n"
+    printf "  bc - Check Data Integrity\n"
     printf "  bo - Customized Output\n"
     printf "  be - Edit Script\n"
     ;;
