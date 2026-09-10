@@ -134,6 +134,7 @@ MUCOMMANDER_PROGNAME="muCommander"
 NEMO_PROGNAME="Nemo"
 NNN_PROGNAME="nnn"
 PCMANFM_PROGNAME="PCManFM, PCManFM-Qt"
+RANGER_PROGNAME="ranger"
 ROX_PROGNAME="ROX-Filer"
 SPACEFM_PROGNAME="SpaceFM"
 THUNAR_PROGNAME="Thunar"
@@ -184,6 +185,7 @@ print_menu() {
 # $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
   printf "Menu:\n"
+  print_menu_item a "$RANGER_PROGNAME" "$RANGER_DISABLED"
   print_menu_item c "$CAJA_PROGNAME" "$CAJA_DISABLED"
   print_menu_item d "$KDE_PROGNAME" "$KDE_DISABLED"
   print_menu_item e "$ELEMENTARY_PROGNAME" "$ELEMENTARY_DISABLED"
@@ -310,7 +312,7 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
@@ -571,6 +573,18 @@ set_env() {
     fi
     ;;
 
+  ranger)
+    if type ranger &>/dev/null; then
+      RANGER=1
+      RANGER_DISABLED=""
+      # ranger's config folder, honoring XDG_CONFIG_HOME like ranger itself does
+      PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/ranger"
+    else
+      RANGER=0
+      RANGER_DISABLED="(DISABLED)"
+    fi
+    ;;
+
   esac
 }
 
@@ -578,7 +592,7 @@ set_env() {
 uninstall() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
@@ -590,11 +604,11 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe)
     uninstall_$1
     ;;
   spacefm | zzzfm)
@@ -813,6 +827,35 @@ uninstall_thunar() {
 }
 
 # -------------------------------------------------------------------------
+uninstall_ranger() {
+# -------------------------------------------------------------------------
+  SH="$PREFIX/share/apps/$NAME/"
+
+  printf "\n  Removing %s.sh:                " "$NAME"
+  if [ -d "$SH" ]; then
+    if rm -r "$SH"; then
+      printf "[  OK  ]\n"
+    else
+      printf "[FAILED]\n"
+      exit 1
+    fi
+  else
+    printf "[ NOT INSTALLED ]\n"
+  fi
+  printf "  Removing %s entries:           " "$NAME"
+  # restore the backup
+  RANGERRC="$PREFIX/rc.conf"
+  RANGERRCBACKUP="$PREFIX/rc.before-jacksum.conf"
+  if [ ! -f "$RANGERRCBACKUP" ]; then
+    printf "[ NOT INSTALLED ]\n"
+  else
+    cp "$RANGERRCBACKUP" "$RANGERRC"
+    rm "$RANGERRCBACKUP"
+    printf "[  OK  ]\n"
+  fi
+}
+
+# -------------------------------------------------------------------------
 uninstall_mucommander() {
 # -------------------------------------------------------------------------
   SH="$PREFIX/share/apps/$NAME/"
@@ -931,11 +974,11 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | thunar | xfe)
+  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe)
     install_menu_$1
     ;;
   spacefm | zzzfm)
@@ -1308,6 +1351,68 @@ install_menu_thunar() {
 }
 
 # -------------------------------------------------------------------------
+# ranger has no browsable plugin/menu folder like nnn; its only extension
+# point for this is key bindings in its own rc.conf (backed up/restored the
+# same way Thunar's uca.xml is). The four fixed $COMMANDS get key bindings
+# b[c|k|o|e]; of $ALGORITHMS (open-ended, user-selectable) only the first 5
+# also get one (b1..b5), since an unbounded list doesn't scale to individual
+# key bindings - the rest remain reachable via HashGarten's own GUI as usual.
+#
+install_menu_ranger() {
+# -------------------------------------------------------------------------
+  RANGERRC="$PREFIX/rc.conf"
+  RANGERRCBACKUP="$PREFIX/rc.before-jacksum.conf"
+  printf "  Backing up rc.conf:                 "
+  if [ ! -f "$RANGERRC" ]; then
+    printf "[ NOT FOUND ]\n"
+    mkdir -p "$PREFIX" 2>/dev/null
+    : >"$RANGERRC"
+    cp "$RANGERRC" "$RANGERRCBACKUP"
+  else
+    cp "$RANGERRC" "$RANGERRCBACKUP"
+    printf "[  OK  ]\n"
+  fi
+
+  printf "  Installing key bindings:            "
+  {
+    printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
+    for i in $COMMANDS; do
+      CMD="${i%;*}"
+      case "$CMD" in
+        cmd_calc) KEY=c ;;
+        cmd_check) KEY=k ;;
+        cmd_cust) KEY=o ;;
+        cmd_edit) KEY=e ;;
+      esac
+      # %p = selection: marked files if any, else the highlighted file (ranger's own convention)
+      printf 'map b%s shell %s %s %%p\n' "$KEY" "$JACKSUMSH" "$CMD"
+    done
+    N=0
+    for i in $ALGORITHMS; do
+      N=$((N + 1))
+      if [ "$N" -gt 5 ]; then
+        break
+      fi
+      printf 'map b%d shell %s %s %%p\n' "$N" "$JACKSUMSH" "$i"
+    done
+  } >>"$RANGERRC"
+  printf "[  OK  ]\n"
+
+  N=0
+  for i in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$N" -eq 1 ]; then
+      printf "  Direct algorithm key bindings:\n"
+    fi
+    if [ "$N" -gt 5 ]; then
+      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a ranger key binding)\n" "$i"
+      break
+    fi
+    printf "    b%d - %s\n" "$N" "$i"
+  done
+}
+
+# -------------------------------------------------------------------------
 install_menu_elementary() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX"
@@ -1520,11 +1625,11 @@ install_menu_xxxfm() {
 # -------------------------------------------------------------------------
 install_script() {
 # parameters: 
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | rox | spacefm | thunar | xfe | zzzfm)
+    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | zzzfm)
     install_script_generic
     ;;
   *)
@@ -1910,7 +2015,7 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
@@ -1952,6 +2057,13 @@ install_done() {
     ;;
   pcmanfm)
     ;;
+  ranger)
+    printf "Please restart ranger, then use these key bindings:\n"
+    printf "  bc - Calc Hash Values\n"
+    printf "  bk - Check Data Integrity\n"
+    printf "  bo - Customized Output\n"
+    printf "  be - Edit Script\n"
+    ;;
   esac
   printf "Press enter to continue ... "
   read -r
@@ -1960,7 +2072,7 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
@@ -1973,7 +2085,7 @@ install_generic() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, rox,
+# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
 #    spacefm, thunar, xfe or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
@@ -2007,6 +2119,7 @@ set_env caja
 set_env elementary
 set_env spacefm
 set_env zzzfm
+set_env ranger
 set_env mucommander
 set_env nnn
 set_env pcmanfm
@@ -2039,6 +2152,11 @@ while :; do
     fi
     ;;
 
+  a)
+    if [ $RANGER -eq 1 ]; then
+      ${ACTION}_generic ranger
+    fi
+    ;;
   c)
     if [ $CAJA -eq 1 ]; then
       ${ACTION}_generic caja
