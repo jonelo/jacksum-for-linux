@@ -24,7 +24,7 @@ Requirements
 
 2) A file browser: Caja, Dolphin, elementary Files, GNOME Nautilus (Files),
    Konqueror, Krusader, muCommander, Nemo, nnn, PCManFM, PCManFM-Qt, ranger,
-   ROX-Filer, SpaceFM, Thunar, Xfe, and zzzFM are supported
+   ROX-Filer, SpaceFM, Thunar, Xfe, Yazi, and zzzFM are supported
 
 3) A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK)
    with graphical libraries.
