@@ -21,9 +21,9 @@
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
 #    See also https://web.archive.org/web/20170706050025/https://www.linux-apps.com/p/998451/
 #
-#  * This script requires jacksum-4.0.0.jar and HashGarten-0.19.0.jar
+#  * This script requires jacksum-4.0.0.jar and HashGarten-0.19.0.jar,
 #    which are part of the Jacksum file browser integration package for Linux
-#    since 2.0.0
+#    since 2.0.0.
 #    See also https://jacksum.net
 #
 #  * Version 2.x of the script has been successfully tested on the following
@@ -80,7 +80,7 @@
 #
 #
 #  * Version 1.x of the script has been successfully tested on the following systems,
-#    and it should work on similar platforms was well:
+#    and it should work on similar platforms as well:
 #
 #    Caja 1.12.0 on Linux Mint 17.3 Mate
 #
@@ -116,8 +116,8 @@
 #    Xfe 1.37 on Ubuntu Linux 14.04
 #
 #    Note that some older systems that aren't listed above could cause problems
-#    on read-only-filesystems (e.g. on life CDs), crashes of kate, or non-supported
-#    servicemenus for KDE
+#    on read-only filesystems (e.g. live CDs), crashes of Kate, or unsupported
+#    servicemenus for KDE.
 
 VERSION="2.11.0"
 NAME="jacksum"
@@ -211,11 +211,7 @@ print_menu() {
   else
     printf "  h - Unhide the DISABLED entries\n"
   fi
-  if [ "$ACTION" = "install" ]; then
-    printf "  u - Show the uninstall menu\n"
-  else
-    printf "  i - Show the install menu\n"
-  fi
+  printf "  i - Toggle install/uninstall menu\n"
   printf "  q - Quit the installer\n"
   print_dashes
 }
@@ -296,7 +292,7 @@ find_bin() {
   fi
   while [ ! -f "$BIN" ]; do
     printf "Couldn't find \"%s\"!\n" "$1"
-    printf "Type the absolute path here or \"Ctrl+C\" to abort: "
+    printf "Type the absolute path here or press \"Ctrl+C\" to abort: "
     read -r BIN
   done
 }
@@ -614,7 +610,7 @@ uninstall() {
 #    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
-  printf "\nUninstallation finished. Please press enter key to continue ... "
+  printf "\nUninstallation finished. Please press the \"Enter\" key to continue ... "
   read -r
 }
 
@@ -1323,7 +1319,7 @@ install_menu_rox() {
   if [ ! -d "$OPENWITHFOLDER" ]; then
     mkdir -p "$OPENWITHFOLDER" 2>/dev/null
   fi
-  # simply make a symlink in order to be cross compatible
+  # simply make a symlink in order to be cross-compatible
   ln -s "$SCRIPTFOLDER" "$OPENWITHFOLDER/$NAME"
 
   printf "  Installing scripts:                 "
@@ -1679,22 +1675,22 @@ install_menu_xxxfm() {
   local BROWSER="$1"
   SESSION_FILE="${PREFIX}/session"
 
-  # if session file does not exist, the user need to call spacefm once.
+  # if the session file does not exist, the user needs to run the file manager once.
   if [ ! -f "$SESSION_FILE" ]; then
-    printf "  Note: In the next step I will try to open %s so the required session file gets generated.\n" "$BROWSER"
-    printf "        Please hit enter when you are ready: "
+    printf "  Note: In the next step I will try to open %s so that the required session file gets generated.\n" "$BROWSER"
+    printf "        Please press the \"Enter\" key when you are ready: "
     read -r
     $BROWSER >/dev/null 2>&1 &
   fi
 
-  printf "  Note: Please close all SpaceFM instances manually.\n"
-  printf "        Please hit enter when you are ready: "
+  printf "  Note: Please close all %s instances manually.\n" "$BROWSER"
+  printf "        Please press the \"Enter\" key when you are ready: "
   read -r
   # if the user didn't read the instruction it could still work if a session file is there already.
   pkill -HUP "$BROWSER"
 
   if [ ! -f "$SESSION_FILE" ]; then
-    printf "  Error: SpaceFM session file not found.\n"
+    printf "  Error: %s session file not found.\n" "$BROWSER"
     printf "         Please follow the instructions.\n"
     exit 1
   fi
@@ -1979,9 +1975,9 @@ print_params() {
   EDIT="$BIN"
 
   if [ -z "$ALGORITHMS" ]; then
-    printf "  [direct accessible algorithms]: %s\n\n" "n/a"
+    printf "  [directly accessible algorithms]: %s\n\n" "n/a"
   else
-    printf "  [direct accessible algorithms]: %s\n\n" "$ALGORITHMS"
+    printf "  [directly accessible algorithms]: %s\n\n" "$ALGORITHMS"
   fi
 }
 
@@ -2010,13 +2006,13 @@ enter_java() {
 # -------------------------------------------------------------------------
 modify_params() {
 # -------------------------------------------------------------------------
-  printf "\nA JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten which is a GUI for Jacksum.\n"
-  printf "You could go to https://adoptium.net for example to obtain a full JDK/JRE.\n"
-  printf "On Debian based derivates you could install by 'sudo apt install default-jdk'\n"
+  printf "\nA JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten, which is a GUI for Jacksum.\n"
+  printf "You could, for example, go to https://adoptium.net to obtain a full JDK/JRE.\n"
+  printf "On Debian-based derivatives, you could install it by running 'sudo apt install default-jdk'.\n"
 
   enter_java
 
-  printf "\n\nThe jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but during runtime it expects those binaries to be there at the specified location after the installation.\n"
+  printf "\n\nThe jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but at runtime it expects to find them at the specified location once installation is complete.\n"
   find_bin "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
   JACKSUM_JAR="$BIN"
 
@@ -2027,7 +2023,7 @@ modify_params() {
   find_bin "viewer" "$VIEWER"
   VIEWER="$BIN"
 
-  printf "\n\nTo use the \"Edit the script\" feature, you need to specify an editor.\n"
+  printf "\n\nTo use the \"Edit Script\" feature, you need to specify an editor.\n"
   find_bin "editor" "$EDIT"
   EDIT="$BIN"
 
@@ -2044,9 +2040,9 @@ print_info_kde() {
       printf "  If you want to install Jacksum/HashGarten in %s\n" "$KDE_PROGNAME"
       printf "  for all users, please run this script as root.\n"
     else
-      printf "  If you want to install Jacksum/HashGarten %s\n" "$KDE_PROGNAME"
+      printf "  If you want to install Jacksum/HashGarten in %s\n" "$KDE_PROGNAME"
       printf "  only for one user, run the script as a normal user. If you have a Live CD,\n"
-      printf "  you must run the script as normal user, because CD-ROMs are read only.\n"
+      printf "  you must run the script as a normal user, because CD-ROMs are read-only.\n"
     fi
     print_dashes
   fi
@@ -2067,7 +2063,7 @@ select_algorithms() {
   printf "\n\n"
   local YESNO=""
   while [ "$YESNO" != "y" ] && [ "$YESNO" != "n" ]; do
-    printf "Do you want to access some algorithms directly without the HashGarten GUI?\nType n to disable direct access to algorithms, type p or any other key to use the previous selection [n]: "
+    printf "Do you want to access some algorithms directly without the HashGarten GUI?\nType y to enable direct access to algorithms, type n to disable direct access to algorithms, type p or any other key to use the previous selection [n]: "
     read_key
     YESNO="$KEY"
     test -z "$YESNO" && YESNO="n"
@@ -2148,7 +2144,7 @@ restart_fb() {
     # (sleep does not cause harm to others)
     printf "Please wait ... "
     sleep 5
-    # some older Nautilus restart Nautilus after a quit
+    # some older versions of Nautilus restart Nautilus after a quit
     # we ignore that fact and start Nautilus in any case
     $1 >/dev/null 2>&1 &
     ;;
@@ -2216,7 +2212,7 @@ install_done() {
     printf "  be - Edit Script\n"
     ;;
   esac
-  printf "Press enter to continue ... "
+  printf "Press the \"Enter\" key to continue ... "
   read -r
 }
 
@@ -2291,11 +2287,12 @@ while :; do
   read_key
   OPTION="$KEY"
   case "$OPTION" in
-  u)
-    ACTION="uninstall"
-    ;;
   i)
-    ACTION="install"
+    if [ "$ACTION" = "install" ]; then
+      ACTION="uninstall"
+    else
+      ACTION="install"
+    fi
     ;;
   h)
     if [ -z "$HIDE_DISABLED" ]; then
