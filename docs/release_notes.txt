@@ -4,6 +4,7 @@ Release Notes
 - added an "h - Hide/Unhide the UNAVAILABLE entries menu" toggle
 - changed the Nemo menu key from n to o
 - changed the muCommander menu key from m to u
+- added support for broot
 - added support for Midnight Commander
 - added support for nnn
 - added support for ranger

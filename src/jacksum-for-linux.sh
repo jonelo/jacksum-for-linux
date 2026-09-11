@@ -30,6 +30,8 @@
 #  * Version 2.x of the script has been successfully tested on the following
 #    systems, and it should work on older platforms as well:
 #
+#    broot 1.55.0 on Ubuntu Linux 26.04
+#
 #    Caja 1.26.4 on Ubuntu Linux 26.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04
 #    Caja 1.26.0 on Ubuntu Linux 22.04.1
@@ -135,7 +137,8 @@ COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cus
 # How many of the $ALGORITHMS get an entry of their own where every entry
 # costs a key: mc, ranger and Yazi have a menu hotkey or a key binding per
 # entry, and an open ended list of algorithms would either run out of keys or
-# bury the entries of the user. Everywhere else all of them get one.
+# bury the entries of the user. Everywhere else all of them get one - broot
+# and nnn included, whose verbs and plugins cost no key at all.
 MAX_DIRECT_ALGOS=5
 
 # What the installation puts into a config file of a file browser that does
@@ -159,13 +162,14 @@ PLAN_COUNT=0
 # name, and the programs it stands for. The order of the keys is the order of
 # the menu. Together with an install_menu_* and an uninstall_* function this
 # is all it takes to add one.
-BROWSER_KEYS="a c d e g m n o p r s t u x y z"
+BROWSER_KEYS="a b c d e g m n o p r s t u x y z"
 declare -A BROWSER_ID=(
-  [a]=ranger [c]=caja [d]=kde [e]=elementary [g]=gnome [m]=mc [n]=nnn
-  [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar [u]=mucommander
-  [x]=xfe [y]=yazi [z]=zzzfm
+  [a]=ranger [b]=broot [c]=caja [d]=kde [e]=elementary [g]=gnome [m]=mc
+  [n]=nnn [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar
+  [u]=mucommander [x]=xfe [y]=yazi [z]=zzzfm
 )
 declare -A BROWSER_PROGNAME=(
+  [broot]="broot"
   [caja]="Caja"
   [elementary]="Elementary Files"
   [gnome]="GNOME Files (Nautilus)"
@@ -187,8 +191,8 @@ declare -A BROWSER_PROGNAME=(
 # browsers share one, because they want the very same thing (the Nautilus
 # family its scripts folder, SpaceFM and zzzFM their handlers).
 declare -A BROWSER_IMPL=(
-  [caja]=gnome [elementary]=elementary [gnome]=gnome [kde]=kde [mc]=mc
-  [mucommander]=mucommander [nemo]=gnome [nnn]=nnn [pcmanfm]=pcmanfm
+  [broot]=broot [caja]=gnome [elementary]=elementary [gnome]=gnome [kde]=kde
+  [mc]=mc [mucommander]=mucommander [nemo]=gnome [nnn]=nnn [pcmanfm]=pcmanfm
   [ranger]=ranger [rox]=rox [spacefm]=xxxfm [thunar]=thunar
   [xfe]=gnome [yazi]=yazi [zzzfm]=xxxfm
 )
@@ -461,8 +465,8 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # Every file browser but KDE installs into the home of the user who runs
   # the script - none of the others has a system wide location that it would
@@ -639,6 +643,25 @@ set_env() {
     fi
     ;;
 
+  broot)
+    if type broot &>/dev/null; then
+      BROWSER_UNAVAILABLE[$1]=""
+      # broot's config folder, honoring BROOT_CONFIG_DIR and XDG_CONFIG_HOME
+      # like broot itself does (see Conf::dir())
+      PREFIX="${BROOT_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/broot}"
+      # broot reads conf.hjson, and only if that one is missing conf.toml
+      # (see Conf::default_location()). The extension is remembered rather
+      # than the whole path, because it is also the syntax that
+      # install_menu_broot has to write, and uninstall_broot has to arrive at
+      # the very same file.
+      if [ ! -f "$PREFIX/conf.hjson" ] && [ -f "$PREFIX/conf.toml" ]; then
+        BROOT_CONF_EXT="toml"
+      else
+        BROOT_CONF_EXT="hjson"
+      fi
+    fi
+    ;;
+
   mc)
     if type mc &>/dev/null; then
       BROWSER_UNAVAILABLE[$1]=""
@@ -717,8 +740,8 @@ browser_for_key() {
 refresh_menu_item() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
 
@@ -741,8 +764,8 @@ refresh_menu_item() {
 menu_action() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # the file browser is not there at all
   if [ -n "${BROWSER_UNAVAILABLE[$1]}" ]; then
@@ -759,8 +782,8 @@ menu_action() {
 uninstall() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press the \"Enter\" key to continue ... "
@@ -771,8 +794,8 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "uninstall_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -791,8 +814,8 @@ uninstall_silent() {
 is_installed() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local COUNT
 
@@ -1079,7 +1102,7 @@ count_entries() {
 # command carries the blanks of its label as underscores and gets them back
 # here, while an algorithm keeps every underscore of its name (haval_256_5);
 # and ranger and Yazi put the commands on letters but the algorithms on
-# numbers.
+# numbers, while broot builds a verb name out of either.
 #
 # To be read with a process substitution rather than with a pipe - the loop
 # has to run in the shell of the caller, several of them collect something in
@@ -1354,6 +1377,19 @@ uninstall_mc() {
 }
 
 # -------------------------------------------------------------------------
+uninstall_broot() {
+# -------------------------------------------------------------------------
+  BROOTCONF="$PREFIX/conf.$BROOT_CONF_EXT"
+  BROOTCONFBACKUP="$PREFIX/conf.before-jacksum.$BROOT_CONF_EXT"
+
+  remove_jacksum_sh
+  # broot does write a config of its own, but only when it is started for the
+  # first time; the one the installation creates when there is none yet is
+  # empty, so the empty seed drops it again rather than leaving it behind
+  restore_backup "$NAME entries" "$BROOTCONF" "$BROOTCONFBACKUP" ""
+}
+
+# -------------------------------------------------------------------------
 uninstall_ranger() {
 # -------------------------------------------------------------------------
   RANGERRC="$PREFIX/rc.conf"
@@ -1487,8 +1523,8 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "install_menu_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -1922,6 +1958,155 @@ install_menu_thunar() {
   cp "$MYTEMP" "$THUNARXML"
   rm "$MYTEMP"
   status_ok
+}
+
+# -------------------------------------------------------------------------
+# broot has neither a menu nor a browsable plugin folder, and a key of the
+# ranger kind is out of the question too: what is typed in broot goes into
+# its search input. Its own extension point are verbs - named commands that
+# are called with ":" and their name, are completed while they are typed and
+# are listed on the help screen ("?"). A verb costs no key, so unlike mc,
+# ranger and Yazi broot deliberately gets one for every single selected
+# algorithm, nnn style.
+#
+# The verbs are appended to broot's config file - conf.hjson, or conf.toml if
+# that is the one broot itself would read (see set_env) - which is backed
+# up/restored the way Thunar's uca.xml is. {file:space-separated} is what
+# hands jacksum.sh more than one file: broot runs an external command once
+# per file of its staging area (ctrl-g), and that flag turns it into a single
+# run with all of them; without anything staged it is simply the selection.
+# The flag arrived in broot 1.56.0 and an older broot silently ignores it, so
+# the verbs work there too - one run per staged file instead of one for all
+# of them, which is what the note at the end of this function is about.
+#
+install_menu_broot() {
+# -------------------------------------------------------------------------
+  BROOTCONF="$PREFIX/conf.$BROOT_CONF_EXT"
+  BROOTCONFBACKUP="$PREFIX/conf.before-jacksum.$BROOT_CONF_EXT"
+
+  # Repeated [[verbs]] tables are regular TOML, so a conf.toml is always
+  # appended to. In hjson a second "verbs" key would be a duplicate one
+  # instead, and broot's own conf.hjson has none (it keeps its verbs in the
+  # imported verbs.hjson), so an hjson config that does bring one is added to
+  # rather than appended to - as long as its array opens on a line of its
+  # own. Where it does not, this stops before anything has been touched:
+  # guessing where that array ends would put the config of the user at risk.
+  BROOT_INSERT=""
+  if [ "$BROOT_CONF_EXT" = "hjson" ] && [ -f "$BROOTCONF" ] &&
+    grep -q '^[[:space:]]*verbs[[:space:]]*:' "$BROOTCONF"; then
+    if grep -q '^[[:space:]]*verbs[[:space:]]*:[[:space:]]*\[[[:space:]]*$' "$BROOTCONF"; then
+      BROOT_INSERT=1
+    else
+      printf >&2 "\nFATAL: %s holds a \"verbs\" key that this\n" "$BROOTCONF"
+      printf >&2 "       script cannot add to. Move your verbs to verbs.hjson, which\n"
+      printf >&2 "       broot's own conf.hjson imports, and try again. Exit.\n"
+      exit 1
+    fi
+  fi
+
+  backup_file "conf.$BROOT_CONF_EXT" "$BROOTCONF" "$BROOTCONFBACKUP" ""
+
+  # broot waits for an external command while everything we start is a GUI,
+  # so it gets a helper of its own next to jacksum.sh that starts it detached
+  BROOTRUN="$(dirname "$JACKSUMSH")/broot-run.sh"
+  if plan_pending "create" "$BROOTRUN" "helper that starts $NAME.sh detached"; then
+    count_entries "verbs" 0
+    plan_item "modify" "$BROOTCONF" "$ENTRIES_TEXT"
+    return 0
+  fi
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
+    cat <<'EOF'
+CMD="$1"; shift
+# detached, everything we start is a GUI and broot would otherwise stay
+# blocked until its window is closed again
+("$JACKSUMSH" "$CMD" "$@" >/dev/null 2>&1 &)
+EOF
+  } >"$BROOTRUN"
+  chmod +x "$BROOTRUN"
+
+  status_begin "Installing verbs"
+
+  MYTEMP="$(mktemp)"
+  BROOT_VERBS=""
+  while IFS=$'\t' read -r KIND CMD TXT; do
+    if [ "$KIND" = "command" ]; then
+      VERB="${CMD#cmd_}"
+    else
+      VERB="$CMD"
+    fi
+    # broot reads a verb name as one word, and every character in it that is
+    # neither alphanumeric nor "_" nor "-" would start the arguments of the
+    # verb instead - so sha512/256 becomes jacksum_sha512_256, while sha3-256
+    # and haval_256_5 stay what they are. Only the name is touched: the
+    # description and what is handed to jacksum.sh keep the algorithm as it is.
+    VERB="${NAME}_${VERB//[!A-Za-z0-9_-]/_}"
+    if [ "$BROOT_CONF_EXT" = "toml" ]; then
+      printf '\n[[verbs]]\n'
+      printf 'invocation = "%s"\n' "$VERB"
+      printf 'description = "Jacksum - %s"\n' "$TXT"
+      printf 'external = [ "%s", "%s", "{file:space-separated}" ]\n' "$BROOTRUN" "$CMD"
+      # a verb that leaves broot cannot be used on the staging area, and
+      # switching the terminal away is pointless for a GUI we start detached
+      printf 'leave_broot = false\n'
+      printf 'switch_terminal = false\n'
+    else
+      printf '    {\n'
+      printf '        invocation: %s\n' "$VERB"
+      printf '        description: "Jacksum - %s"\n' "$TXT"
+      printf '        external: [ "%s", "%s", "{file:space-separated}" ]\n' "$BROOTRUN" "$CMD"
+      printf '        leave_broot: false\n'
+      printf '        switch_terminal: false\n'
+      printf '    }\n'
+    fi
+    BROOT_VERBS="$BROOT_VERBS    :$VERB - $TXT"$'\n'
+  done < <(menu_entries) >"$MYTEMP"
+
+  if [ -n "$BROOT_INSERT" ]; then
+    MYTEMP2="$(mktemp)"
+    awk -v entries="$MYTEMP" '
+      { print }
+      !added && /^[[:space:]]*verbs[[:space:]]*:[[:space:]]*\[[[:space:]]*$/ {
+        print "    # Jacksum/HashGarten (added by jacksum-for-linux.sh)"
+        while ((getline line < entries) > 0) { print line }
+        added = 1
+      }' "$BROOTCONF" >"$MYTEMP2"
+    cp "$MYTEMP2" "$BROOTCONF"
+    rm "$MYTEMP2"
+  else
+    {
+      printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
+      if [ "$BROOT_CONF_EXT" = "hjson" ]; then
+        printf 'verbs: [\n'
+        cat "$MYTEMP"
+        printf ']\n'
+      else
+        cat "$MYTEMP"
+      fi
+    } >>"$BROOTCONF"
+  fi
+  rm "$MYTEMP"
+  status_ok
+
+  # "broot 1.55.0" - the version decides whether the whole staging area
+  # reaches jacksum.sh in one run, see {file:space-separated} above
+  BROOT_VER="$(broot --version 2>/dev/null | cut -f2 -d' ')"
+  BROOT_MAJOR="${BROOT_VER%%.*}"
+  BROOT_MINOR="${BROOT_VER#*.}"
+  BROOT_MINOR="${BROOT_MINOR%%.*}"
+  case "$BROOT_MAJOR.$BROOT_MINOR" in
+  *[!0-9.]* | "." | *..*) ;; # nothing to compare, so nothing to say
+  *)
+    if [ "$BROOT_MAJOR" -eq 1 ] && [ "$BROOT_MINOR" -lt 56 ]; then
+      printf "  Note: broot %s runs a verb once per file of the staging area;\n" "$BROOT_VER"
+      printf "        1.56.0 and newer hand all of them over in a single run.\n"
+    fi
+    ;;
+  esac
+
+  printf "  Verbs (type \":\" and the name in broot, \"?\" lists them all):\n"
+  printf "%s" "$BROOT_VERBS"
 }
 
 # -------------------------------------------------------------------------
@@ -2559,8 +2744,8 @@ select_algorithms() {
 confirm_install() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -2596,7 +2781,7 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or mc or mucommander or nnn or ranger or yazi
+# or broot or mc or mucommander or nnn or ranger or yazi
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -2663,8 +2848,8 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -2682,6 +2867,10 @@ install_done() {
   mc)
     # no restart required, mc reads its user menu every time F2 is pressed :)
     printf "Press F2 in Midnight Commander to open the user menu.\n"
+    ;;
+  broot)
+    printf "Please restart broot, then type \":\" and the name of a verb,\n"
+    printf "e.g. :jacksum_calc - the \"?\" help screen lists all of them.\n"
     ;;
   ranger | yazi)
     # the name of the program rather than the one from the menu: that is what
@@ -2702,8 +2891,8 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # No print_params here, install_interactive prints the parameters anyway.
@@ -2725,8 +2914,8 @@ install_generic() {
 confirm_uninstall() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -2754,8 +2943,8 @@ confirm_uninstall() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
+#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # the confirmation is deliberately not in uninstall_silent(), which every
