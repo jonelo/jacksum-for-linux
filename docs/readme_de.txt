@@ -23,8 +23,9 @@ Voraussetzungen
    Ein headless-System ist nicht ausreichend.
 
 2) Einen Dateimanager: Caja, Dolphin, elementary Files, GNOME Nautilus (Files),
-   Konqueror, Krusader, muCommander, Nemo, nnn, PCManFM, PCManFM-Qt, ranger,
-   ROX-Filer, SpaceFM, Thunar, Xfe, Yazi und zzzFM werden unterstützt.
+   Konqueror, Krusader, Midnight Commander, muCommander, Nemo, nnn, PCManFM,
+   PCManFM-Qt, ranger, ROX-Filer, SpaceFM, Thunar, Xfe, Yazi und zzzFM werden
+   unterstützt.
 
 3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 
    Ein headless-OpenJDK ist nicht ausreichend.
