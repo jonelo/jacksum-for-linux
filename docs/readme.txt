@@ -1,12 +1,12 @@
 Description
 -----------
 Jacksum File Browser Integration
-for GNU/Linux and Unix Operating Systems v2.11.0 (Sep 10, 2026)
+for GNU/Linux and Unix Operating Systems v2.11.0 (Sep 11, 2026)
 Copyright (C) 2006-2026 Dipl.-Inf. (FH) Johann N. Loefflmann
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+the Free Software Foundation; either version 3 of the License, or
 any later version.
 
 The Jacksum File Browser Integration script installs Jacksum's primary 
