@@ -217,6 +217,23 @@ print_menu() {
 }
 
 # -------------------------------------------------------------------------
+# Returns 0 if the glob that the caller passed in (unquoted, so that the shell
+# expands it here) matched at least one existing file, otherwise 1. An unmatched
+# glob stays unexpanded in bash, hence the -e test rather than a count of "$#".
+#
+glob_exists() {
+#
+# parameters:
+# $@ = the expanded glob, e.g.  glob_exists "$DIR"/foo*
+# -------------------------------------------------------------------------
+  local f
+  for f in "$@"; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
+# -------------------------------------------------------------------------
 check_env() {
 #
 # parameters:
@@ -229,6 +246,8 @@ check_env() {
   elif [ -d "$3" ]; then
     DIR="$3"
   else
+    # a value left over from an earlier call must not be reused silently
+    DIR=""
     printf "\n"
     while [ ! -d "$DIR" ]; do
       printf "Could not find %s!\n" "$1"
@@ -305,9 +324,11 @@ version_value() {
 # parameters:
 # $1 version, e.g. 12.34.567
 # -------------------------------------------------------------------------
+  # leading zeros are stripped, otherwise printf would read a component such as
+  # the 08 of 4.08.1 as an octal number and bail out with "invalid octal number"
   # shellcheck disable=SC2046
   # shellcheck disable=SC2183
-  printf "%03d%03d%03d" $(printf "%s\n" "$1" | tr '.' '\n' | head -n 3)
+  printf "%03d%03d%03d" $(printf "%s\n" "$1" | tr '.' '\n' | head -n 3 | sed -e 's/^0*\([0-9]\)/\1/')
 }
 
 # -------------------------------------------------------------------------
@@ -412,22 +433,39 @@ set_env() {
     if nautilus --version >/dev/null 2>&1; then
       GNOME=1
       GNOME_DISABLED=""
-      if [ "$(nautilus --version | cut -c16)" -ge 2 ]; then
-
-        if [ -e "$HOME/.local/share/nautilus/scripts" ]; then
+      # "GNOME nautilus " is 15 characters, so the version starts at column 16
+      NAUTILUSVER=$(nautilus --version 2>/dev/null | cut -c16-)
+      # The folder has to be derived from the version, not from the folder that
+      # happens to exist already (as Nemo does it below): on a fresh account
+      # none of them exists yet, and dropping the scripts into the pre 14.04
+      # location would install them where a current Nautilus never looks.
+      case $NAUTILUSVER in
+      [0-9]*)
+        if [ "$(version_value "$NAUTILUSVER")" -ge "$(version_value 3.0.0)" ]; then
           # In Ubuntu 14.04 and later, Nautilus config folder is
           PREFIX="$HOME/.local/share/nautilus"
           FB_SCRIPTFOLDER=scripts
-        else
+        elif [ "$(version_value "$NAUTILUSVER")" -ge "$(version_value 2.0.0)" ]; then
           # Starting with Nautilus 2.x, the Nautilus config folder is
           PREFIX="$HOME/.gnome2"
           FB_SCRIPTFOLDER=nautilus-scripts
+        else
+          # Starting with Nautilus 1.0.5, the Nautilus config folder is
+          PREFIX="$HOME/.gnome"
+          FB_SCRIPTFOLDER=nautilus-scripts
         fi
-      else
-        # Starting with Nautilus 1.0.5, the Nautilus config folder is
-        PREFIX="$HOME/.gnome"
-        FB_SCRIPTFOLDER=nautilus-scripts
-      fi
+        ;;
+      *)
+        # unexpected --version output, fall back to whatever is there already
+        if [ -e "$HOME/.local/share/nautilus/scripts" ]; then
+          PREFIX="$HOME/.local/share/nautilus"
+          FB_SCRIPTFOLDER=scripts
+        else
+          PREFIX="$HOME/.gnome2"
+          FB_SCRIPTFOLDER=nautilus-scripts
+        fi
+        ;;
+      esac
     else
       GNOME=0
       GNOME_DISABLED="(DISABLED)"
@@ -438,7 +476,7 @@ set_env() {
     if nemo --version >/dev/null 2>&1; then
       NEMO=1
       NEMO_DISABLED=""
-      NEMOVER=$(nemo --version | cut -f2 -d' ')
+      NEMOVER=$(nemo --version 2>/dev/null | cut -f2 -d' ')
       if [ "$(version_value "$NEMOVER")" -ge "$(version_value 2.6.7)" ]; then
         # starting with Nemo 2.6.7 Nemo's config folder is
         PREFIX="$HOME/.local/share/nemo"
@@ -456,7 +494,7 @@ set_env() {
 
   xfe)
     if xfe --version >/dev/null 2>&1; then
-      XFEVER=$(xfe --version | cut -f3 -d' ')
+      XFEVER=$(xfe --version 2>/dev/null | cut -f3 -d' ')
       # script folder is supported starting with Xfe 1.35
       if [ "$(version_value "$XFEVER")" -ge "$(version_value 1.35)" ]; then
         XFE=1
@@ -623,7 +661,7 @@ uninstall_silent() {
 # -------------------------------------------------------------------------
   case $1 in
   caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
-    uninstall_$1
+    uninstall_"$1"
     ;;
   spacefm | zzzfm)
     uninstall_xxxfm
@@ -632,14 +670,19 @@ uninstall_silent() {
 }
 
 # -------------------------------------------------------------------------
-uninstall_kde() {
+# Removes the generated wrapper folder $PREFIX/share/apps/jacksum and reports
+# the result. The now empty parents are taken along too (but only if they are
+# in fact empty - "share" may well be shared with something else), so that an
+# uninstallation leaves nothing of us behind.
+#
+remove_jacksum_sh() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
-  DSK="$PREFIX$KDEPOSTFIX$NAME.desktop"
+  local SH="$PREFIX/share/apps/$NAME"
 
   printf "\n  Removing %s.sh:                " "$NAME"
   if [ -d "$SH" ]; then
     if rm -r "$SH"; then
+      rmdir "$PREFIX/share/apps" "$PREFIX/share" 2>/dev/null
       printf "[  OK  ]\n"
     else
       printf "[FAILED]\n"
@@ -648,6 +691,14 @@ uninstall_kde() {
   else
     printf "[ NOT INSTALLED ]\n"
   fi
+}
+
+# -------------------------------------------------------------------------
+uninstall_kde() {
+# -------------------------------------------------------------------------
+  DSK="$PREFIX$KDEPOSTFIX$NAME.desktop"
+
+  remove_jacksum_sh
   printf "  Removing %s.desktop:           " "$NAME"
   if [ -f "$DSK" ]; then
     if rm "$DSK"; then
@@ -665,23 +716,14 @@ uninstall_kde() {
 # -------------------------------------------------------------------------
 uninstall_pcmanfm() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX"
-  DESKTOP_FILES="$PREFIX/actions/"
+  DESKTOP_FILES="$PREFIX/actions"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s*.desktop:          " "$NAME"
-  if [ -d "$DESKTOP_FILES" ]; then
-    if rm "$DESKTOP_FILES/*"; then
+  # the actions folder is shared with the user's own custom actions, so only
+  # remove the ones we have generated (see install_menu_pcmanfm_sub)
+  if glob_exists "$DESKTOP_FILES/${NAME}_"*.desktop; then
+    if rm -f "$DESKTOP_FILES/${NAME}_"*.desktop; then
       printf "[  OK  ]\n"
     else
       printf "[FAILED]\n"
@@ -696,20 +738,9 @@ uninstall_pcmanfm() {
 # -------------------------------------------------------------------------
 uninstall_gnome() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
   SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s scripts:           " "$NAME"
   if [ -d "$SCRIPTS" ]; then
     if rm -r "$SCRIPTS"; then
@@ -738,29 +769,14 @@ uninstall_nemo() {
 # -------------------------------------------------------------------------
 uninstall_nnn() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
   SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
 
   printf "  Removing %s plugins:           " "$NAME"
   # plugins live flat in the shared nnn plugins folder (see install_menu_nnn),
   # so only remove the ones with our "Jacksum  " prefix, not the whole folder
-  FOUND=""
-  for f in "$SCRIPTS"/Jacksum\ \ *; do
-    [ -e "$f" ] && FOUND=1 && break
-  done
-  if [ -n "$FOUND" ]; then
+  if glob_exists "$SCRIPTS"/Jacksum\ \ *; then
     if rm -f "$SCRIPTS"/Jacksum\ \ *; then
       printf "[  OK  ]\n"
     else
@@ -781,24 +797,13 @@ uninstall_caja() {
 # -------------------------------------------------------------------------
 uninstall_rox() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
   SCRIPTS="$PREFIX/SendTo/$NAME/"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s scripts:           " "$NAME"
   if [ -d "$SCRIPTS" ]; then
     # removing the symlink
-    rm "$SCRIPTS/../../OpenWith/$NAME"
+    rm -f "$SCRIPTS/../../OpenWith/$NAME"
     # removing all scripts
     if rm -r "$SCRIPTS"; then
       printf "[  OK  ]\n"
@@ -814,19 +819,7 @@ uninstall_rox() {
 # -------------------------------------------------------------------------
 uninstall_thunar() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
-
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s entries:           " "$NAME"
   # restore the backup
   THUNARXML="$PREFIX/uca.xml"
@@ -843,19 +836,7 @@ uninstall_thunar() {
 # -------------------------------------------------------------------------
 uninstall_ranger() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
-
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s entries:           " "$NAME"
   # restore the backup
   RANGERRC="$PREFIX/rc.conf"
@@ -872,19 +853,7 @@ uninstall_ranger() {
 # -------------------------------------------------------------------------
 uninstall_yazi() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
-
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s entries:           " "$NAME"
   # restore the backup
   YAZIKEYMAP="$PREFIX/keymap.toml"
@@ -901,19 +870,7 @@ uninstall_yazi() {
 # -------------------------------------------------------------------------
 uninstall_mucommander() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
-
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s entries:           " "$NAME"
   # restore the backup
   XML="$PREFIX/commands.xml"
@@ -930,20 +887,9 @@ uninstall_mucommander() {
 # -------------------------------------------------------------------------
 uninstall_elementary() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME/"
   SCRIPTS="$PREFIX"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s scripts:           " "$NAME"
   if [ -f "${SCRIPTS}/jacksum.cmd_calc.contract" ]; then
     if rm "${SCRIPTS}"/jacksum.*.contract; then
@@ -958,11 +904,49 @@ uninstall_elementary() {
 }
 
 # -------------------------------------------------------------------------
+# Rebuilds the "open_hand-s=..." line of a SpaceFM/zzzFM session file without
+# any of our own hand_f_jacksum* entries, keeping every foreign handler and
+# their order untouched.
+#
+# This has to be done word by word. A pattern substitution such as
+# ${HANDLERS//hand_f_jacksum[^ ]*/} looks like it would do the same, but in a
+# glob "*" is not a quantifier for the preceding bracket expression - it matches
+# any string, blanks included - so it would silently swallow every handler that
+# is registered behind ours.
+#
+strip_jacksum_handlers() {
+#
+# parameters:
+# $1 the whole "open_hand-s=..." line
+# $2 optional: remove exactly this one handler instead of all of ours, so that
+#    the install loop can re-register one handler at a time without dropping
+#    the ones it has added before
+# -------------------------------------------------------------------------
+  local REST="${1#*=}"
+  local ONLY="$2"
+  local OUT=""
+  local HANDLER
+  # word splitting is wanted here, the handlers are blank separated
+  for HANDLER in $REST; do
+    if [ -n "$ONLY" ]; then
+      if [ "$HANDLER" = "$ONLY" ]; then
+        continue
+      fi
+    else
+      case "$HANDLER" in
+      hand_f_jacksum*) continue ;;
+      esac
+    fi
+    OUT="$OUT $HANDLER"
+  done
+  printf "open_hand-s=%s" "${OUT# }"
+}
+
+# -------------------------------------------------------------------------
 clean_xxxfm_session_file() {
 #
 # parameters:
 # $1 session file of SpaceFM or zzzFM
-# $3 text
 # -------------------------------------------------------------------------
   local SESSION_FILE="$1"
   local HANDLER_PREFIX="hand_f_jacksum"
@@ -972,11 +956,12 @@ clean_xxxfm_session_file() {
   HANDLERS=$(grep ^open_hand-s "${SESSION_FILE}") # e.g. open_hand-s=hand_f_3aa02120 hand_f_28b4b240
 
   # clean the handlers property
-  HANDLERS="${HANDLERS//hand_f_jacksum[^ ]*/}" # remove all strings that start with hand_f_jacksum
+  HANDLERS="$(strip_jacksum_handlers "$HANDLERS")"
 
   # update the session file
-  local TEMP_FILE="/tmp/jacksum.$$.session"
-  grep -v ^${HANDLER_PREFIX} "${SESSION_FILE}" | grep -v ^open_hand-s >"$TEMP_FILE"
+  local TEMP_FILE
+  TEMP_FILE="$(mktemp)"
+  grep -v ^"${HANDLER_PREFIX}" "${SESSION_FILE}" | grep -v ^open_hand-s >"$TEMP_FILE"
   printf "%s\n" "$HANDLERS" >>"$TEMP_FILE"
   cat "${TEMP_FILE}" >"${SESSION_FILE}"
   rm "${TEMP_FILE}"
@@ -985,20 +970,9 @@ clean_xxxfm_session_file() {
 # -------------------------------------------------------------------------
 uninstall_xxxfm() {
 # -------------------------------------------------------------------------
-  SH="$PREFIX/share/apps/$NAME"
   SCRIPTS="$PREFIX/scripts"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_jacksum_sh
   printf "  Removing %s scripts:           " "$NAME"
   if [ -d "${SCRIPTS}/hand_f_jacksum_cmd_calc" ]; then
     if rm -R "${SCRIPTS}"/hand_f_jacksum*; then
@@ -1022,10 +996,10 @@ install_menu() {
 # -------------------------------------------------------------------------
   case $1 in
   caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
-    install_menu_$1
+    install_menu_"$1"
     ;;
   spacefm | zzzfm)
-    install_menu_xxxfm $1
+    install_menu_xxxfm "$1"
     ;;
   esac
 }
@@ -1050,7 +1024,9 @@ install_menu_kde() {
   DESKFILE="$PREFIX$KDEPOSTFIX$NAME.desktop"
   printf "  Installing %s.desktop:         " $NAME
 
-  # gather all action codes
+  # gather all action codes (reset first, the installer menu can be run
+  # more than once per session)
+  ACTIONS=""
   for i in $COMMANDS; do
     CMD=$(printf "%s\n" "$i" | awk -F";" '{print $1 }')
     ACTIONS="$ACTIONS;$CMD"
@@ -1061,7 +1037,7 @@ install_menu_kde() {
   ACTIONS=$(printf "%s\n" "$ACTIONS" | sed -e "s/^;//")
 
   printf "[Desktop Entry]\n" >"$DESKFILE"
-  if [ $KDE -ge 4 ]; then {
+  if [ "$KDE" -ge 4 ]; then {
       printf "Type=Service\n"
       printf "ServiceTypes=KonqPopupMenu/Plugin\n"
       printf "MimeType=inode/directory;application/octet-stream\n"
@@ -1251,7 +1227,8 @@ install_menu_nnn_plugin() {
     printf 'CMD="%s"\n' "$CMD"
     cat <<'EOF'
 # $1 = hovered file, $2 = working directory (nnn plugin convention)
-SEL="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection"
+# NNN_SEL is nnn's own override for the selection file, see nnn(1)
+SEL="${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection}"
 FILES=()
 if [ -s "$SEL" ]; then
   # "|| [ -n "$f" ]" also picks up the last entry when the selection file
@@ -1262,7 +1239,9 @@ if [ -s "$SEL" ]; then
 else
   FILES=("$2/$1")
 fi
-exec "$JACKSUMSH" "$CMD" "${FILES[@]}"
+# detached, everything we start is a GUI and nnn would otherwise stay blocked
+# until its window is closed again
+("$JACKSUMSH" "$CMD" "${FILES[@]}" >/dev/null 2>&1 &)
 EOF
   } >"$PLUGIN"
   chmod +x "$PLUGIN"
@@ -1320,7 +1299,7 @@ install_menu_rox() {
     mkdir -p "$OPENWITHFOLDER" 2>/dev/null
   fi
   # simply make a symlink in order to be cross-compatible
-  ln -s "$SCRIPTFOLDER" "$OPENWITHFOLDER/$NAME"
+  ln -sfn "$SCRIPTFOLDER" "$OPENWITHFOLDER/$NAME"
 
   printf "  Installing scripts:                 "
 
@@ -1349,7 +1328,7 @@ install_menu_thunar() {
   if [ ! -f "$THUNARXML" ]; then
     printf "[ NOT FOUND ]\n"
     # Put a default file here
-    printf '<?xml encoding="UTF-8" version="1.0"?><actions></actions>\n' >"$THUNARXML"
+    printf '<?xml version="1.0" encoding="UTF-8"?><actions></actions>\n' >"$THUNARXML"
     cp "$THUNARXML" "$THUNARXMLBACKUP"
   else
     cp "$THUNARXML" "$THUNARXMLBACKUP"
@@ -1358,7 +1337,7 @@ install_menu_thunar() {
 
   printf "  Installing entries:                 "
 
-  MYTEMP=/tmp/jacksum.$$.temp
+  MYTEMP="$(mktemp)"
   # xml without the closing </actions> tag
   sed 's/<\/actions>//' "$THUNARXML" >"$MYTEMP"
 
@@ -1426,9 +1405,16 @@ install_menu_ranger() {
         cmd_check) KEY=c ;;
         cmd_cust) KEY=o ;;
         cmd_edit) KEY=e ;;
+        # a $COMMANDS entry we have no key for is skipped rather than silently
+        # overwriting the binding of the entry before it
+        *) KEY="" ;;
       esac
-      # %p = selection: marked files if any, else the highlighted file (ranger's own convention)
-      printf 'map b%s shell %s %s %%p\n' "$KEY" "$JACKSUMSH" "$CMD"
+      if [ -n "$KEY" ]; then
+        # -f = fork: everything we start here is a GUI, without it ranger would
+        # stay blocked until the window is closed again (see ranger(1), FLAGS)
+        # %p = selection: marked files if any, else the highlighted file (ranger's own convention)
+        printf 'map b%s shell -f %s %s %%p\n' "$KEY" "$JACKSUMSH" "$CMD"
+      fi
     done
     N=0
     for i in $ALGORITHMS; do
@@ -1436,7 +1422,7 @@ install_menu_ranger() {
       if [ "$N" -gt 5 ]; then
         break
       fi
-      printf 'map b%d shell %s %s %%p\n' "$N" "$JACKSUMSH" "$i"
+      printf 'map b%d shell -f %s %s %%p\n' "$N" "$JACKSUMSH" "$i"
     done
   } >>"$RANGERRC"
   printf "[  OK  ]\n"
@@ -1466,7 +1452,7 @@ install_menu_yazi() {
 # -------------------------------------------------------------------------
   YAZIKEYMAP="$PREFIX/keymap.toml"
   YAZIKEYMAPBACKUP="$PREFIX/keymap.before-jacksum.toml"
-  printf "  Backing up keymap.toml:              "
+  printf "  Backing up keymap.toml:             "
   if [ ! -f "$YAZIKEYMAP" ]; then
     printf "[ NOT FOUND ]\n"
     mkdir -p "$PREFIX" 2>/dev/null
@@ -1505,7 +1491,13 @@ EOF
         cmd_check) KEY=c ;;
         cmd_cust) KEY=o ;;
         cmd_edit) KEY=e ;;
+        # a $COMMANDS entry we have no key for is skipped rather than silently
+        # overwriting the binding of the entry before it
+        *) KEY="" ;;
       esac
+      if [ -z "$KEY" ]; then
+        continue
+      fi
       printf '\n[[mgr.prepend_keymap]]\n'
       printf 'on = [ "b", "%s" ]\n' "$KEY"
       # %h is single-quoted so an empty hovered file still arrives as one (empty) arg
@@ -1605,7 +1597,7 @@ install_menu_mucommander() {
 
   printf "  Installing entries:                 "
 
-  MYTEMP=/tmp/jacksum.$$.temp
+  MYTEMP="$(mktemp)"
   # xml without the closing </commands> tag
   sed 's/<\/commands>//' "$XML" >"$MYTEMP"
 
@@ -1647,12 +1639,13 @@ update_xxxfm_session_file() {
   local HANDLERS
   HANDLERS=$(grep ^open_hand-s "${SESSION_FILE}") # e.g. open_hand-s=hand_f_3aa02120 hand_f_28b4b240
 
-  # clean the handlers property
-  HANDLERS="${HANDLERS//${HANDLER}/}" # e.g. open_hand-s=hand_f_3aa02120
-  HANDLERS="${HANDLERS//  /}"         # remove all double blanks
+  # drop this very handler only (avoids a duplicate entry when it is already
+  # registered), then append it again below
+  HANDLERS="$(strip_jacksum_handlers "$HANDLERS" "$HANDLER")" # e.g. open_hand-s=hand_f_3aa02120
 
   # update the session file
-  local TEMP_FILE="/tmp/jacksum.$$.session"
+  local TEMP_FILE
+  TEMP_FILE="$(mktemp)"
   grep -v ^"${HANDLER}" "${SESSION_FILE}" | grep -v ^open_hand-s >"$TEMP_FILE"
   {
     printf "%s %s\n" "$HANDLERS" "$HANDLER"
@@ -1789,14 +1782,32 @@ EOF
     printf '    cat "$1" | "%s" --text-info --width 800 --height 600 --title "Jacksum: $1" --no-wrap --font="Monospace" "$1"\n' "${VIEWER}"
   else
     # shellcheck disable=SC2016
-    printf '    "%s" "$1"\n' "${EDIT}"
+    printf '    "%s" "$1"\n' "${VIEWER}"
   fi
   printf '}\n\n'
 
-  printf 'FILE_LIST="/tmp/jacksum-%s-filelist.txt"\n' "${JACKSUM_VERSION}"
-  printf 'OUTPUT="/tmp/jacksum-%s-output.txt"\n' "${JACKSUM_VERSION}"
-  printf 'ERROR_LOG="/tmp/jacksum-%s-error.txt"\n' "${JACKSUM_VERSION}"
-  printf 'CHECK_FILE="/tmp/jacksum-%s-check.txt"\n' "${JACKSUM_VERSION}"
+  # The result files stay behind on purpose (some editors need them to be still
+  # there when they open them), so they cannot get random names. They do get a
+  # private folder per user though: with fixed names directly in a shared /tmp a
+  # second user could neither overwrite them nor avoid reading the first user's
+  # results, and anybody could pre-create one of those names as a symlink.
+  cat <<'EOF'
+JACKSUM_TMPDIR="${TMPDIR:-/tmp}/jacksum-$(id -u)"
+mkdir -p "$JACKSUM_TMPDIR" 2>/dev/null
+if [ -L "$JACKSUM_TMPDIR" ] || [ ! -d "$JACKSUM_TMPDIR" ] || [ ! -O "$JACKSUM_TMPDIR" ]; then
+  # not ours (or not a folder at all), so don't touch it
+  JACKSUM_TMPDIR="$(mktemp -d)"
+fi
+chmod 700 "$JACKSUM_TMPDIR"
+EOF
+  # $JACKSUM_TMPDIR must be evaluated when the generated script runs, not now
+  # shellcheck disable=SC2016
+  {
+    printf 'FILE_LIST="$JACKSUM_TMPDIR/jacksum-%s-filelist.txt"\n' "${JACKSUM_VERSION}"
+    printf 'OUTPUT="$JACKSUM_TMPDIR/jacksum-%s-output.txt"\n' "${JACKSUM_VERSION}"
+    printf 'ERROR_LOG="$JACKSUM_TMPDIR/jacksum-%s-error.txt"\n' "${JACKSUM_VERSION}"
+    printf 'CHECK_FILE="$JACKSUM_TMPDIR/jacksum-%s-check.txt"\n' "${JACKSUM_VERSION}"
+  }
   printf 'JAVA="%s"\n' "${JAVA}"
   printf 'JACKSUM_JAR="%s"\n' "${JACKSUM_JAR}"
   printf 'HASHGARTEN_JAR="%s"\n' "${HASHGARTEN_JAR}"
@@ -1830,11 +1841,11 @@ shift
 case $ALGO in
 
   "cmd_calc")
-    "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O relative -U ${ERROR_LOG} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+    "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -O relative -U "${ERROR_LOG}" --file-list-format list --file-list "${FILE_LIST}" --path-relative-to-entry 1 --verbose default,summary
     ;;
 
   "cmd_check")
-    "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c relative -O ${OUTPUT} -U ${OUTPUT} --file-list-format list --file-list ${FILE_LIST} --path-relative-to-entry 1 --verbose default,summary
+    "${JAVA}" -jar "${HASHGARTEN_JAR}" --header -c relative -O "${OUTPUT}" -U "${OUTPUT}" --file-list-format list --file-list "${FILE_LIST}" --path-relative-to-entry 1 --verbose default,summary
     ;;
 
   "cmd_cust")
@@ -1946,6 +1957,7 @@ function find_app() {
     printf >&2 "FATAL: at least one parameter is required in find_app(). Exit.\n"
     exit 1
   fi
+  APP=""
   while (("$#")); do
     if type -P "$1" >/dev/null; then
       APP="$(type -P "$1")"
@@ -2033,7 +2045,7 @@ modify_params() {
 # -------------------------------------------------------------------------
 print_info_kde() {
 # -------------------------------------------------------------------------
-  if [ $KDE -gt 1 ]; then
+  if [ "$KDE" -gt 1 ]; then
     printf "Info:\n"
     # if not root
     if [ "$(id | cut -c5)" -ne 0 ]; then
@@ -2084,8 +2096,10 @@ select_algorithms() {
     "n")
       ALGORITHMS=""
       ;;
-    *) ;;
-
+    *)
+      # "p" or any other key: keep the previous selection and move on
+      YESNO="n"
+      ;;
     esac
   done
 }
@@ -2223,10 +2237,11 @@ install_generic() {
 #    spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
-  print_params "$1"
+  # No print_params here, install_interactive prints the parameters anyway.
+  # The defaults offered by modify_params come from init_java/init_editor/
+  # init_viewer, and they are deliberately kept across runs.
   modify_params
   install_interactive "$1"
-  EDIT=""
 }
 
 # -------------------------------------------------------------------------
@@ -2237,6 +2252,13 @@ uninstall_generic() {
 # -------------------------------------------------------------------------
   set_env "$1"
   uninstall "$1"
+}
+
+# -------------------------------------------------------------------------
+init_java() {
+# -------------------------------------------------------------------------
+  find_app java
+  JAVA="$APP"
 }
 
 # -------------------------------------------------------------------------
@@ -2272,6 +2294,7 @@ set_env nnn
 set_env pcmanfm
 set_env yazi
 
+init_java
 init_editor
 init_viewer
 ACTION="install"
@@ -2303,77 +2326,77 @@ while :; do
     ;;
 
   a)
-    if [ $RANGER -eq 1 ]; then
+    if [ "$RANGER" -eq 1 ]; then
       ${ACTION}_generic ranger
     fi
     ;;
   c)
-    if [ $CAJA -eq 1 ]; then
+    if [ "$CAJA" -eq 1 ]; then
       ${ACTION}_generic caja
     fi
     ;;
   d) # in the $KDE variable we have stored the major version
-    if [ $KDE -gt 1 ]; then
+    if [ "$KDE" -gt 1 ]; then
       ${ACTION}_generic kde
     fi
     ;;
   e)
-    if [ $ELEMENTARY -eq 1 ]; then
+    if [ "$ELEMENTARY" -eq 1 ]; then
       ${ACTION}_generic elementary
     fi
     ;;
   g)
-    if [ $GNOME -eq 1 ]; then
+    if [ "$GNOME" -eq 1 ]; then
       ${ACTION}_generic gnome
     fi
     ;;
   m)
-    if [ $MUCOMMANDER -eq 1 ]; then
+    if [ "$MUCOMMANDER" -eq 1 ]; then
       ${ACTION}_generic mucommander
     fi
     ;;
   n)
-    if [ $NNN -eq 1 ]; then
+    if [ "$NNN" -eq 1 ]; then
       ${ACTION}_generic nnn
     fi
     ;;
   o)
-    if [ $NEMO -eq 1 ]; then
+    if [ "$NEMO" -eq 1 ]; then
       ${ACTION}_generic nemo
     fi
     ;;
   p)
-    if [ $PCMANFM -eq 1 ]; then
+    if [ "$PCMANFM" -eq 1 ]; then
       ${ACTION}_generic pcmanfm
     fi
     ;;
   r)
-    if [ $ROX -eq 1 ]; then
+    if [ "$ROX" -eq 1 ]; then
       ${ACTION}_generic rox
     fi
     ;;
   s)
-    if [ $SPACEFM -eq 1 ]; then
+    if [ "$SPACEFM" -eq 1 ]; then
       ${ACTION}_generic spacefm
     fi
     ;;
   t)
-    if [ $THUNAR -eq 1 ]; then
+    if [ "$THUNAR" -eq 1 ]; then
       ${ACTION}_generic thunar
     fi
     ;;
   x)
-    if [ $XFE -eq 1 ]; then
+    if [ "$XFE" -eq 1 ]; then
       ${ACTION}_generic xfe
     fi
     ;;
   y)
-    if [ $YAZI -eq 1 ]; then
+    if [ "$YAZI" -eq 1 ]; then
       ${ACTION}_generic yazi
     fi
     ;;
   z)
-    if [ $ZZZFM -eq 1 ]; then
+    if [ "$ZZZFM" -eq 1 ]; then
       ${ACTION}_generic zzzfm
     fi
     ;;
