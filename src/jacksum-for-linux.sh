@@ -47,6 +47,8 @@
 #    GNOME Files (known as Gnome Nautilus) 42.1.1 on Ubuntu Linux 22.04
 #    GNOME Files (known as Gnome Nautilus) 3.26.4 on Ubuntu Linux 18.04
 #
+#    Midnight Commander 4.8.33 on Ubuntu Linux 26.04
+#
 #    muCommander 1.3.0 on Ubuntu 22.04.4 LTS
 #
 #    Nemo 6.4.5 on Ubuntu Linux 26.04
@@ -134,6 +136,7 @@ CAJA_PROGNAME="Caja"
 ELEMENTARY_PROGNAME="Elementary Files"
 GNOME_PROGNAME="GNOME Files (Nautilus)"
 KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
+MC_PROGNAME="Midnight Commander"
 MUCOMMANDER_PROGNAME="muCommander"
 NEMO_PROGNAME="Nemo"
 NNN_PROGNAME="nnn"
@@ -195,13 +198,14 @@ print_menu() {
   print_menu_item d "$KDE_PROGNAME" "$KDE_DISABLED"
   print_menu_item e "$ELEMENTARY_PROGNAME" "$ELEMENTARY_DISABLED"
   print_menu_item g "$GNOME_PROGNAME" "$GNOME_DISABLED"
-  print_menu_item m "$MUCOMMANDER_PROGNAME" "$MUCOMMANDER_DISABLED"
+  print_menu_item m "$MC_PROGNAME" "$MC_DISABLED"
   print_menu_item n "$NNN_PROGNAME" "$NNN_DISABLED"
   print_menu_item o "$NEMO_PROGNAME" "$NEMO_DISABLED"
   print_menu_item p "$PCMANFM_PROGNAME" "$PCMANFM_DISABLED"
   print_menu_item r "$ROX_PROGNAME" "$ROX_DISABLED"
   print_menu_item s "$SPACEFM_PROGNAME" "$SPACEFM_DISABLED"
   print_menu_item t "$THUNAR_PROGNAME" "$THUNAR_DISABLED"
+  print_menu_item u "$MUCOMMANDER_PROGNAME" "$MUCOMMANDER_DISABLED"
   print_menu_item x "$XFE_PROGNAME" "$XFE_DISABLED"
   print_menu_item y "$YAZI_PROGNAME" "$YAZI_DISABLED"
   print_menu_item z "$ZZZFM_PROGNAME" "$ZZZFM_DISABLED"
@@ -335,8 +339,8 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   kde)
@@ -589,6 +593,23 @@ set_env() {
     fi
     ;;
 
+  mc)
+    if type mc &>/dev/null; then
+      MC=1
+      MC_DISABLED=""
+      # mc's config folder; MC_PROFILE_ROOT replaces HOME and switches the XDG
+      # lookup off entirely, that's what mc itself does (see mc(1))
+      if [ -n "$MC_PROFILE_ROOT" ]; then
+        PREFIX="$MC_PROFILE_ROOT/.config/mc"
+      else
+        PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/mc"
+      fi
+    else
+      MC=0
+      MC_DISABLED="(DISABLED)"
+    fi
+    ;;
+
   nnn)
     if type nnn &>/dev/null; then
       NNN=1
@@ -644,8 +665,8 @@ set_env() {
 uninstall() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press the \"Enter\" key to continue ... "
@@ -656,11 +677,11 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
+  caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
     uninstall_"$1"
     ;;
   spacefm | zzzfm)
@@ -834,6 +855,30 @@ uninstall_thunar() {
 }
 
 # -------------------------------------------------------------------------
+uninstall_mc() {
+# -------------------------------------------------------------------------
+  remove_jacksum_sh
+  printf "  Removing %s entries:           " "$NAME"
+  # restore the backup
+  MCMENU="$PREFIX/menu"
+  MCMENUBACKUP="$PREFIX/menu.before-jacksum"
+  if [ ! -f "$MCMENUBACKUP" ]; then
+    printf "[ NOT INSTALLED ]\n"
+  else
+    cp "$MCMENUBACKUP" "$MCMENU"
+    rm "$MCMENUBACKUP"
+    # the user had no user menu of their own before the installation, so what
+    # we would leave behind is a verbatim copy of the menu that mc falls back
+    # to anyway (see install_menu_mc)
+    if find_mc_system_menu && cmp -s "$MCMENU" "$MC_SYSTEM_MENU"; then
+      rm "$MCMENU"
+      rmdir "$PREFIX" 2>/dev/null
+    fi
+    printf "[  OK  ]\n"
+  fi
+}
+
+# -------------------------------------------------------------------------
 uninstall_ranger() {
 # -------------------------------------------------------------------------
   remove_jacksum_sh
@@ -991,11 +1036,11 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-  caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
+  caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
     install_menu_"$1"
     ;;
   spacefm | zzzfm)
@@ -1274,6 +1319,165 @@ install_menu_nnn() {
     install_menu_nnn_plugin
   done
   printf "[  OK  ]\n"
+}
+
+# -------------------------------------------------------------------------
+# Looks for the system wide mc.menu and returns its path in $MC_SYSTEM_MENU.
+# "mc --datadir" prints the folder of the system wide config files and, in
+# parentheses, the one of the system wide data files; depending on the
+# distribution the file is in either of the two.
+#
+find_mc_system_menu() {
+# -------------------------------------------------------------------------
+  local DIR
+  MC_SYSTEM_MENU=""
+  # the word splitting of the "mc --datadir" output is intended here
+  for DIR in $(mc --datadir 2>/dev/null | tr -d '()') /etc/mc /usr/share/mc /usr/local/share/mc; do
+    # mc prints its folders with a trailing slash, we don't want a double one
+    if [ -f "${DIR%/}/mc.menu" ]; then
+      MC_SYSTEM_MENU="${DIR%/}/mc.menu"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# -------------------------------------------------------------------------
+# Determines the hotkey of the next mc user menu entry and returns it in
+# $HOTKEY. The first character of an entry line in an mc menu file is that
+# entry's hotkey, and mc jumps to the first entry that carries the character
+# that was typed - an entry with a character that is taken already would
+# never be reached. So the characters that are in use are collected in
+# $MC_HOTKEYS_USED (install_menu_mc initializes it from the menu file) and
+# they are skipped here.
+#
+# The pool deliberately has none of the characters that mc's own mc.menu
+# uses. At most 4 + 5 = 9 of them are needed, so running out is a merely
+# theoretical case; "." is used then, which is no hotkey at all, but the
+# entry is still in the menu and can be reached with the arrow keys, which
+# beats shadowing an entry of the user.
+#
+mc_next_hotkey() {
+#
+# in/out: $MC_HOTKEYS_USED, the characters that are taken already
+# -------------------------------------------------------------------------
+  local POOL="jklefgipqsuvwJKLEFGIMNOPQSTVWX9"
+  local I C
+  for ((I = 0; I < ${#POOL}; I++)); do
+    C="${POOL:I:1}"
+    case "$MC_HOTKEYS_USED" in
+    *"$C"*) ;;
+    *)
+      MC_HOTKEYS_USED="$MC_HOTKEYS_USED$C"
+      HOTKEY="$C"
+      return
+      ;;
+    esac
+  done
+  HOTKEY="."
+}
+
+# -------------------------------------------------------------------------
+# Appends one entry to the mc user menu: the hotkey and the title start in
+# column 1, and the command below it is indented - that is what makes mc
+# treat the line as a command rather than as the next entry.
+#
+# mc replaces %s with the tagged files, or with the file under the cursor if
+# nothing is tagged, and it shell quotes what it inserts (see the macro
+# documentation on top of mc's own mc.menu), so %s can be handed over to
+# jacksum.sh as it is. Everything we start is a GUI and mc runs a menu
+# command synchronously, hence the subshell in the background - the panels
+# would stay frozen until the window is closed again otherwise.
+#
+install_menu_mc_entry() {
+#
+# parameters:
+# $1 = command or algorithm
+# $2 = text
+#
+# in/out: $MC_HOTKEYS_USED, $MC_ENTRIES
+# -------------------------------------------------------------------------
+  mc_next_hotkey
+  printf '%s       Jacksum - %s\n' "$HOTKEY" "$2"
+  printf '        ("%s" %s %%s >/dev/null 2>&1 &)\n' "$JACKSUMSH" "$1"
+  MC_ENTRIES="$MC_ENTRIES    $HOTKEY - $2"$'\n'
+}
+
+# -------------------------------------------------------------------------
+# mc's user menu, the one that F2 opens, is a plain text file that mc reads
+# again every time the menu is opened, so no restart is required. mc uses the
+# user's own menu only if it exists and the system wide one otherwise, which
+# is why a menu that we have to create is seeded with a copy of the system
+# wide one: a file with nothing but our own entries in it would silently take
+# all of mc's default actions away from the user.
+#
+# Unlike ranger and Yazi this is a real menu, so all four fixed $COMMANDS get
+# an entry; of $ALGORITHMS (open-ended, user-selectable) only the first 5 do,
+# so that a long list of directly selected algorithms cannot bury the user's
+# own entries - the rest remain reachable via HashGarten's own GUI as usual.
+#
+install_menu_mc() {
+# -------------------------------------------------------------------------
+  MCMENU="$PREFIX/menu"
+  MCMENUBACKUP="$PREFIX/menu.before-jacksum"
+  printf "  Backing up the user menu:           "
+  if [ ! -f "$MCMENU" ]; then
+    printf "[ NOT FOUND ]\n"
+    mkdir -p "$PREFIX" 2>/dev/null
+    if find_mc_system_menu; then
+      cp "$MC_SYSTEM_MENU" "$MCMENU"
+    else
+      printf 'shell_patterns=0\n' >"$MCMENU"
+    fi
+    cp "$MCMENU" "$MCMENUBACKUP"
+  else
+    cp "$MCMENU" "$MCMENUBACKUP"
+    printf "[  OK  ]\n"
+  fi
+  # mc ignores a user menu that everybody could write to, see mc(1)
+  chmod go-w "$MCMENU"
+
+  printf "  Installing entries:                 "
+  # the characters that are in use as a hotkey already; the shell_patterns
+  # line is a setting rather than an entry, and lines that start with #, +
+  # or = are comments and conditions, so none of those carries a hotkey
+  MC_HOTKEYS_USED="$(sed -n '/^shell_patterns=/d; s/^\([^[:space:]#+=]\).*/\1/p' "$MCMENU" | tr -d '\n')"
+  MC_ENTRIES=""
+  {
+    printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
+    for i in $COMMANDS; do
+      CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+      install_menu_mc_entry "$CMD" "$TXT"
+    done
+    N=0
+    for i in $ALGORITHMS; do
+      N=$((N + 1))
+      if [ "$N" -gt 5 ]; then
+        break
+      fi
+      install_menu_mc_entry "$i" "$i"
+    done
+  } >>"$MCMENU"
+  printf "[  OK  ]\n"
+
+  # see mc(1), FILES: a "local user-defined menu" wins over the user menu
+  MCLOCALMENU="${MC_PROFILE_ROOT:-$HOME}/.local/share/mc.menu"
+  if [ -f "$MCLOCALMENU" ]; then
+    printf "  Note: mc uses %s\n" "$MCLOCALMENU"
+    printf "        instead of the user menu, so the entries below stay invisible as\n"
+    printf "        long as that file exists.\n"
+  fi
+
+  printf "  User menu entries (press F2 in mc):\n"
+  printf "%s" "$MC_ENTRIES"
+  N=0
+  for i in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$N" -gt 5 ]; then
+      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a menu entry)\n" "$i"
+      break
+    fi
+  done
 }
 
 # -------------------------------------------------------------------------
@@ -1746,11 +1950,11 @@ install_menu_xxxfm() {
 # -------------------------------------------------------------------------
 install_script() {
 # parameters: 
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
-    caja | elementary | gnome | kde | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | yazi | zzzfm)
+    caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | yazi | zzzfm)
     install_script_generic
     ;;
   *)
@@ -2109,7 +2313,7 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or mucommander or nnn or ranger or yazi
+# or mc or mucommander or nnn or ranger or yazi
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -2169,8 +2373,8 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -2203,6 +2407,10 @@ install_done() {
   zzzfm)
     # no restart required for zzzFM :)
     ;;
+  mc)
+    # no restart required, mc reads its user menu every time F2 is pressed :)
+    printf "Press F2 in Midnight Commander to open the user menu.\n"
+    ;;
   mucommander)
     printf "Please restart muCommander in order to make the change active.\n"
     ;;
@@ -2233,8 +2441,8 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # No print_params here, install_interactive prints the parameters anyway.
@@ -2247,8 +2455,8 @@ install_generic() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# $1 caja, elementary, gnome, kde, mucommander, nemo, nnn, pcmanfm, ranger, rox,
-#    spacefm, thunar, xfe, yazi or zzzfm
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   uninstall "$1"
@@ -2290,6 +2498,7 @@ set_env spacefm
 set_env zzzfm
 set_env ranger
 set_env mucommander
+set_env mc
 set_env nnn
 set_env pcmanfm
 set_env yazi
@@ -2351,8 +2560,8 @@ while :; do
     fi
     ;;
   m)
-    if [ "$MUCOMMANDER" -eq 1 ]; then
-      ${ACTION}_generic mucommander
+    if [ "$MC" -eq 1 ]; then
+      ${ACTION}_generic mc
     fi
     ;;
   n)
@@ -2383,6 +2592,11 @@ while :; do
   t)
     if [ "$THUNAR" -eq 1 ]; then
       ${ACTION}_generic thunar
+    fi
+    ;;
+  u)
+    if [ "$MUCOMMANDER" -eq 1 ]; then
+      ${ACTION}_generic mucommander
     fi
     ;;
   x)
