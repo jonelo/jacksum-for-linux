@@ -17,6 +17,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+#
 #  * credit: this shell script is based on the bash script called
 #    Mount ISO 0.9.1 for KDE, which is released under the terms of the GNU GPL.
 #    See also https://web.archive.org/web/20170706050025/https://www.linux-apps.com/p/998451/
@@ -128,26 +129,75 @@ HASHGARTEN_VERSION="0.19.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
-ALGOS_DIRECT_SUGGESTION="cksum crc32 ed2k haval_256_5 md5 rmd160 sha1 sha256 sha3-256 sumbsd sumsysv whirlpool"
+ALGOS_DIRECT_SUGGESTION="sha256 sha3-256 sha1 md5 cksum crc32 ed2k sumbsd sumsysv"
 ALGORITHMS=""
 COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cust;3)_Customized_Output cmd_edit;4)_Edit_Script"
+# How many of the $ALGORITHMS get an entry of their own where every entry
+# costs a key: mc, ranger and Yazi have a menu hotkey or a key binding per
+# entry, and an open ended list of algorithms would either run out of keys or
+# bury the entries of the user. Everywhere else all of them get one.
+MAX_DIRECT_ALGOS=5
 
-CAJA_PROGNAME="Caja"
-ELEMENTARY_PROGNAME="Elementary Files"
-GNOME_PROGNAME="GNOME Files (Nautilus)"
-KDE_PROGNAME="Dolphin, Konqueror, or Krusader"
-MC_PROGNAME="Midnight Commander"
-MUCOMMANDER_PROGNAME="muCommander"
-NEMO_PROGNAME="Nemo"
-NNN_PROGNAME="nnn"
-PCMANFM_PROGNAME="PCManFM, PCManFM-Qt"
-RANGER_PROGNAME="ranger"
-ROX_PROGNAME="ROX-Filer"
-SPACEFM_PROGNAME="SpaceFM"
-THUNAR_PROGNAME="Thunar"
-XFE_PROGNAME="Xfe"
-YAZI_PROGNAME="Yazi"
-ZZZFM_PROGNAME="zzzFM"
+# What the installation puts into a config file of a file browser that does
+# not have one yet (see backup_file). The uninstallation compares the backup
+# against it: if they are the same, the file exists only because we created
+# it, and it is removed rather than restored (see restore_backup).
+SEED_UCA_XML=$'<?xml version="1.0" encoding="UTF-8"?><actions></actions>\n'
+SEED_COMMANDS_XML=$'<?xml version="1.0" encoding="UTF-8"?><commands></commands>\n'
+
+# the user who runs the script; only KDE can install for all users, see set_env
+ME="$(whoami)"
+
+# 1 while an uninstallation is only reported, 0 while it is actually carried
+# out. See confirm_uninstall(), which uses a dry run to show the user what an
+# uninstallation would delete and modify before it asks for confirmation.
+DRYRUN=0
+# the number of changes that the dry run has found
+PLAN_COUNT=0
+
+# Every supported file browser: the key it has in the menu, its internal
+# name, and the programs it stands for. The order of the keys is the order of
+# the menu. Together with an install_menu_* and an uninstall_* function this
+# is all it takes to add one.
+BROWSER_KEYS="a c d e g m n o p r s t u x y z"
+declare -A BROWSER_ID=(
+  [a]=ranger [c]=caja [d]=kde [e]=elementary [g]=gnome [m]=mc [n]=nnn
+  [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar [u]=mucommander
+  [x]=xfe [y]=yazi [z]=zzzfm
+)
+declare -A BROWSER_PROGNAME=(
+  [caja]="Caja"
+  [elementary]="Elementary Files"
+  [gnome]="GNOME Files (Nautilus)"
+  [kde]="Dolphin, Konqueror, Krusader"
+  [mc]="Midnight Commander"
+  [mucommander]="muCommander"
+  [nemo]="Nemo"
+  [nnn]="nnn"
+  [pcmanfm]="PCManFM, PCManFM-Qt"
+  [ranger]="ranger"
+  [rox]="ROX-Filer"
+  [spacefm]="SpaceFM"
+  [thunar]="Thunar"
+  [xfe]="Xfe"
+  [yazi]="Yazi"
+  [zzzfm]="zzzFM"
+)
+# Whose install_menu_*/uninstall_* function does the work: several file
+# browsers share one, because they want the very same thing (the Nautilus
+# family its scripts folder, SpaceFM and zzzFM their handlers).
+declare -A BROWSER_IMPL=(
+  [caja]=gnome [elementary]=elementary [gnome]=gnome [kde]=kde [mc]=mc
+  [mucommander]=mucommander [nemo]=gnome [nnn]=nnn [pcmanfm]=pcmanfm
+  [ranger]=ranger [rox]=rox [spacefm]=xxxfm [thunar]=thunar
+  [xfe]=gnome [yazi]=yazi [zzzfm]=xxxfm
+)
+
+# Filled in by set_env() and refresh_menu_item(), read by print_menu(): "the
+# file browser is not on this machine", whom an installation would be for,
+# and "1" if something of ours is installed for it already (which decides
+# whether the menu offers install or reinstall, uninstall or nothing at all).
+declare -A BROWSER_UNAVAILABLE BROWSER_USERS BROWSER_INSTALLED
 
 # -------------------------------------------------------------------------
 # Prints a line with dashes.
@@ -168,52 +218,61 @@ print_header() {
 }
 
 # -------------------------------------------------------------------------
-# Prints one file-manager menu line, unless it is DISABLED and disabled
+# Prints one file-manager menu line, unless it is UNAVAILABLE and unavailable
 # entries are currently hidden.
 #
 print_menu_item() {
 #
 # parameters:
-# $1 = menu letter
-# $2 = progname
-# $3 = disabled flag (empty or "(DISABLED)")
+# $1 = menu key
+# $2 = file browser
 # -------------------------------------------------------------------------
-  if [ -n "$3" ] && [ -n "$HIDE_DISABLED" ]; then
+  local KEY="$1"
+  local ID="$2"
+  local UNAVAILABLE="${BROWSER_UNAVAILABLE[$ID]}"
+  local VERB
+
+  if [ -n "$UNAVAILABLE" ] && [ -n "$HIDE_UNAVAILABLE" ]; then
     return
   fi
-  printf "  %s - %-9s  in %s for %s %s\n" "$1" "${ACTION}" "$2" "$USERS" "$3"
+
+  # The word says what the key does, and by that it says what is there: an
+  # entry that cannot be installed at all, and one that has nothing to
+  # uninstall, get dashes rather than an action that would do nothing.
+  if [ -n "$UNAVAILABLE" ]; then
+    VERB="-------"
+  elif [ "$ACTION" = "install" ]; then
+    if [ -n "${BROWSER_INSTALLED[$ID]}" ]; then
+      VERB="reinstall"
+    else
+      VERB="install"
+    fi
+  elif [ -n "${BROWSER_INSTALLED[$ID]}" ]; then
+    VERB="uninstall"
+  else
+    VERB="-------"
+  fi
+
+  printf "  %s - %-9s  in %s for %s%s\n" "$KEY" "$VERB" "${BROWSER_PROGNAME[$ID]}" \
+    "${BROWSER_USERS[$ID]}" "${UNAVAILABLE:+ $UNAVAILABLE}"
 }
 
 # -------------------------------------------------------------------------
 # Prints the install/uninstall menu.
 #
 print_menu() {
-#
-# parameter:
-# $1 "install" or "uninstall"
 # -------------------------------------------------------------------------
+  local KEY
+
   printf "Menu:\n"
-  print_menu_item a "$RANGER_PROGNAME" "$RANGER_DISABLED"
-  print_menu_item c "$CAJA_PROGNAME" "$CAJA_DISABLED"
-  print_menu_item d "$KDE_PROGNAME" "$KDE_DISABLED"
-  print_menu_item e "$ELEMENTARY_PROGNAME" "$ELEMENTARY_DISABLED"
-  print_menu_item g "$GNOME_PROGNAME" "$GNOME_DISABLED"
-  print_menu_item m "$MC_PROGNAME" "$MC_DISABLED"
-  print_menu_item n "$NNN_PROGNAME" "$NNN_DISABLED"
-  print_menu_item o "$NEMO_PROGNAME" "$NEMO_DISABLED"
-  print_menu_item p "$PCMANFM_PROGNAME" "$PCMANFM_DISABLED"
-  print_menu_item r "$ROX_PROGNAME" "$ROX_DISABLED"
-  print_menu_item s "$SPACEFM_PROGNAME" "$SPACEFM_DISABLED"
-  print_menu_item t "$THUNAR_PROGNAME" "$THUNAR_DISABLED"
-  print_menu_item u "$MUCOMMANDER_PROGNAME" "$MUCOMMANDER_DISABLED"
-  print_menu_item x "$XFE_PROGNAME" "$XFE_DISABLED"
-  print_menu_item y "$YAZI_PROGNAME" "$YAZI_DISABLED"
-  print_menu_item z "$ZZZFM_PROGNAME" "$ZZZFM_DISABLED"
+  for KEY in $BROWSER_KEYS; do
+    print_menu_item "$KEY" "${BROWSER_ID[$KEY]}"
+  done
   printf "\n"
-  if [ -z "$HIDE_DISABLED" ]; then
-    printf "  h - Hide the DISABLED entries\n"
+  if [ -z "$HIDE_UNAVAILABLE" ]; then
+    printf "  h - Hide the UNAVAILABLE entries\n"
   else
-    printf "  h - Unhide the DISABLED entries\n"
+    printf "  h - Unhide the UNAVAILABLE entries\n"
   fi
   printf "  i - Toggle install/uninstall menu\n"
   printf "  q - Quit the installer\n"
@@ -224,6 +283,8 @@ print_menu() {
 # Returns 0 if the glob that the caller passed in (unquoted, so that the shell
 # expands it here) matched at least one existing file, otherwise 1. An unmatched
 # glob stays unexpanded in bash, hence the -e test rather than a count of "$#".
+# A symlink whose target is gone is an entry that is still there and that still
+# has to be removed, so -L counts as well - -e alone would not see it.
 #
 glob_exists() {
 #
@@ -232,7 +293,7 @@ glob_exists() {
 # -------------------------------------------------------------------------
   local f
   for f in "$@"; do
-    [ -e "$f" ] && return 0
+    { [ -e "$f" ] || [ -L "$f" ]; } && return 0
   done
   return 1
 }
@@ -263,61 +324,122 @@ check_env() {
 }
 
 # -------------------------------------------------------------------------
+# Looks for a program and reports where it was found, or that it was not.
+# The four functions here all take the variable that the result goes into as
+# their first parameter, rather than leaving it in one of their own.
+#
 check_bin() {
 #
 # parameters:
-# $1 = Binary name
-# $2 = Default location
+# $1 = the variable that takes the result
+# $2 = binary name
+# $3 = default location
 # -------------------------------------------------------------------------
-  BIN=""
-  WHICH="$(which "$1" 2>/dev/null)"
-  if [ -f "$2" ]; then
-    BIN="$2"
-    printf "  [%s]: %s\n" "$1" "$BIN"
+  local FOUND=""
+  local WHICH
+  WHICH="$(command -v "$2" 2>/dev/null)"
+  if [ -f "$3" ]; then
+    FOUND="$3"
   elif [ -f "$WHICH" ]; then
-    BIN="$WHICH"
-    printf "  [%s]: %s\n" "$1" "$BIN"
-  else
-    printf "  [%s]: >> not found <<\n" "$1"
+    FOUND="$WHICH"
   fi
+
+  if [ -n "$FOUND" ]; then
+    printf "  [%s]: %s\n" "$2" "$FOUND"
+  else
+    printf "  [%s]: >> not found <<\n" "$2"
+  fi
+  printf -v "$1" "%s" "$FOUND"
 }
 
 # -------------------------------------------------------------------------
+# The same for a file that is expected at one certain place, e.g. a jar.
+#
 check_file() {
 #
 # parameters:
-# $1 = file name
-# $2 = Default location
+# $1 = the variable that takes the result
+# $2 = file name
+# $3 = default location
 # -------------------------------------------------------------------------
-  BIN=""
-  if [ -f "$2" ]; then
-    BIN="$2"
-    printf "  [%s]: %s\n" "$1" "$BIN"
+  local FOUND=""
+  if [ -f "$3" ]; then
+    FOUND="$3"
+    printf "  [%s]: %s\n" "$2" "$FOUND"
   else
-    printf "  [%s]: >> not found <<\n" "$1"
+    printf "  [%s]: >> not found <<\n" "$2"
   fi
+  printf -v "$1" "%s" "$FOUND"
 }
 
 # -------------------------------------------------------------------------
+# Asks the user for a file, and keeps asking until it names one that is
+# really there.
+#
 find_bin() {
 #
 # parameters:
-# $1 = Description for the binary
-# $2 = Default location
+# $1 = the variable that takes the result
+# $2 = description for the binary
+# $3 = default location
 # -------------------------------------------------------------------------
+  local FOUND=""
+
   printf "\n"
-  BIN=""
-  if [ -n "$2" ]; then
-    printf "Type the absolute path to \"%s\"\n" "$1"
-    printf "and press \"Enter\" to continue [%s]: " "$2"
-    read -r BIN
-    test -z "$BIN" && BIN="$2"
+  if [ -n "$3" ]; then
+    printf "Type the absolute path to \"%s\"\n" "$2"
+    printf "and press \"Enter\" to continue [%s]: " "$3"
+    read -r FOUND
+    test -z "$FOUND" && FOUND="$3"
   fi
-  while [ ! -f "$BIN" ]; do
-    printf "Couldn't find \"%s\"!\n" "$1"
+  while [ ! -f "$FOUND" ]; do
+    printf "Couldn't find \"%s\"!\n" "$2"
     printf "Type the absolute path here or press \"Ctrl+C\" to abort: "
-    read -r BIN
+    read -r FOUND
   done
+  printf -v "$1" "%s" "$FOUND"
+}
+
+# -------------------------------------------------------------------------
+# Returns 0 if the java binary that was passed in belongs to a headless
+# JRE/JDK, one that cannot open a window, so that HashGarten cannot be used
+# with it.
+#
+# A headless build ships the java.desktop module like every other one, and
+# the java.awt.headless property is not set either way (the JVM decides that
+# lazily), so neither of the two says anything. What such a build does not
+# ship is the native X11 binding of AWT, libawt_xawt.so - that is the file
+# that tells them apart (Debian's openjdk-*-jre-headless, Red Hat's
+# java-*-openjdk-headless).
+#
+# Returns 1 for a full JRE/JDK, and also whenever the question cannot be
+# answered - a warning that turns out to be made up would be worse than none.
+#
+is_headless_java() {
+#
+# parameters:
+# $1 the java binary
+# -------------------------------------------------------------------------
+  local JAVA_HOME_DIR
+  # the JVM itself knows where it lives, which readlink would not survive if
+  # the binary that was entered is a wrapper script rather than a symlink
+  JAVA_HOME_DIR="$("$1" -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p')"
+  if [ ! -d "$JAVA_HOME_DIR" ]; then
+    return 1
+  fi
+
+  # not a layout we know (a Mac has libawt.dylib, and so on), so say nothing
+  # rather than read "headless" into the absence of a file that would never
+  # be there in the first place
+  if ! glob_exists "$JAVA_HOME_DIR"/lib/libawt.so "$JAVA_HOME_DIR"/lib/*/libawt.so; then
+    return 1
+  fi
+
+  # lib/ is where Java 9 and later keep it, lib/<arch>/ is the older layout
+  if glob_exists "$JAVA_HOME_DIR"/lib/libawt_xawt.so "$JAVA_HOME_DIR"/lib/*/libawt_xawt.so; then
+    return 1
+  fi
+  return 0
 }
 
 # -------------------------------------------------------------------------
@@ -342,101 +464,67 @@ set_env() {
 # $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
 #    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
+  # Every file browser but KDE installs into the home of the user who runs
+  # the script - none of the others has a system wide location that it would
+  # read a menu of ours from - so this holds for all of them, and only the
+  # KDE branch below overwrites it when the script is run as root.
+  USERS="user $ME"
+
+  # a file browser is taken to be missing until its own arm below has found
+  # it, so that only the arm that succeeds has anything to say
+  BROWSER_UNAVAILABLE[$1]="(UNAVAILABLE)"
+
   case $1 in
   kde)
-    KDE=""
-    if [ "$KDE" = "" ]; then
-      if type kded6 &>/dev/null; then
-        # KDE Framework 6.x
-        KDE=6
-        KDE_DISABLED=""
-        if [ "$(id | cut -c5)" -ne 0 ]; then
-          # non-root user
-          LOCAL=""
-          check_env "KDE config folder" "$LOCAL" "$HOME/.local"
-          USERS="user "$(whoami)
-        else
-          SYSTEM=""
-          check_env "KDE install prefix" "$SYSTEM" "/usr"
-          USERS="all users"
-        fi
-        PREFIX="$DIR"
-        KDEPOSTFIX="/share/kio/servicemenus/"
-      fi
-    fi
+    # Every generation of KDE keeps its servicemenus somewhere else, and each
+    # one is recognized by a program that only it brings along. The table is
+    # walked from the newest generation to the oldest, one row each:
+    #
+    #   version;program;ask it?;config folder;install prefix;servicemenu folder
+    #
+    # KDE 6 and 5 are only looked for, KDE 4 and 3 are run: their kde*-config
+    # prints the folders they use, so it is asked, and one that cannot even be
+    # run is not a KDE we could install into. The two newer ones have no such
+    # program, so they leave the folder to the default in the row.
+    KDE=0
+    for ROW in \
+      "6;kded6;;$HOME/.local;/usr;/share/kio/servicemenus/" \
+      "5;kf5-config;;$HOME/.local;/usr;/share/kservices5/ServiceMenus/" \
+      "4;kde4-config;ask;$HOME/.kde;/opt/kde4;/share/kde4/services/ServiceMenus/" \
+      "3;kde-config;ask;$HOME/.kde;/opt/kde3;/share/apps/konqueror/servicemenus/"; do
+      IFS=";" read -r KDEVER KDEPROBE KDEASK KDELOCAL KDESYSTEM KDEMENUS <<<"$ROW"
 
-    if [ "$KDE" = "" ]; then
-      if type kf5-config &>/dev/null; then
-        # KDE Framework 5.x
-        KDE=5
-        KDE_DISABLED=""
-        if [ "$(id | cut -c5)" -ne 0 ]; then
-          # non-root user
-          LOCAL=""
-          check_env "KDE config folder" "$LOCAL" "$HOME/.local"
-          USERS="user "$(whoami)
-        else
-          SYSTEM=""
-          check_env "KDE install prefix" "$SYSTEM" "/usr"
-          USERS="all users"
-        fi
-        PREFIX="$DIR"
-        KDEPOSTFIX="/share/kservices5/ServiceMenus/"
+      if [ -n "$KDEASK" ]; then
+        "$KDEPROBE" >/dev/null 2>&1 || continue
+      else
+        type "$KDEPROBE" >/dev/null 2>&1 || continue
       fi
-    fi
 
-    if [ "$KDE" = "" ]; then
-      if kde4-config >/dev/null 2>&1; then
-        # KDE 4.x
-        KDE=4
-        KDE_DISABLED=""
-        if [ "$(id | cut -c5)" -ne 0 ]; then
-          # non-root user
-          LOCAL="$(kde4-config --localprefix 2>/dev/null)"
-          check_env "KDE config folder" "$LOCAL" "$HOME/.kde"
-          USERS="user "$(whoami)
-        else
-          SYSTEM="$(kde4-config --prefix 2>/dev/null)"
-          check_env "KDE install prefix" "$SYSTEM" "/opt/kde4"
-          USERS="all users"
-        fi
-        PREFIX="$DIR"
-        KDEPOSTFIX="/share/kde4/services/ServiceMenus/"
+      KDE="$KDEVER"
+      BROWSER_UNAVAILABLE[$1]=""
+      # $EUID rather than "id -u": Solaris' /usr/bin/id does not know -u
+      # (only /usr/xpg4/bin/id does), while bash brings $EUID everywhere
+      if [ "$EUID" -ne 0 ]; then
+        # non-root user
+        LOCAL=""
+        test -n "$KDEASK" && LOCAL="$("$KDEPROBE" --localprefix 2>/dev/null)"
+        check_env "KDE config folder" "$LOCAL" "$KDELOCAL"
+        USERS="user $ME"
+      else
+        SYSTEM=""
+        test -n "$KDEASK" && SYSTEM="$("$KDEPROBE" --prefix 2>/dev/null)"
+        check_env "KDE install prefix" "$SYSTEM" "$KDESYSTEM"
+        USERS="all users"
       fi
-    fi
-
-    if [ "$KDE" = "" ]; then
-      if kde-config >/dev/null 2>&1; then
-        # KDE 3.x
-        KDE=3
-        KDE_DISABLED=""
-        if [ "$(id | cut -c5)" -ne 0 ]; then
-          # non-root user
-          LOCAL="$(kde-config --localprefix 2>/dev/null)"
-          check_env "KDE config folder" "$LOCAL" "$HOME/.kde"
-          USERS="user "$(whoami)
-        else
-          SYSTEM="$(kde-config --prefix 2>/dev/null)"
-          check_env "KDE install prefix" "$SYSTEM" "/opt/kde3"
-          USERS="all users"
-        fi
-        PREFIX="$DIR"
-        KDEPOSTFIX="/share/apps/konqueror/servicemenus/"
-      fi
-    fi
-
-    if [ "$KDE" = "" ]; then
-      # no KDE
-      KDE=0
-      KDE_DISABLED="(DISABLED)"
-      USERS="user "$(whoami)
-    fi
+      PREFIX="$DIR"
+      KDEPOSTFIX="$KDEMENUS"
+      break
+    done
     ;;
 
   gnome)
     if nautilus --version >/dev/null 2>&1; then
-      GNOME=1
-      GNOME_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       # "GNOME nautilus " is 15 characters, so the version starts at column 16
       NAUTILUSVER=$(nautilus --version 2>/dev/null | cut -c16-)
       # The folder has to be derived from the version, not from the folder that
@@ -470,16 +558,12 @@ set_env() {
         fi
         ;;
       esac
-    else
-      GNOME=0
-      GNOME_DISABLED="(DISABLED)"
     fi
     ;;
 
   nemo)
     if nemo --version >/dev/null 2>&1; then
-      NEMO=1
-      NEMO_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       NEMOVER=$(nemo --version 2>/dev/null | cut -f2 -d' ')
       if [ "$(version_value "$NEMOVER")" -ge "$(version_value 2.6.7)" ]; then
         # starting with Nemo 2.6.7 Nemo's config folder is
@@ -490,9 +574,6 @@ set_env() {
         PREFIX="$HOME/.gnome2"
         FB_SCRIPTFOLDER=nemo-scripts
       fi
-    else
-      NEMO=0
-      NEMO_DISABLED="(DISABLED)"
     fi
     ;;
 
@@ -501,102 +582,66 @@ set_env() {
       XFEVER=$(xfe --version 2>/dev/null | cut -f3 -d' ')
       # script folder is supported starting with Xfe 1.35
       if [ "$(version_value "$XFEVER")" -ge "$(version_value 1.35)" ]; then
-        XFE=1
-        XFE_DISABLED=""
+        BROWSER_UNAVAILABLE[$1]=""
         PREFIX="$HOME/.config/xfe"
         FB_SCRIPTFOLDER=scripts
-      else
-        XFE=0
-        XFE_DISABLED="(DISABLED)"
       fi
-    else
-      XFE=0
-      XFE_DISABLED="(DISABLED)"
     fi
     ;;
 
   caja)
     if caja --version >/dev/null 2>&1; then
-      CAJA=1
-      CAJA_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       PREFIX="$HOME/.config/caja"
       FB_SCRIPTFOLDER=scripts
-    else
-      CAJA=0
-      CAJA_DISABLED="(DISABLED)"
     fi
     ;;
 
   rox)
     if rox --version >/dev/null 2>&1; then
-      ROX=1
-      ROX_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       PREFIX="$HOME/.config/rox.sourceforge.net"
-    else
-      ROX=0
-      ROX_DISABLED="(DISABLED)"
     fi
     ;;
 
   thunar)
     if thunar --version >/dev/null 2>&1; then
-      THUNAR=1
-      THUNAR_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       PREFIX="$HOME/.config/Thunar"
-    else
-      THUNAR=0
-      THUNAR_DISABLED="(DISABLED)"
     fi
     ;;
 
   elementary)
     if io.elementary.files --version >/dev/null 2>&1; then
-      ELEMENTARY=1
-      ELEMENTARY_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       PREFIX="$HOME/.local/share/contractor"
-    else
-      ELEMENTARY=0
-      ELEMENTARY_DISABLED="(DISABLED)"
     fi
     ;;
 
   spacefm)
     if spacefm --version >/dev/null 2>&1; then
-      SPACEFM=1
-      SPACEFM_DISABLED=""
-      PREFIX="$HOME/.config/spacefm/"
-    else
-      SPACEFM=0
-      SPACEFM_DISABLED="(DISABLED)"
+      BROWSER_UNAVAILABLE[$1]=""
+      PREFIX="$HOME/.config/spacefm"
     fi
     ;;
 
   zzzfm)
     if zzzfm --version >/dev/null 2>&1; then
-      ZZZFM=1
-      ZZZFM_DISABLED=""
-      PREFIX="$HOME/.config/zzzfm/"
-    else
-      ZZZFM=0
-      ZZZFM_DISABLED="(DISABLED)"
+      BROWSER_UNAVAILABLE[$1]=""
+      PREFIX="$HOME/.config/zzzfm"
     fi
     ;;
     
   mucommander)
     if [ -f "/opt/mucommander/bin/muCommander" ]; then
-      MUCOMMANDER=1
-      MUCOMMANDER_DISABLED=""
-      PREFIX="$HOME/.mucommander/"
-    else
-      MUCOMMANDER=0
-      MUCOMMANDER_DISABLED="(DISABLED)"
+      BROWSER_UNAVAILABLE[$1]=""
+      PREFIX="$HOME/.mucommander"
     fi
     ;;
 
   mc)
     if type mc &>/dev/null; then
-      MC=1
-      MC_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       # mc's config folder; MC_PROFILE_ROOT replaces HOME and switches the XDG
       # lookup off entirely, that's what mc itself does (see mc(1))
       if [ -n "$MC_PROFILE_ROOT" ]; then
@@ -604,61 +649,110 @@ set_env() {
       else
         PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/mc"
       fi
-    else
-      MC=0
-      MC_DISABLED="(DISABLED)"
     fi
     ;;
 
   nnn)
     if type nnn &>/dev/null; then
-      NNN=1
-      NNN_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       # nnn's config folder, honoring XDG_CONFIG_HOME like nnn itself does
       PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/nnn"
       FB_SCRIPTFOLDER=plugins
-    else
-      NNN=0
-      NNN_DISABLED="(DISABLED)"
     fi
     ;;
 
   pcmanfm)
-    if [ -f "$(which pcmanfm 2>/dev/null)" ] || [ -f "$(which pcmanfm-qt 2>/dev/null)" ]; then
-      PCMANFM=1
-      PCMANFM_DISABLED=""
-      PREFIX="$HOME/.local/share/file-manager/"
-    else
-      PCMANFM=0
-      PCMANFM_DISABLED="(DISABLED)"
+    if [ -f "$(command -v pcmanfm 2>/dev/null)" ] || [ -f "$(command -v pcmanfm-qt 2>/dev/null)" ]; then
+      BROWSER_UNAVAILABLE[$1]=""
+      PREFIX="$HOME/.local/share/file-manager"
     fi
     ;;
 
   ranger)
     if type ranger &>/dev/null; then
-      RANGER=1
-      RANGER_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       # ranger's config folder, honoring XDG_CONFIG_HOME like ranger itself does
       PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/ranger"
-    else
-      RANGER=0
-      RANGER_DISABLED="(DISABLED)"
     fi
     ;;
 
   yazi)
     if type yazi &>/dev/null; then
-      YAZI=1
-      YAZI_DISABLED=""
+      BROWSER_UNAVAILABLE[$1]=""
       # Yazi's own override var takes precedence, then XDG, like Yazi itself does
       PREFIX="${YAZI_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yazi}"
-    else
-      YAZI=0
-      YAZI_DISABLED="(DISABLED)"
     fi
     ;;
 
   esac
+}
+
+# -------------------------------------------------------------------------
+# Prints the file browser that a menu key stands for, nothing at all if the
+# key is none of ours. The keys are compared one by one on purpose: "*" and
+# "@" are subscripts of their own for an array, so a key that somebody typed
+# must not be used as one.
+#
+browser_for_key() {
+#
+# parameters:
+# $1 = the key that was typed
+# -------------------------------------------------------------------------
+  local KEY
+  for KEY in $BROWSER_KEYS; do
+    if [ "$KEY" = "$1" ]; then
+      printf '%s' "${BROWSER_ID[$KEY]}"
+      return
+    fi
+  done
+}
+
+# -------------------------------------------------------------------------
+# Probes one file browser and remembers what its menu line has to show: whom
+# an installation would be for, and whether it is installed already. Called
+# for every file browser on startup and again for the one that an
+# installation or an uninstallation has just changed, so that the menu is up
+# to date without the installer having to be restarted.
+#
+refresh_menu_item() {
+#
+# parameters:
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# -------------------------------------------------------------------------
+  set_env "$1"
+
+  # A file browser that is not there has no $PREFIX of its own - set_env
+  # leaves the one of the file browser before it standing - so there is
+  # nothing to probe, and the line shows (UNAVAILABLE) anyway.
+  if [ -n "${BROWSER_UNAVAILABLE[$1]}" ] || ! is_installed "$1"; then
+    BROWSER_INSTALLED[$1]=""
+  else
+    BROWSER_INSTALLED[$1]="1"
+  fi
+  BROWSER_USERS[$1]="$USERS"
+}
+
+# -------------------------------------------------------------------------
+# Runs the action of the menu on one file browser, unless its menu line shows
+# dashes rather than an action - there is nothing that key could do then, see
+# print_menu_item().
+#
+menu_action() {
+#
+# parameters:
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# -------------------------------------------------------------------------
+  # the file browser is not there at all
+  if [ -n "${BROWSER_UNAVAILABLE[$1]}" ]; then
+    return
+  fi
+  # nothing of ours to remove
+  if [ "$ACTION" = "uninstall" ] && [ -z "${BROWSER_INSTALLED[$1]}" ]; then
+    return
+  fi
+  "${ACTION}_generic" "$1"
 }
 
 # -------------------------------------------------------------------------
@@ -680,14 +774,481 @@ uninstall_silent() {
 # $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
 #    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
-  case $1 in
-  caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
-    uninstall_"$1"
-    ;;
-  spacefm | zzzfm)
-    uninstall_xxxfm
-    ;;
+  "uninstall_${BROWSER_IMPL[$1]}" "$1"
+}
+
+# -------------------------------------------------------------------------
+# Returns 0 if something of ours is installed for the file browser.
+#
+# It does not look for anything itself: it lets the uninstallation report in
+# a dry run what it would remove, and if that is nothing, nothing is
+# installed. So the menu cannot say anything else than what an uninstallation
+# would really find a moment later - a leftover of a half removed
+# installation counts as installed, because that is what would be removed.
+#
+# $PREFIX has to be set for that file browser already, see set_env().
+#
+is_installed() {
+#
+# parameters:
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# -------------------------------------------------------------------------
+  local COUNT
+
+  DRYRUN=1
+  PLAN_COUNT=0
+  uninstall_silent "$1" >/dev/null
+  COUNT="$PLAN_COUNT"
+  DRYRUN=0
+
+  [ "$COUNT" -gt 0 ]
+}
+
+# -------------------------------------------------------------------------
+# Prints one line of the report that an uninstallation shows before it asks
+# for confirmation, and counts it, so that confirm_uninstall() can tell
+# whether anything of ours is installed at all.
+#
+plan_item() {
+#
+# parameters:
+# $1 what would happen to it, e.g. "delete" or "modify"
+# $2 the path
+# $3 optional remark
+# -------------------------------------------------------------------------
+  PLAN_COUNT=$((PLAN_COUNT + 1))
+  printf "  %-7s %s\n" "$1" "$2"
+  if [ -n "$3" ]; then
+    printf "          (%s)\n" "$3"
+  fi
+}
+
+# -------------------------------------------------------------------------
+# Removes every one of the paths that is there, and reports the result. In a
+# dry run ($DRYRUN=1) nothing is touched, the paths are only reported.
+#
+# Returns 0 if at least one of them was there (and has been removed),
+# otherwise 1, so that a caller can make further steps depend on it.
+#
+remove_items() {
+#
+# parameters:
+# $1 label for the progress line, e.g. "jacksum scripts"
+# $2 remark for the report, may be empty
+# $@ the paths, globs expanded by the caller as in glob_exists()
+# -------------------------------------------------------------------------
+  local LABEL="$1"
+  local REMARK="$2"
+  shift 2
+
+  if ! glob_exists "$@"; then
+    status_begin "Removing $LABEL"
+    status_note "NOT INSTALLED"
+    return 1
+  fi
+
+  if [ "$DRYRUN" -eq 1 ]; then
+    local ITEM
+    for ITEM in "$@"; do
+      { [ -e "$ITEM" ] || [ -L "$ITEM" ]; } || continue
+      if [ -n "$REMARK" ]; then
+        plan_item "delete" "$ITEM" "$REMARK"
+      elif [ -L "$ITEM" ]; then
+        plan_item "delete" "$ITEM" "symbolic link"
+      elif [ -d "$ITEM" ]; then
+        plan_item "delete" "$ITEM" "folder with all of its contents"
+      else
+        plan_item "delete" "$ITEM"
+      fi
+    done
+    return 0
+  fi
+
+  status_begin "Removing $LABEL"
+  # -f, because a glob that matched nothing is still in "$@" as the pattern
+  if rm -rf "$@"; then
+    status_ok
+  else
+    status_failed
+  fi
+  return 0
+}
+
+# -------------------------------------------------------------------------
+# Restores a config file that the installation has modified from the backup
+# that it has taken back then, and removes the backup. In a dry run
+# ($DRYRUN=1) nothing is touched, both files are only reported.
+#
+# Returns 0 if the backup was there (so that the file has been restored),
+# otherwise 1.
+#
+restore_backup() {
+#
+# parameters:
+# $1 label for the progress line, e.g. "jacksum entries"
+# $2 the config file to restore
+# $3 the backup to restore it from
+# $4 what the installation seeds a config file with that does not exist yet
+#    (see backup_file). If that is all the backup holds, the file browser had
+#    no config file of its own before the installation, so restoring it would
+#    leave a file behind that only exists because we created it - it is
+#    removed instead, together with the folder if nothing else is left in it.
+#    A config file that holds no more than the default is worth nothing to
+#    the file browser: none of them can tell it from one that is not there.
+# -------------------------------------------------------------------------
+  local LABEL="$1"
+  local FILE="$2"
+  local BACKUP="$3"
+  local SEED="$4"
+
+  if [ ! -f "$BACKUP" ]; then
+    status_begin "Removing $LABEL"
+    status_note "NOT INSTALLED"
+    return 1
+  fi
+
+  # both sides go through a command substitution, which strips the trailing
+  # newlines of either, so that a seed that ends with one still compares
+  # equal to the file that was written from it
+  if [ "$(cat "$BACKUP")" = "$(printf "%s" "$SEED")" ]; then
+    if [ "$DRYRUN" -eq 1 ]; then
+      plan_item "delete" "$FILE" "it holds nothing but what the installation put into it, the file browser had none of its own"
+      plan_item "delete" "$BACKUP"
+      return 0
+    fi
+    status_begin "Removing $LABEL"
+    rm -f "$FILE" "$BACKUP"
+    rmdir "$(dirname "$FILE")" 2>/dev/null
+    status_ok
+    return 0
+  fi
+
+  if [ "$DRYRUN" -eq 1 ]; then
+    plan_item "modify" "$FILE" "restored from $(basename "$BACKUP")"
+    plan_item "delete" "$BACKUP"
+    return 0
+  fi
+
+  status_begin "Removing $LABEL"
+  cp "$BACKUP" "$FILE"
+  rm "$BACKUP"
+  status_ok
+  return 0
+}
+
+# -------------------------------------------------------------------------
+# Reports what the caller is about to create or modify, and tells it whether
+# it still has to do it: the return value is 0 in a dry run ($DRYRUN=1), so
+# that a write site only needs one line in front of it -
+#
+#   plan_pending "create" "$FILE" && continue
+#
+# and everything that writes the file stays untouched below it.
+#
+plan_pending() {
+#
+# parameters:
+# $1 "create" or "modify"
+# $2 the path
+# $3 optional remark
+# -------------------------------------------------------------------------
+  if [ "$DRYRUN" -eq 0 ]; then
+    return 1
+  fi
+  plan_item "$1" "$2" "$3"
+  return 0
+}
+
+# -------------------------------------------------------------------------
+# Prints a progress line of the installation, unless this is a dry run,
+# where the plan_item lines of the report are all that is wanted.
+#
+progress() {
+#
+# parameters:
+# $1 the text, backslash escapes such as \n are interpreted
+# -------------------------------------------------------------------------
+  if [ "$DRYRUN" -eq 0 ]; then
+    printf '%b' "$1"
+  fi
+}
+
+# -------------------------------------------------------------------------
+# The three parts of a progress line of the installation: the text on the
+# left, padded so that the result behind it always begins in the same column,
+# and the result itself. All of them go through progress(), so a dry run,
+# which wants nothing but the plan_item lines of its report, stays silent.
+#
+status_begin() {
+#
+# parameters:
+# $1 what is being done, e.g. "Installing entries"
+# -------------------------------------------------------------------------
+  progress "$(printf '  %-36s' "$1:")"
+}
+
+# -------------------------------------------------------------------------
+status_ok() {
+# -------------------------------------------------------------------------
+  progress "[  OK  ]\n"
+}
+
+# -------------------------------------------------------------------------
+# Closes the progress line with a result of its own, e.g. "NOT INSTALLED".
+#
+status_note() {
+#
+# parameters:
+# $1 the word between the brackets
+# -------------------------------------------------------------------------
+  progress "[ $1 ]\n"
+}
+
+# -------------------------------------------------------------------------
+# Closes the progress line and gives up: whatever was to be done here could
+# not be done, and an installation that goes on from there would leave the
+# file browser in a half changed state.
+#
+status_failed() {
+# -------------------------------------------------------------------------
+  progress "[FAILED]\n"
+  exit 1
+}
+
+# -------------------------------------------------------------------------
+# Makes a file that has just been written executable and closes the progress
+# line. A file that is not there means that writing it has failed.
+#
+finish_file() {
+#
+# parameters:
+# $1 the file
+# -------------------------------------------------------------------------
+  if [ -f "$1" ]; then
+    chmod +x "$1"
+    status_ok
+  else
+    status_failed
+  fi
+}
+
+# -------------------------------------------------------------------------
+# Builds the remark for a config file that does not get one file per menu
+# entry but one entry appended per command and per algorithm, and returns it
+# in $ENTRIES_TEXT, e.g. "9 key bindings are added (4 commands + the first 5
+# of 12 algorithms)".
+#
+count_entries() {
+#
+# parameters:
+# $1 what one entry is called here, e.g. "key bindings"
+# $2 how many algorithms get one at most, 0 if there is no limit
+# -------------------------------------------------------------------------
+  local WHAT="$1"
+  local MAX="$2"
+  local CMDS_N
+  local ALGOS_N
+
+  # the word splitting of the two blank separated lists is what counts them;
+  # the positional parameters are yardstick only, both arguments are read
+  # into locals above
+  # shellcheck disable=SC2086
+  set -- $COMMANDS
+  CMDS_N=$#
+  # shellcheck disable=SC2086
+  set -- $ALGORITHMS
+  ALGOS_N=$#
+
+  if [ "$MAX" -gt 0 ] && [ "$ALGOS_N" -gt "$MAX" ]; then
+    ENTRIES_TEXT="$((CMDS_N + MAX)) $WHAT are added ($CMDS_N commands + the first $MAX of $ALGOS_N algorithms)"
+  elif [ "$ALGOS_N" -gt 0 ]; then
+    ENTRIES_TEXT="$((CMDS_N + ALGOS_N)) $WHAT are added ($CMDS_N commands + $ALGOS_N algorithms)"
+  else
+    ENTRIES_TEXT="$CMDS_N $WHAT are added, one per command"
+  fi
+}
+
+# -------------------------------------------------------------------------
+# Prints one line per menu entry that a file browser is to get, first one for
+# every command and then one for every algorithm:
+#
+#   KIND<tab>COMMAND<tab>TEXT
+#
+# KIND is "command" or "algorithm", and the two are not interchangeable: a
+# command carries the blanks of its label as underscores and gets them back
+# here, while an algorithm keeps every underscore of its name (haval_256_5);
+# and ranger and Yazi put the commands on letters but the algorithms on
+# numbers.
+#
+# To be read with a process substitution rather than with a pipe - the loop
+# has to run in the shell of the caller, several of them collect something in
+# it that is still needed afterwards (e.g. $MC_ENTRIES):
+#
+#   while IFS=$'\t' read -r KIND CMD TXT; do ... done < <(menu_entries)
+#
+menu_entries() {
+#
+# parameters:
+# $1 how many algorithms at most, empty or 0 for all of them
+# -------------------------------------------------------------------------
+  local MAX="${1:-0}"
+  local ENTRY TXT
+  local N=0
+
+  # the word splitting of the two blank separated lists is what walks them
+  # shellcheck disable=SC2086
+  for ENTRY in $COMMANDS; do
+    TXT="${ENTRY#*;}"
+    printf 'command\t%s\t%s\n' "${ENTRY%;*}" "${TXT//_/ }"
+  done
+
+  # shellcheck disable=SC2086
+  for ENTRY in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$MAX" -gt 0 ] && [ "$N" -gt "$MAX" ]; then
+      break
+    fi
+    printf 'algorithm\t%s\t%s\n' "$ENTRY" "$ENTRY"
+  done
+}
+
+# -------------------------------------------------------------------------
+# The letter that ranger and Yazi put a command on, empty for a command that
+# has none - such a command is skipped rather than silently overwriting the
+# binding of the command before it.
+#
+command_key() {
+#
+# parameters:
+# $1 the command
+# -------------------------------------------------------------------------
+  case "$1" in
+  cmd_calc) printf 'h' ;;
+  cmd_check) printf 'c' ;;
+  cmd_cust) printf 'o' ;;
+  cmd_edit) printf 'e' ;;
   esac
+}
+
+# -------------------------------------------------------------------------
+# Names the algorithms that did not get an entry of their own because there
+# were more of them than $MAX_DIRECT_ALGOS. Prints nothing if none were left
+# out. The whole, uncut list is walked on purpose: the entries beyond the
+# limit are exactly what this is about.
+#
+print_skipped_algorithms() {
+#
+# parameters:
+# $1 what an algorithm beyond the limit does not get, e.g. "a menu entry"
+# -------------------------------------------------------------------------
+  local ALGO
+  local N=0
+  # shellcheck disable=SC2086
+  for ALGO in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$N" -gt "$MAX_DIRECT_ALGOS" ]; then
+      printf '    (skipped "%s" and beyond - only the first %d selected algorithms get %s)\n' \
+        "$ALGO" "$MAX_DIRECT_ALGOS" "$1"
+      return
+    fi
+  done
+}
+
+# -------------------------------------------------------------------------
+# Tells the user which key binding the algorithms have got, b1, b2 and so on,
+# and which ones did not get one (see $MAX_DIRECT_ALGOS).
+#
+print_algo_keybindings() {
+#
+# parameters:
+# $1 what an algorithm beyond the limit does not get, e.g. "a key binding"
+# -------------------------------------------------------------------------
+  local ALGO
+  local N=0
+  # shellcheck disable=SC2086
+  for ALGO in $ALGORITHMS; do
+    N=$((N + 1))
+    if [ "$N" -eq 1 ]; then
+      printf "  Direct algorithm key bindings:\n"
+    fi
+    if [ "$N" -gt "$MAX_DIRECT_ALGOS" ]; then
+      break
+    fi
+    printf "    b%d - %s\n" "$N" "$ALGO"
+  done
+  print_skipped_algorithms "$1"
+}
+
+# -------------------------------------------------------------------------
+# Creates a folder that the installation needs, and reports the result. In a
+# dry run ($DRYRUN=1) nothing is created, and only a folder that is not there
+# yet is reported - creating one that exists already changes nothing.
+#
+create_folder() {
+#
+# parameters:
+# $1 what the folder is for, e.g. "all scripts"
+# $2 the folder
+# -------------------------------------------------------------------------
+  local LABEL="$1"
+  local DIR="$2"
+
+  if [ "$DRYRUN" -eq 1 ]; then
+    if [ ! -d "$DIR" ]; then
+      plan_item "create" "$DIR" "folder"
+    fi
+    return 0
+  fi
+
+  status_begin "Creating a folder for $LABEL"
+  if [ ! -d "$DIR" ]; then
+    mkdir -p "$DIR" 2>/dev/null
+    if [ ! -d "$DIR" ]; then
+      status_failed
+    fi
+  fi
+  status_ok
+}
+
+# -------------------------------------------------------------------------
+# Copies a config file that the installation is about to change to its
+# backup, so that the uninstallation can put it back (see restore_backup).
+# A config file that does not exist yet is created first, which is what the
+# [ NOT FOUND ] in the progress line means. In a dry run ($DRYRUN=1) nothing
+# is copied, both files are only reported.
+#
+backup_file() {
+#
+# parameters:
+# $1 label for the progress line, e.g. "rc.conf"
+# $2 the config file
+# $3 the backup to write
+# $4 optional content for a config file that does not exist yet
+# -------------------------------------------------------------------------
+  local LABEL="$1"
+  local FILE="$2"
+  local BACKUP="$3"
+  local SEED="$4"
+
+  if [ "$DRYRUN" -eq 1 ]; then
+    if [ ! -f "$FILE" ]; then
+      plan_item "create" "$FILE" "it does not exist yet"
+    fi
+    plan_item "create" "$BACKUP" "backup of $(basename "$FILE"), taken before it is changed"
+    return 0
+  fi
+
+  status_begin "Backing up $LABEL"
+  if [ ! -f "$FILE" ]; then
+    status_note "NOT FOUND"
+    mkdir -p "$(dirname "$FILE")" 2>/dev/null
+    printf "%s" "$SEED" >"$FILE"
+    cp "$FILE" "$BACKUP"
+  else
+    cp "$FILE" "$BACKUP"
+    status_ok
+  fi
 }
 
 # -------------------------------------------------------------------------
@@ -700,37 +1261,23 @@ remove_jacksum_sh() {
 # -------------------------------------------------------------------------
   local SH="$PREFIX/share/apps/$NAME"
 
-  printf "\n  Removing %s.sh:                " "$NAME"
-  if [ -d "$SH" ]; then
-    if rm -r "$SH"; then
+  if [ "$DRYRUN" -eq 0 ]; then
+    printf "\n"
+  fi
+  if remove_items "$NAME.sh" \
+    "folder with all of its contents, its empty parents are removed too" \
+    "$SH"; then
+    if [ "$DRYRUN" -eq 0 ]; then
       rmdir "$PREFIX/share/apps" "$PREFIX/share" 2>/dev/null
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
     fi
-  else
-    printf "[ NOT INSTALLED ]\n"
   fi
 }
 
 # -------------------------------------------------------------------------
 uninstall_kde() {
 # -------------------------------------------------------------------------
-  DSK="$PREFIX$KDEPOSTFIX$NAME.desktop"
-
   remove_jacksum_sh
-  printf "  Removing %s.desktop:           " "$NAME"
-  if [ -f "$DSK" ]; then
-    if rm "$DSK"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_items "$NAME.desktop" "" "$PREFIX$KDEPOSTFIX$NAME.desktop"
 }
 
 
@@ -740,51 +1287,19 @@ uninstall_pcmanfm() {
   DESKTOP_FILES="$PREFIX/actions"
 
   remove_jacksum_sh
-  printf "  Removing %s*.desktop:          " "$NAME"
   # the actions folder is shared with the user's own custom actions, so only
   # remove the ones we have generated (see install_menu_pcmanfm_sub)
-  if glob_exists "$DESKTOP_FILES/${NAME}_"*.desktop; then
-    if rm -f "$DESKTOP_FILES/${NAME}_"*.desktop; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  remove_items "$NAME*.desktop" "" "$DESKTOP_FILES/${NAME}_"*.desktop
 }
 
 
 # -------------------------------------------------------------------------
 uninstall_gnome() {
 # -------------------------------------------------------------------------
-  SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
+  SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER/$NAME"
 
   remove_jacksum_sh
-  printf "  Removing %s scripts:           " "$NAME"
-  if [ -d "$SCRIPTS" ]; then
-    if rm -r "$SCRIPTS"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
-}
-
-# -------------------------------------------------------------------------
-uninstall_xfe() {
-# -------------------------------------------------------------------------
-  uninstall_gnome
-}
-
-# -------------------------------------------------------------------------
-uninstall_nemo() {
-# -------------------------------------------------------------------------
-  uninstall_gnome
+  remove_items "$NAME scripts" "" "$SCRIPTS"
 }
 
 # -------------------------------------------------------------------------
@@ -793,140 +1308,81 @@ uninstall_nnn() {
   SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER"
 
   remove_jacksum_sh
-
-  printf "  Removing %s plugins:           " "$NAME"
   # plugins live flat in the shared nnn plugins folder (see install_menu_nnn),
   # so only remove the ones with our "Jacksum  " prefix, not the whole folder
-  if glob_exists "$SCRIPTS"/Jacksum\ \ *; then
-    if rm -f "$SCRIPTS"/Jacksum\ \ *; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
-}
-
-# -------------------------------------------------------------------------
-uninstall_caja() {
-# -------------------------------------------------------------------------
-  uninstall_gnome
+  remove_items "$NAME plugins" "" "$SCRIPTS"/Jacksum\ \ *
 }
 
 # -------------------------------------------------------------------------
 uninstall_rox() {
 # -------------------------------------------------------------------------
-  SCRIPTS="$PREFIX/SendTo/$NAME/"
+  SCRIPTS="$PREFIX/SendTo/$NAME"
 
   remove_jacksum_sh
-  printf "  Removing %s scripts:           " "$NAME"
-  if [ -d "$SCRIPTS" ]; then
-    # removing the symlink
-    rm -f "$SCRIPTS/../../OpenWith/$NAME"
-    # removing all scripts
-    if rm -r "$SCRIPTS"; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  # the scripts and the symlink that points at their folder from the OpenWith
+  # folder (see install_menu_rox)
+  remove_items "$NAME scripts" "" "$SCRIPTS" "$PREFIX/OpenWith/$NAME"
 }
 
 # -------------------------------------------------------------------------
 uninstall_thunar() {
 # -------------------------------------------------------------------------
-  remove_jacksum_sh
-  printf "  Removing %s entries:           " "$NAME"
-  # restore the backup
   THUNARXML="$PREFIX/uca.xml"
   THUNARXMLBACKUP="$PREFIX/uca.before-jacksum.xml"
-  if [ ! -f "$THUNARXMLBACKUP" ]; then
-    printf "[ NOT INSTALLED ]\n"
-  else
-    cp "$THUNARXMLBACKUP" "$THUNARXML"
-    rm "$THUNARXMLBACKUP"
-    printf "[  OK  ]\n"
-  fi
+
+  remove_jacksum_sh
+  restore_backup "$NAME entries" "$THUNARXML" "$THUNARXMLBACKUP" "$SEED_UCA_XML"
 }
 
 # -------------------------------------------------------------------------
 uninstall_mc() {
 # -------------------------------------------------------------------------
-  remove_jacksum_sh
-  printf "  Removing %s entries:           " "$NAME"
-  # restore the backup
   MCMENU="$PREFIX/menu"
   MCMENUBACKUP="$PREFIX/menu.before-jacksum"
-  if [ ! -f "$MCMENUBACKUP" ]; then
-    printf "[ NOT INSTALLED ]\n"
-  else
-    cp "$MCMENUBACKUP" "$MCMENU"
-    rm "$MCMENUBACKUP"
-    # the user had no user menu of their own before the installation, so what
-    # we would leave behind is a verbatim copy of the menu that mc falls back
-    # to anyway (see install_menu_mc)
-    if find_mc_system_menu && cmp -s "$MCMENU" "$MC_SYSTEM_MENU"; then
-      rm "$MCMENU"
-      rmdir "$PREFIX" 2>/dev/null
-    fi
-    printf "[  OK  ]\n"
+
+  remove_jacksum_sh
+  # A user menu that mc did not have before is a copy of the system wide one
+  # that mc falls back to anyway, so restore_backup drops it rather than
+  # leaving that copy behind. Determining that copy starts a process, which
+  # is not worth it if there is no backup to compare it with in the first
+  # place (is_installed() probes every file browser on startup).
+  MC_SEED=""
+  if [ -f "$MCMENUBACKUP" ]; then
+    mc_seed
   fi
+  restore_backup "$NAME entries" "$MCMENU" "$MCMENUBACKUP" "$MC_SEED"
 }
 
 # -------------------------------------------------------------------------
 uninstall_ranger() {
 # -------------------------------------------------------------------------
-  remove_jacksum_sh
-  printf "  Removing %s entries:           " "$NAME"
-  # restore the backup
   RANGERRC="$PREFIX/rc.conf"
   RANGERRCBACKUP="$PREFIX/rc.before-jacksum.conf"
-  if [ ! -f "$RANGERRCBACKUP" ]; then
-    printf "[ NOT INSTALLED ]\n"
-  else
-    cp "$RANGERRCBACKUP" "$RANGERRC"
-    rm "$RANGERRCBACKUP"
-    printf "[  OK  ]\n"
-  fi
+
+  remove_jacksum_sh
+  # ranger writes no rc.conf of its own, so the one the installation creates
+  # when there is none is empty
+  restore_backup "$NAME entries" "$RANGERRC" "$RANGERRCBACKUP" ""
 }
 
 # -------------------------------------------------------------------------
 uninstall_yazi() {
 # -------------------------------------------------------------------------
-  remove_jacksum_sh
-  printf "  Removing %s entries:           " "$NAME"
-  # restore the backup
   YAZIKEYMAP="$PREFIX/keymap.toml"
   YAZIKEYMAPBACKUP="$PREFIX/keymap.before-jacksum.toml"
-  if [ ! -f "$YAZIKEYMAPBACKUP" ]; then
-    printf "[ NOT INSTALLED ]\n"
-  else
-    cp "$YAZIKEYMAPBACKUP" "$YAZIKEYMAP"
-    rm "$YAZIKEYMAPBACKUP"
-    printf "[  OK  ]\n"
-  fi
+
+  remove_jacksum_sh
+  restore_backup "$NAME entries" "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP" ""
 }
 
 # -------------------------------------------------------------------------
 uninstall_mucommander() {
 # -------------------------------------------------------------------------
-  remove_jacksum_sh
-  printf "  Removing %s entries:           " "$NAME"
-  # restore the backup
   XML="$PREFIX/commands.xml"
   XMLBACKUP="$PREFIX/commands.before-jacksum.xml"
-  if [ ! -f "$XMLBACKUP" ]; then
-    printf "[ NOT INSTALLED ]\n"
-  else
-    cp "$XMLBACKUP" "$XML"
-    rm "$XMLBACKUP"
-    printf "[  OK  ]\n"
-  fi
+
+  remove_jacksum_sh
+  restore_backup "$NAME entries" "$XML" "$XMLBACKUP" "$SEED_COMMANDS_XML"
 }
 
 # -------------------------------------------------------------------------
@@ -935,17 +1391,9 @@ uninstall_elementary() {
   SCRIPTS="$PREFIX"
 
   remove_jacksum_sh
-  printf "  Removing %s scripts:           " "$NAME"
-  if [ -f "${SCRIPTS}/jacksum.cmd_calc.contract" ]; then
-    if rm "${SCRIPTS}"/jacksum.*.contract; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[ NOT INSTALLED ]\n"
-  fi
+  # the contractor folder is shared with the contracts of other applications,
+  # so only remove our own ones (see install_menu_elementary)
+  remove_items "$NAME scripts" "" "${SCRIPTS}"/"$NAME".*.contract
 }
 
 # -------------------------------------------------------------------------
@@ -1018,18 +1466,21 @@ uninstall_xxxfm() {
   SCRIPTS="$PREFIX/scripts"
 
   remove_jacksum_sh
-  printf "  Removing %s scripts:           " "$NAME"
-  if [ -d "${SCRIPTS}/hand_f_jacksum_cmd_calc" ]; then
-    if rm -R "${SCRIPTS}"/hand_f_jacksum*; then
-      printf "[  OK  ]\n"
+  if remove_items "$NAME scripts" "" "${SCRIPTS}"/hand_f_jacksum* &&
+    [ -f "${PREFIX}/session" ]; then
+    if [ "$DRYRUN" -eq 1 ]; then
+      plan_item "modify" "${PREFIX}/session" "the jacksum file handlers are unregistered there"
     else
-      printf "[FAILED]\n"
-      exit 1
+      clean_xxxfm_session_file "${PREFIX}/session"
     fi
-    clean_xxxfm_session_file "${PREFIX}/session"
-  else
-    printf "[ NOT INSTALLED ]\n"
   fi
+  # The copy of the session file that the installation took (see
+  # install_menu_xxxfm) is not restored, it is dropped: the handlers are
+  # unregistered above one by one, which keeps everything else in the session
+  # - the windows, the bookmarks, every other setting - as it is now, while
+  # putting the copy back would revert all of that to the day of the
+  # installation. It is only there in case the surgery goes wrong.
+  remove_items "$NAME session backup" "" "${PREFIX}/session.backup"
 }
 
 # -------------------------------------------------------------------------
@@ -1039,47 +1490,29 @@ install_menu() {
 # $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
 #    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
-  case $1 in
-  caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | thunar | xfe | yazi)
-    install_menu_"$1"
-    ;;
-  spacefm | zzzfm)
-    install_menu_xxxfm "$1"
-    ;;
-  esac
+  "install_menu_${BROWSER_IMPL[$1]}" "$1"
 }
 
 # -------------------------------------------------------------------------
 install_menu_kde() {
 # -------------------------------------------------------------------------
-  printf "  Creating a folder for servicemenus: "
-
-  if [ ! -d "$PREFIX$KDEPOSTFIX" ]; then
-    mkdir -p "$PREFIX$KDEPOSTFIX" 2>/dev/null
-    if [ -d "$PREFIX$KDEPOSTFIX" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
+  # $KDEPOSTFIX carries a trailing slash, which would look odd in the report
+  create_folder "servicemenus" "$PREFIX${KDEPOSTFIX%/}"
 
   DESKFILE="$PREFIX$KDEPOSTFIX$NAME.desktop"
-  printf "  Installing %s.desktop:         " $NAME
+  # one single file, with one action in it per command and per algorithm
+  count_entries "menu actions" 0
+  plan_pending "create" "$DESKFILE" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing $NAME.desktop"
 
   # gather all action codes (reset first, the installer menu can be run
   # more than once per session)
   ACTIONS=""
-  for i in $COMMANDS; do
-    CMD=$(printf "%s\n" "$i" | awk -F";" '{print $1 }')
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     ACTIONS="$ACTIONS;$CMD"
-  done
-  for i in $ALGORITHMS; do
-    ACTIONS="$ACTIONS;$i"
-  done
-  ACTIONS=$(printf "%s\n" "$ACTIONS" | sed -e "s/^;//")
+  done < <(menu_entries)
+  ACTIONS="${ACTIONS#;}"
 
   printf "[Desktop Entry]\n" >"$DESKFILE"
   if [ "$KDE" -ge 4 ]; then {
@@ -1098,8 +1531,7 @@ install_menu_kde() {
     printf "\n"
   } >>"$DESKFILE"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     {
       printf "[Desktop Action %s]\n" "$CMD"
       printf "Icon=binary\n"
@@ -1107,79 +1539,78 @@ install_menu_kde() {
       printf "Exec=%s %s %s\n" "$JACKSUMSH" "$CMD" "%U"
       printf "\n"
     } >>"$DESKFILE"
-  done
+  done < <(menu_entries)
 
-  for i in $ALGORITHMS; do
-    {
-      printf "[Desktop Action %s]\n" "$i"
-      printf "Icon=binary\n"
-      printf "Name=%s\n" "$i"
-      printf "Exec=%s %s %s\n" "$JACKSUMSH" "$i" "%U"
-      printf "\n"
-    } >>"$DESKFILE"
-  done
-
-  if [ -f "$DESKFILE" ]; then
-    chmod +x "$DESKFILE"
-    printf "[  OK  ]\n"
-  else
-    printf "[FAILED]\n"
-    exit 1
-  fi
+  finish_file "$DESKFILE"
 }
 
 # -------------------------------------------------------------------------
+# Writes the .desktop file of one menu entry.
+#
 install_menu_pcmanfm_sub() {
+#
+# parameters:
+# $1 = command or algorithm
+# $2 = text
 # -------------------------------------------------------------------------
-    DESKFILE="${PREFIX}/actions/${NAME}_${CMD}.desktop"
-    printf "  Installing %s:         " "$DESKFILE"
+  local CMD="$1"
+  local TXT="$2"
+  local DESKFILE="${PREFIX}/actions/${NAME}_${CMD}.desktop"
 
-    {
-      printf "[Desktop Entry]\n"
-      printf "Type=Action\n"
-      printf "Name=%s\n" "$TXT"
-      printf "Profiles=%s_%s\n" "$NAME" "$CMD"
-      printf "\n"
-      printf "[X-Action-Profile %s_%s]\n" "$NAME" "$CMD"
-      printf "Exec=%s %s %s\n" "$JACKSUMSH" "$CMD" "%F"
-      printf "\n"
-    } >"$DESKFILE"
-    if [ -f "$DESKFILE" ]; then
-      chmod +x "$DESKFILE"
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
+  plan_pending "create" "$DESKFILE" && return 0
+
+  {
+    printf "[Desktop Entry]\n"
+    printf "Type=Action\n"
+    printf "Name=%s\n" "$TXT"
+    printf "Profiles=%s_%s\n" "$NAME" "$CMD"
+    printf "\n"
+    printf "[X-Action-Profile %s_%s]\n" "$NAME" "$CMD"
+    printf "Exec=%s %s %s\n" "$JACKSUMSH" "$CMD" "%F"
+    printf "\n"
+  } >"$DESKFILE"
+  # one progress line covers the whole set of them, see install_menu_pcmanfm,
+  # so only a failure has something to say here
+  if [ ! -f "$DESKFILE" ]; then
+    status_failed
+  fi
+  chmod +x "$DESKFILE"
 }
 
 # -------------------------------------------------------------------------
 install_menu_pcmanfm() {
 # -------------------------------------------------------------------------
-  printf "  Creating a folder for servicemenus: "
+  create_folder "servicemenus" "$PREFIX/actions"
 
-  if [ ! -d "$PREFIX/actions" ]; then
-    mkdir -p "$PREFIX/actions" 2>/dev/null
-    if [ -d "$PREFIX/actions" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
+  status_begin "Installing actions"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-    install_menu_pcmanfm_sub
-  done
+  while IFS=$'\t' read -r _KIND CMD TXT; do
+    install_menu_pcmanfm_sub "$CMD" "$TXT"
+  done < <(menu_entries)
 
-  for i in $ALGORITHMS; do
-    CMD="${i}"; TXT="${CMD}"
-    install_menu_pcmanfm_sub
-  done
+  status_ok
+}
 
+# -------------------------------------------------------------------------
+# Writes one little script per menu entry into $SCRIPTFOLDER, named after the
+# entry, which is what the file browser shows in its menu. Used by Nautilus,
+# Xfe, Nemo, Caja and ROX-Filer.
+#
+install_entry_scripts() {
+# -------------------------------------------------------------------------
+  local _KIND CMD TXT SCRIPT
+
+  status_begin "Installing scripts"
+
+  while IFS=$'\t' read -r _KIND CMD TXT; do
+    SCRIPT="$SCRIPTFOLDER/$TXT"
+    plan_pending "create" "$SCRIPT" && continue
+    printf "#!/bin/sh\n" >"$SCRIPT"
+    printf 'exec %s %s "$@"\n' "$JACKSUMSH" "$CMD" >>"$SCRIPT"
+    chmod +x "$SCRIPT"
+  done < <(menu_entries)
+
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -1187,62 +1618,14 @@ install_menu_pcmanfm() {
 #
 install_menu_gnome_shared() {
 # -------------------------------------------------------------------------
-  printf "  Creating a folder for all scripts:  "
-  if [ ! -d "$SCRIPTFOLDER" ]; then
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-    if [ -d "$SCRIPTFOLDER" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
-
-  printf "  Installing scripts:                 "
-
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-    printf "#!/bin/sh\n" >"$SCRIPTFOLDER/$TXT"
-    printf 'exec %s %s "$@"\n' "$JACKSUMSH" "$CMD" >>"$SCRIPTFOLDER/$TXT"
-    chmod +x "$SCRIPTFOLDER/$TXT"
-  done
-
-  for i in $ALGORITHMS; do
-    printf "#!/bin/sh\n" >"$SCRIPTFOLDER/$i"
-    printf 'exec %s %s "$@"\n' "$JACKSUMSH" "$i" >>"$SCRIPTFOLDER/$i"
-    chmod +x "$SCRIPTFOLDER/$i"
-  done
-
-  printf "[  OK  ]\n"
+  create_folder "all scripts" "$SCRIPTFOLDER"
+  install_entry_scripts
 }
 
 # -------------------------------------------------------------------------
 install_menu_gnome() {
 # -------------------------------------------------------------------------
-  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
-  install_menu_gnome_shared
-}
-
-# -------------------------------------------------------------------------
-install_menu_xfe() {
-# -------------------------------------------------------------------------
-  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
-  install_menu_gnome_shared
-}
-
-# -------------------------------------------------------------------------
-install_menu_nemo() {
-# -------------------------------------------------------------------------
-  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
-  install_menu_gnome_shared
-}
-
-# -------------------------------------------------------------------------
-install_menu_caja() {
-# -------------------------------------------------------------------------
-  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME/"
+  SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER/$NAME"
   install_menu_gnome_shared
 }
 
@@ -1263,9 +1646,14 @@ install_menu_caja() {
 #
 install_menu_nnn_plugin() {
 #
-# parameters (via globals set by the caller loop): $CMD, $TXT
+# parameters:
+# $1 = command or algorithm
+# $2 = text
 # -------------------------------------------------------------------------
-  PLUGIN="$SCRIPTFOLDER/Jacksum  $TXT"
+  local CMD="$1"
+  local TXT="$2"
+  local PLUGIN="$SCRIPTFOLDER/Jacksum  $TXT"
+  plan_pending "create" "$PLUGIN" && return 0
   {
     printf '#!/usr/bin/env bash\n'
     printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
@@ -1296,29 +1684,13 @@ EOF
 install_menu_nnn() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX/$FB_SCRIPTFOLDER"
-  printf "  Creating a folder for all plugins:  "
-  if [ ! -d "$SCRIPTFOLDER" ]; then
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-    if [ -d "$SCRIPTFOLDER" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
+  create_folder "all plugins" "$SCRIPTFOLDER"
 
-  printf "  Installing plugins:                 "
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-    install_menu_nnn_plugin
-  done
-  for i in $ALGORITHMS; do
-    CMD="$i"; TXT="$i"
-    install_menu_nnn_plugin
-  done
-  printf "[  OK  ]\n"
+  status_begin "Installing plugins"
+  while IFS=$'\t' read -r _KIND CMD TXT; do
+    install_menu_nnn_plugin "$CMD" "$TXT"
+  done < <(menu_entries)
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -1340,6 +1712,21 @@ find_mc_system_menu() {
     fi
   done
   return 1
+}
+
+# -------------------------------------------------------------------------
+# Returns in $MC_SEED what a user menu that mc does not have yet is filled
+# with by the installation: the system wide menu that mc falls back to as
+# long as there is no user menu, so that the user does not lose the entries
+# they know, or a minimal menu if there is no system wide one either.
+#
+mc_seed() {
+# -------------------------------------------------------------------------
+  if find_mc_system_menu; then
+    MC_SEED="$(cat "$MC_SYSTEM_MENU")"
+  else
+    MC_SEED="shell_patterns=0"
+  fi
 }
 
 # -------------------------------------------------------------------------
@@ -1420,24 +1807,45 @@ install_menu_mc() {
 # -------------------------------------------------------------------------
   MCMENU="$PREFIX/menu"
   MCMENUBACKUP="$PREFIX/menu.before-jacksum"
-  printf "  Backing up the user menu:           "
-  if [ ! -f "$MCMENU" ]; then
-    printf "[ NOT FOUND ]\n"
-    mkdir -p "$PREFIX" 2>/dev/null
-    if find_mc_system_menu; then
-      cp "$MC_SYSTEM_MENU" "$MCMENU"
-    else
-      printf 'shell_patterns=0\n' >"$MCMENU"
+  # This one cannot use backup_file: a user menu that we have to create is
+  # not seeded with a fixed text but with a byte for byte copy of the system
+  # wide menu, which mc falls back to as long as there is no user menu - the
+  # user would lose the entries they know otherwise.
+  if [ "$DRYRUN" -eq 1 ]; then
+    if [ ! -f "$MCMENU" ]; then
+      if find_mc_system_menu; then
+        plan_item "create" "$MCMENU" "a copy of $MC_SYSTEM_MENU, the menu that mc uses as long as there is no user menu"
+      else
+        plan_item "create" "$MCMENU" "it does not exist yet"
+      fi
     fi
-    cp "$MCMENU" "$MCMENUBACKUP"
+    plan_item "create" "$MCMENUBACKUP" "backup of menu, taken before it is changed"
   else
-    cp "$MCMENU" "$MCMENUBACKUP"
-    printf "[  OK  ]\n"
+    status_begin "Backing up the user menu"
+    if [ ! -f "$MCMENU" ]; then
+      status_note "NOT FOUND"
+      mkdir -p "$PREFIX" 2>/dev/null
+      # this is what mc_seed() describes for the uninstallation, keep the two
+      # in step - the uninstallation recognizes a menu that is only ours by
+      # comparing the backup against it
+      if find_mc_system_menu; then
+        cp "$MC_SYSTEM_MENU" "$MCMENU"
+      else
+        printf 'shell_patterns=0\n' >"$MCMENU"
+      fi
+      cp "$MCMENU" "$MCMENUBACKUP"
+    else
+      cp "$MCMENU" "$MCMENUBACKUP"
+      status_ok
+    fi
+    # mc ignores a user menu that everybody could write to, see mc(1)
+    chmod go-w "$MCMENU"
   fi
-  # mc ignores a user menu that everybody could write to, see mc(1)
-  chmod go-w "$MCMENU"
 
-  printf "  Installing entries:                 "
+  count_entries "menu entries" "$MAX_DIRECT_ALGOS"
+  plan_pending "modify" "$MCMENU" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing entries"
   # the characters that are in use as a hotkey already; the shell_patterns
   # line is a setting rather than an entry, and lines that start with #, +
   # or = are comments and conditions, so none of those carries a hotkey
@@ -1445,20 +1853,11 @@ install_menu_mc() {
   MC_ENTRIES=""
   {
     printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
-    for i in $COMMANDS; do
-      CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+    while IFS=$'\t' read -r _KIND CMD TXT; do
       install_menu_mc_entry "$CMD" "$TXT"
-    done
-    N=0
-    for i in $ALGORITHMS; do
-      N=$((N + 1))
-      if [ "$N" -gt 5 ]; then
-        break
-      fi
-      install_menu_mc_entry "$i" "$i"
-    done
+    done < <(menu_entries "$MAX_DIRECT_ALGOS")
   } >>"$MCMENU"
-  printf "[  OK  ]\n"
+  status_ok
 
   # see mc(1), FILES: a "local user-defined menu" wins over the user menu
   MCLOCALMENU="${MC_PROFILE_ROOT:-$HOME}/.local/share/mc.menu"
@@ -1470,14 +1869,7 @@ install_menu_mc() {
 
   printf "  User menu entries (press F2 in mc):\n"
   printf "%s" "$MC_ENTRIES"
-  N=0
-  for i in $ALGORITHMS; do
-    N=$((N + 1))
-    if [ "$N" -gt 5 ]; then
-      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a menu entry)\n" "$i"
-      break
-    fi
-  done
+  print_skipped_algorithms "a menu entry"
 }
 
 # -------------------------------------------------------------------------
@@ -1485,42 +1877,17 @@ install_menu_rox() {
 # -------------------------------------------------------------------------
 # on Ubuntu 10.04 (ROX-Filer 2.5), the folder is called SendTo
   SCRIPTFOLDER="$PREFIX/SendTo/$NAME"
-  printf "  Creating a folder for all scripts:  "
-  if [ ! -d "$SCRIPTFOLDER" ]; then
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-    if [ -d "$SCRIPTFOLDER" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
+  create_folder "all scripts" "$SCRIPTFOLDER"
+
   # on Puppy Linux 4.3.1 (ROX-Filer 2.6.1), the folder is called OpenWith
   OPENWITHFOLDER="$PREFIX/OpenWith"
-  if [ ! -d "$OPENWITHFOLDER" ]; then
-    mkdir -p "$OPENWITHFOLDER" 2>/dev/null
-  fi
+  create_folder "OpenWith" "$OPENWITHFOLDER"
   # simply make a symlink in order to be cross-compatible
-  ln -sfn "$SCRIPTFOLDER" "$OPENWITHFOLDER/$NAME"
+  if ! plan_pending "create" "$OPENWITHFOLDER/$NAME" "symbolic link to $SCRIPTFOLDER"; then
+    ln -sfn "$SCRIPTFOLDER" "$OPENWITHFOLDER/$NAME"
+  fi
 
-  printf "  Installing scripts:                 "
-
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-    printf "#!/bin/sh\n" >"$SCRIPTFOLDER/$TXT"
-    printf 'exec %s %s "$@"\n' "$JACKSUMSH" "$CMD" >>"$SCRIPTFOLDER/$TXT"
-    chmod +x "$SCRIPTFOLDER/$TXT"
-  done
-
-  for i in $ALGORITHMS; do
-    printf "#!/bin/sh\n" >"$SCRIPTFOLDER/$i"
-    printf 'exec %s %s "$@"\n' "$JACKSUMSH" "$i" >>"$SCRIPTFOLDER/$i"
-    chmod +x "$SCRIPTFOLDER/$i"
-  done
-
-  printf "[  OK  ]\n"
+  install_entry_scripts
 }
 
 # -------------------------------------------------------------------------
@@ -1528,25 +1895,18 @@ install_menu_thunar() {
 # -------------------------------------------------------------------------
   THUNARXML="$PREFIX/uca.xml"
   THUNARXMLBACKUP="$PREFIX/uca.before-jacksum.xml"
-  printf "  Backing up uca.xml:                 "
-  if [ ! -f "$THUNARXML" ]; then
-    printf "[ NOT FOUND ]\n"
-    # Put a default file here
-    printf '<?xml version="1.0" encoding="UTF-8"?><actions></actions>\n' >"$THUNARXML"
-    cp "$THUNARXML" "$THUNARXMLBACKUP"
-  else
-    cp "$THUNARXML" "$THUNARXMLBACKUP"
-    printf "[  OK  ]\n"
-  fi
+  backup_file "uca.xml" "$THUNARXML" "$THUNARXMLBACKUP" "$SEED_UCA_XML"
 
-  printf "  Installing entries:                 "
+  count_entries "actions" 0
+  plan_pending "modify" "$THUNARXML" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing entries"
 
   MYTEMP="$(mktemp)"
   # xml without the closing </actions> tag
   sed 's/<\/actions>//' "$THUNARXML" >"$MYTEMP"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     {
       printf '<action>\n'
       printf '<name>Jacksum - %s</name>\n' "$TXT"
@@ -1556,24 +1916,12 @@ install_menu_thunar() {
       printf '<directories/><audio-files/><image-files/><other-files/><text-files/><video-files/>\n'
       printf '</action>\n'
     } >>"$MYTEMP"
-  done
-
-  for i in $ALGORITHMS; do
-    {
-      printf '<action>\n'
-      printf '<name>Jacksum - %s</name>\n' "$i"
-      printf '<command>%s %s %s</command>\n' "$JACKSUMSH" "$i" "%F"
-      printf '<description>%s</description>\n' "$i"
-      printf '<patterns>*</patterns>\n'
-      printf '<directories/><audio-files/><image-files/><other-files/><text-files/><video-files/>\n'
-      printf '</action>\n'
-    } >>"$MYTEMP"
-  done
+  done < <(menu_entries)
 
   printf '</actions>\n' >>"$MYTEMP"
   cp "$MYTEMP" "$THUNARXML"
   rm "$MYTEMP"
-  printf "[  OK  ]\n"
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -1588,61 +1936,37 @@ install_menu_ranger() {
 # -------------------------------------------------------------------------
   RANGERRC="$PREFIX/rc.conf"
   RANGERRCBACKUP="$PREFIX/rc.before-jacksum.conf"
-  printf "  Backing up rc.conf:                 "
-  if [ ! -f "$RANGERRC" ]; then
-    printf "[ NOT FOUND ]\n"
-    mkdir -p "$PREFIX" 2>/dev/null
-    : >"$RANGERRC"
-    cp "$RANGERRC" "$RANGERRCBACKUP"
-  else
-    cp "$RANGERRC" "$RANGERRCBACKUP"
-    printf "[  OK  ]\n"
-  fi
+  backup_file "rc.conf" "$RANGERRC" "$RANGERRCBACKUP" ""
 
-  printf "  Installing key bindings:            "
+  count_entries "key bindings" "$MAX_DIRECT_ALGOS"
+  plan_pending "modify" "$RANGERRC" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing key bindings"
   {
     printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
-    for i in $COMMANDS; do
-      CMD="${i%;*}"
-      case "$CMD" in
-        cmd_calc) KEY=h ;;
-        cmd_check) KEY=c ;;
-        cmd_cust) KEY=o ;;
-        cmd_edit) KEY=e ;;
-        # a $COMMANDS entry we have no key for is skipped rather than silently
-        # overwriting the binding of the entry before it
-        *) KEY="" ;;
-      esac
-      if [ -n "$KEY" ]; then
-        # -f = fork: everything we start here is a GUI, without it ranger would
-        # stay blocked until the window is closed again (see ranger(1), FLAGS)
-        # %p = selection: marked files if any, else the highlighted file (ranger's own convention)
-        printf 'map b%s shell -f %s %s %%p\n' "$KEY" "$JACKSUMSH" "$CMD"
-      fi
-    done
     N=0
-    for i in $ALGORITHMS; do
-      N=$((N + 1))
-      if [ "$N" -gt 5 ]; then
-        break
+    while IFS=$'\t' read -r KIND CMD _TXT; do
+      if [ "$KIND" = "command" ]; then
+        KEY="$(command_key "$CMD")"
+        # a command we have no key for is skipped rather than silently
+        # overwriting the binding of the entry before it
+        if [ -z "$KEY" ]; then
+          continue
+        fi
+      else
+        # the algorithms are numbered, b1 to b$MAX_DIRECT_ALGOS
+        N=$((N + 1))
+        KEY="$N"
       fi
-      printf 'map b%d shell -f %s %s %%p\n' "$N" "$JACKSUMSH" "$i"
-    done
+      # -f = fork: everything we start here is a GUI, without it ranger would
+      # stay blocked until the window is closed again (see ranger(1), FLAGS)
+      # %p = selection: marked files if any, else the highlighted file (ranger's own convention)
+      printf 'map b%s shell -f %s %s %%p\n' "$KEY" "$JACKSUMSH" "$CMD"
+    done < <(menu_entries "$MAX_DIRECT_ALGOS")
   } >>"$RANGERRC"
-  printf "[  OK  ]\n"
+  status_ok
 
-  N=0
-  for i in $ALGORITHMS; do
-    N=$((N + 1))
-    if [ "$N" -eq 1 ]; then
-      printf "  Direct algorithm key bindings:\n"
-    fi
-    if [ "$N" -gt 5 ]; then
-      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a ranger key binding)\n" "$i"
-      break
-    fi
-    printf "    b%d - %s\n" "$N" "$i"
-  done
+  print_algo_keybindings "a ranger key binding"
 }
 
 # -------------------------------------------------------------------------
@@ -1656,18 +1980,16 @@ install_menu_yazi() {
 # -------------------------------------------------------------------------
   YAZIKEYMAP="$PREFIX/keymap.toml"
   YAZIKEYMAPBACKUP="$PREFIX/keymap.before-jacksum.toml"
-  printf "  Backing up keymap.toml:             "
-  if [ ! -f "$YAZIKEYMAP" ]; then
-    printf "[ NOT FOUND ]\n"
-    mkdir -p "$PREFIX" 2>/dev/null
-    : >"$YAZIKEYMAP"
-    cp "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP"
-  else
-    cp "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP"
-    printf "[  OK  ]\n"
-  fi
+  backup_file "keymap.toml" "$YAZIKEYMAP" "$YAZIKEYMAPBACKUP" ""
 
+  # yazi hands a plugin the hovered file and the selection separately, so it
+  # needs a second wrapper next to jacksum.sh that sorts that out
   YAZIRUN="$(dirname "$JACKSUMSH")/yazi-run.sh"
+  if plan_pending "create" "$YAZIRUN" "helper that passes yazi's selection on to $NAME.sh"; then
+    count_entries "key bindings" "$MAX_DIRECT_ALGOS"
+    plan_item "modify" "$YAZIKEYMAP" "$ENTRIES_TEXT"
+    return 0
+  fi
   {
     printf '#!/usr/bin/env bash\n'
     printf 'JACKSUMSH="%s"\n' "$JACKSUMSH"
@@ -1685,79 +2007,46 @@ EOF
   } >"$YAZIRUN"
   chmod +x "$YAZIRUN"
 
-  printf "  Installing key bindings:            "
+  status_begin "Installing key bindings"
   {
     printf '\n# Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
-    for i in $COMMANDS; do
-      CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-      case "$CMD" in
-        cmd_calc) KEY=h ;;
-        cmd_check) KEY=c ;;
-        cmd_cust) KEY=o ;;
-        cmd_edit) KEY=e ;;
-        # a $COMMANDS entry we have no key for is skipped rather than silently
+    N=0
+    while IFS=$'\t' read -r KIND CMD TXT; do
+      if [ "$KIND" = "command" ]; then
+        KEY="$(command_key "$CMD")"
+        # a command we have no key for is skipped rather than silently
         # overwriting the binding of the entry before it
-        *) KEY="" ;;
-      esac
-      if [ -z "$KEY" ]; then
-        continue
+        if [ -z "$KEY" ]; then
+          continue
+        fi
+      else
+        # the algorithms are numbered, b1 to b$MAX_DIRECT_ALGOS
+        N=$((N + 1))
+        KEY="$N"
       fi
       printf '\n[[mgr.prepend_keymap]]\n'
       printf 'on = [ "b", "%s" ]\n' "$KEY"
       # %h is single-quoted so an empty hovered file still arrives as one (empty) arg
       printf "run = \"shell -- %s %s '%%h' %%s\"\n" "$YAZIRUN" "$CMD"
       printf 'desc = "Jacksum - %s"\n' "$TXT"
-    done
-    N=0
-    for i in $ALGORITHMS; do
-      N=$((N + 1))
-      if [ "$N" -gt 5 ]; then
-        break
-      fi
-      printf '\n[[mgr.prepend_keymap]]\n'
-      printf 'on = [ "b", "%d" ]\n' "$N"
-      printf "run = \"shell -- %s %s '%%h' %%s\"\n" "$YAZIRUN" "$i"
-      printf 'desc = "Jacksum - %s"\n' "$i"
-    done
+    done < <(menu_entries "$MAX_DIRECT_ALGOS")
   } >>"$YAZIKEYMAP"
-  printf "[  OK  ]\n"
+  status_ok
 
-  N=0
-  for i in $ALGORITHMS; do
-    N=$((N + 1))
-    if [ "$N" -eq 1 ]; then
-      printf "  Direct algorithm key bindings:\n"
-    fi
-    if [ "$N" -gt 5 ]; then
-      printf "    (skipped \"%s\" and beyond - only the first 5 selected algorithms get a key binding)\n" "$i"
-      break
-    fi
-    printf "    b%d - %s\n" "$N" "$i"
-  done
+  print_algo_keybindings "a key binding"
 }
 
 # -------------------------------------------------------------------------
 install_menu_elementary() {
 # -------------------------------------------------------------------------
   SCRIPTFOLDER="$PREFIX"
-  printf "  Creating a folder for all scripts:  "
-  if [ ! -d "$SCRIPTFOLDER" ]; then
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-    if [ -d "$SCRIPTFOLDER" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
-  else
-    printf "[  OK  ]\n"
-  fi
+  create_folder "all scripts" "$SCRIPTFOLDER"
 
-  printf "  Installing scripts:                 "
+  status_begin "Installing scripts"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${CMD}.contract"
+    plan_pending "create" "$OUTPUTFILE" && continue
     printf "[Contractor Entry]\n" >"$OUTPUTFILE"
     {
       printf "Name=%s\n" "${TXT}"
@@ -1766,21 +2055,9 @@ install_menu_elementary() {
       printf "Exec=%s %s %s\n" "${JACKSUMSH}" "${CMD}" "%F"
     } >>"$OUTPUTFILE"
     chmod +x "$OUTPUTFILE"
-  done
+  done < <(menu_entries)
 
-  for i in $ALGORITHMS; do
-    OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${i}.contract"
-    printf "[Contractor Entry]\n" >"$OUTPUTFILE"
-    {
-      printf "Name=%s\n" "${i}"
-      printf "Description=%s\n" "${i}"
-      printf "MimeType=!inode/blockdevice;inode/chardevice;inode/fifo;inode/socket;\n"
-      printf "Exec=%s %s %s\n" "${JACKSUMSH}" "${i}" "%F"
-    } >>"$OUTPUTFILE"
-    chmod +x "$OUTPUTFILE"
-  done
-
-  printf "[  OK  ]\n"
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -1788,43 +2065,29 @@ install_menu_mucommander() {
 # -------------------------------------------------------------------------
   XML="$PREFIX/commands.xml"
   XMLBACKUP="$PREFIX/commands.before-jacksum.xml"
-  printf "  Backing up commands.xml:            "
-  if [ ! -f "$XML" ]; then
-    printf "[ NOT FOUND ]\n"
-    # Put a default file here
-    printf '<?xml version="1.0" encoding="UTF-8"?><commands></commands>\n' >"$XML"
-    cp "$XML" "$XMLBACKUP"
-  else
-    cp "$XML" "$XMLBACKUP"
-    printf "[  OK  ]\n"
-  fi
+  backup_file "commands.xml" "$XML" "$XMLBACKUP" "$SEED_COMMANDS_XML"
 
-  printf "  Installing entries:                 "
+  count_entries "entries" 0
+  plan_pending "modify" "$XML" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing entries"
 
   MYTEMP="$(mktemp)"
   # xml without the closing </commands> tag
   sed 's/<\/commands>//' "$XML" >"$MYTEMP"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     {
       # $f is the placeholder for muCommander, therefore it must not be evaluated
       # shellcheck disable=SC2016
       printf '<command alias="Jacksum - %s" value="%s %s %s" />\n' "$TXT" "${JACKSUMSH}" "${CMD}" '$f'
     } >>"$MYTEMP"
-  done
-
-  for i in $ALGORITHMS; do
-    {
-      # shellcheck disable=SC2016
-      printf '<command alias="Jacksum - %s" value="%s %s %s" />\n' "$i" "$JACKSUMSH" "$i" '$f'
-    } >>"$MYTEMP"
-  done
+  done < <(menu_entries)
 
   printf '</commands>\n' >>"$MYTEMP"
   cp "$MYTEMP" "$XML"
   rm "$MYTEMP"
-  printf "[  OK  ]\n"
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -1872,54 +2135,60 @@ install_menu_xxxfm() {
   local BROWSER="$1"
   SESSION_FILE="${PREFIX}/session"
 
-  # if the session file does not exist, the user needs to run the file manager once.
-  if [ ! -f "$SESSION_FILE" ]; then
-    printf "  Note: In the next step I will try to open %s so that the required session file gets generated.\n" "$BROWSER"
+  # None of this belongs into a dry run: it asks the user to close the file
+  # browser, it starts and signals it, and it gives up if the session file is
+  # still not there - all of that is part of the installation itself, which
+  # the user has not confirmed yet while the report is being written.
+  if [ "$DRYRUN" -eq 0 ]; then
+    # if the session file does not exist, the user needs to run the file manager once.
+    if [ ! -f "$SESSION_FILE" ]; then
+      printf "  Note: In the next step I will try to open %s so that the required session file gets generated.\n" "$BROWSER"
+      printf "        Please press the \"Enter\" key when you are ready: "
+      read -r
+      $BROWSER >/dev/null 2>&1 &
+    fi
+
+    printf "  Note: Please close all %s instances manually.\n" "$BROWSER"
     printf "        Please press the \"Enter\" key when you are ready: "
     read -r
-    $BROWSER >/dev/null 2>&1 &
-  fi
+    # if the user didn't read the instruction it could still work if a session file is there already.
+    pkill -HUP "$BROWSER"
 
-  printf "  Note: Please close all %s instances manually.\n" "$BROWSER"
-  printf "        Please press the \"Enter\" key when you are ready: "
-  read -r
-  # if the user didn't read the instruction it could still work if a session file is there already.
-  pkill -HUP "$BROWSER"
-
-  if [ ! -f "$SESSION_FILE" ]; then
-    printf "  Error: %s session file not found.\n" "$BROWSER"
-    printf "         Please follow the instructions.\n"
-    exit 1
-  fi
-
-  # backup the "session" file
-  cp "${SESSION_FILE}" "${SESSION_FILE}.backup"
-
-  SCRIPTFOLDER="${PREFIX}/scripts/"
-  printf "  Creating a folder for all scripts:  "
-  if [ ! -d "$SCRIPTFOLDER" ]; then
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-    if [ -d "$SCRIPTFOLDER" ]; then
-      printf "[  OK  ]\n"
-    else
-      printf "[FAILED]\n"
+    if [ ! -f "$SESSION_FILE" ]; then
+      printf "  Error: %s session file not found.\n" "$BROWSER"
+      printf "         Please follow the instructions.\n"
       exit 1
     fi
-  else
-    printf "[  OK  ]\n"
+  elif [ ! -f "$SESSION_FILE" ]; then
+    # a plain note, not a change, so it is deliberately not a plan_item
+    printf "  Note: %s has no session file yet. The installation will ask you to\n" "$BROWSER"
+    printf "        start and close %s once so that it gets written.\n" "$BROWSER"
   fi
 
+  # backup the "session" file, as a fallback for the user if the handler
+  # surgery below goes wrong - the uninstallation removes it again, it does
+  # not restore it (see uninstall_xxxfm)
+  if ! plan_pending "create" "${SESSION_FILE}.backup" "backup of session, taken before it is changed"; then
+    cp "${SESSION_FILE}" "${SESSION_FILE}.backup"
+  fi
+
+  # the handlers are registered in the session file one by one below, but
+  # that is one single change to it as far as the report is concerned
+  count_entries "file handlers" 0
+  plan_pending "modify" "$SESSION_FILE" "$ENTRIES_TEXT"
+
+  create_folder "all scripts" "${PREFIX}/scripts"
+
   # The actual scripts in .sh format
-  printf "  Installing scripts:                 "
+  status_begin "Installing scripts"
 
-  for i in $COMMANDS; do
-    CMD="${i%;*}"; TXT="${i#*;}"; TXT="${TXT//_/ }"
-
+  while IFS=$'\t' read -r _KIND CMD TXT; do
     HANDLER="hand_f_jacksum_${CMD}"
     SCRIPTFOLDER="${PREFIX}/scripts/${HANDLER}"
-    #OUTPUTFILE="${SCRIPTFOLDER}/hand-jacksum.${CMD}.sh"
-    # probably a bug in SpaceFM. It works only if the file handler is called "hand-file-mount.sh"
+    # probably a bug in SpaceFM. It works only if the file handler is called
+    # "hand-file-mount.sh", not "hand-jacksum.${CMD}.sh"
     OUTPUTFILE="${SCRIPTFOLDER}/hand-file-mount.sh"
+    plan_pending "create" "$OUTPUTFILE" && continue
     mkdir -p "$SCRIPTFOLDER" 2>/dev/null
 
     printf "%s\n" '#!/bin/bash' >"$OUTPUTFILE"
@@ -1927,41 +2196,9 @@ install_menu_xxxfm() {
     chmod +x "$OUTPUTFILE"
 
     update_xxxfm_session_file "$SESSION_FILE" "$HANDLER" "$TXT"
-  done
+  done < <(menu_entries)
 
-  for i in $ALGORITHMS; do
-    HANDLER="hand_f_jacksum_${i}"
-    SCRIPTFOLDER="${PREFIX}/scripts/${HANDLER}"
-    # OUTPUTFILE="${SCRIPTFOLDER}/jacksum.${i}.sh"
-    # probably a bug in SpaceFM. It works only if the file handler is called "hand-file-mount.sh"
-    OUTPUTFILE="${SCRIPTFOLDER}/hand-file-mount.sh"
-    mkdir -p "$SCRIPTFOLDER" 2>/dev/null
-
-    printf "%s\n" '#!/bin/bash' >"$OUTPUTFILE"
-    printf "%s %s %s\n" "${JACKSUMSH}" "${i}" "%F" >>"$OUTPUTFILE"
-    chmod +x "$OUTPUTFILE"
-
-    update_xxxfm_session_file "$SESSION_FILE" "$HANDLER" "$i"
-  done
-
-  printf "[  OK  ]\n"
-}
-
-# -------------------------------------------------------------------------
-install_script() {
-# parameters: 
-# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
-#    rox, spacefm, thunar, xfe, yazi or zzzfm
-# -------------------------------------------------------------------------
-  case $1 in
-    caja | elementary | gnome | kde | mc | mucommander | nemo | nnn | pcmanfm | ranger | rox | spacefm | thunar | xfe | yazi | zzzfm)
-    install_script_generic
-    ;;
-  *)
-    printf "Error: file browser %s is not supported. Exit.\n" "$1"
-    exit 1
-    ;;
-  esac
+  status_ok
 }
 
 # -------------------------------------------------------------------------
@@ -2125,70 +2362,69 @@ EOF
 # -------------------------------------------------------------------------
 install_script_generic() {
 # -------------------------------------------------------------------------
-  JACKSUM_VER=$("$JAVA" -jar "$JACKSUM_JAR" -v)
-  printf "  Found %s:                [  OK  ]\n" "$JACKSUM_VER"
+  # in a dry run this is all that is needed from here, the menu functions
+  # below refer to the wrapper by this path
+  JACKSUMSH="$PREFIX/share/apps/$NAME/$NAME.sh"
+  # the folder is wiped rather than overwritten, but that deletion is not
+  # worth a line of its own in the report: the uninstallation that runs
+  # first (see confirm_install) reports it already
+  plan_pending "create" "$JACKSUMSH" && return 0
 
-  printf "  Installing %s.sh:              " "$NAME"
+  JACKSUM_VER=$("$JAVA" -jar "$JACKSUM_JAR" -v)
+  status_begin "Found $JACKSUM_VER"
+  status_ok
+
+  status_begin "Installing $NAME.sh"
   if [ -d "$PREFIX/share/apps/$NAME/" ]; then
     rm -r "$PREFIX/share/apps/$NAME"
   fi
 
-  JACKSUMSH="$PREFIX/share/apps/$NAME/$NAME.sh"
   mkdir -p "$PREFIX/share/apps/$NAME" 2>/dev/null
 
-  if [ -d "$PREFIX/share/apps/$NAME" ]; then
-    if install_script_sh; then
-      if chmod +x "$JACKSUMSH"; then
-        printf "[  OK  ]\n"
-      else
-        printf "[FAILED]\n"
-        exit 1
-      fi
-    else
-      printf "[FAILED]\n"
-      exit 1
-    fi
+  if [ -d "$PREFIX/share/apps/$NAME" ] && install_script_sh && chmod +x "$JACKSUMSH"; then
+    status_ok
   else
-    printf "[FAILED]\n"
-    exit 1
+    status_failed
   fi
 }
 
 # -------------------------------------------------------------------------
-function find_app() {
+# Takes the first of the programs that is installed, and nothing if none of
+# them is.
+#
+find_app() {
+#
+# parameters:
+# $1 = the variable that takes the result
+# $@ = the programs, in the order in which they are preferred
 # -------------------------------------------------------------------------
-  if [[ "$#" == "0" ]]; then
-    printf >&2 "FATAL: at least one parameter is required in find_app(). Exit.\n"
+  local VAR="$1"
+  shift
+  if [ "$#" -eq 0 ]; then
+    printf >&2 "FATAL: at least one program is required in find_app(). Exit.\n"
     exit 1
   fi
-  APP=""
-  while (("$#")); do
+
+  local FOUND=""
+  while [ "$#" -gt 0 ]; do
     if type -P "$1" >/dev/null; then
-      APP="$(type -P "$1")"
+      FOUND="$(type -P "$1")"
       break
     fi
     shift
   done
+  printf -v "$VAR" "%s" "$FOUND"
 }
 
 # -------------------------------------------------------------------------
 print_params() {
 # -------------------------------------------------------------------------
   printf "\nCurrent parameters:\n"
-  check_bin "java" "$JAVA"
-  JAVA="$BIN"
-
-  check_file "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
-  JACKSUM_JAR="$BIN"
-
-  check_file "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
-  HASHGARTEN_JAR="$BIN"
-
-  check_bin "Viewer" "$VIEWER"
-  VIEWER="$BIN"
-
-  check_bin "Editor" "$EDIT"
-  EDIT="$BIN"
+  check_bin JAVA "java" "$JAVA"
+  check_file JACKSUM_JAR "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
+  check_file HASHGARTEN_JAR "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
+  check_bin VIEWER "Viewer" "$VIEWER"
+  check_bin EDIT "Editor" "$EDIT"
 
   if [ -z "$ALGORITHMS" ]; then
     printf "  [directly accessible algorithms]: %s\n\n" "n/a"
@@ -2202,8 +2438,7 @@ enter_java() {
 # -------------------------------------------------------------------------
   JAVA_FOUND=0
   while [ $JAVA_FOUND -eq 0 ]; do
-    find_bin "java" "$JAVA"
-    JAVA="$BIN"
+    find_bin JAVA "java" "$JAVA"
 
     JAVA_VERSION="$("$JAVA" -fullversion 2>&1)"
     JAVA_VERSION="${JAVA_VERSION#*\"}"
@@ -2215,6 +2450,14 @@ enter_java() {
       printf "Java version %s must be at least 11\n" "$JAVA_VERSION"
     else
       JAVA_FOUND=1
+      if is_headless_java "$JAVA"; then
+        printf "\nWarning: %s\n" "$JAVA"
+        printf "         is a headless JRE/JDK, it cannot open a window. HashGarten, the GUI\n"
+        printf "         for Jacksum, cannot be used with it, so the menu entries \"Calc Hash\n"
+        printf "         Values\" and \"Check Data Integrity\" would fail. \"Customized Output\",\n"
+        printf "         \"Edit Script\" and the entries for the algorithms don't need\n"
+        printf "         HashGarten and would work.\n"
+      fi
     fi
   done
 }
@@ -2224,24 +2467,18 @@ modify_params() {
 # -------------------------------------------------------------------------
   printf "\nA JDK or JRE is required. If you use a headless JDK/JRE, you cannot use HashGarten, which is a GUI for Jacksum.\n"
   printf "You could, for example, go to https://adoptium.net to obtain a full JDK/JRE.\n"
-  printf "On Debian-based derivatives, you could install it by running 'sudo apt install default-jdk'.\n"
 
   enter_java
 
   printf "\n\nThe jar files Jacksum, HashGarten, and FlatLaf have to be stored in the same folder. The script won't copy those files anywhere, but at runtime it expects to find them at the specified location once installation is complete.\n"
-  find_bin "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
-  JACKSUM_JAR="$BIN"
-
-  find_bin "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
-  HASHGARTEN_JAR="$BIN"
+  find_bin JACKSUM_JAR "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
+  find_bin HASHGARTEN_JAR "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
 
   printf "\n\nTo view text output, you need to specify a viewer or an editor.\n"
-  find_bin "viewer" "$VIEWER"
-  VIEWER="$BIN"
+  find_bin VIEWER "viewer" "$VIEWER"
 
   printf "\n\nTo use the \"Edit Script\" feature, you need to specify an editor.\n"
-  find_bin "editor" "$EDIT"
-  EDIT="$BIN"
+  find_bin EDIT "editor" "$EDIT"
 
   select_algorithms
 }
@@ -2252,11 +2489,11 @@ print_info_kde() {
   if [ "$KDE" -gt 1 ]; then
     printf "Info:\n"
     # if not root
-    if [ "$(id | cut -c5)" -ne 0 ]; then
-      printf "  If you want to install Jacksum/HashGarten in %s\n" "$KDE_PROGNAME"
+    if [ "$EUID" -ne 0 ]; then
+      printf "  If you want to install Jacksum/HashGarten in %s\n" "${BROWSER_PROGNAME[kde]}"
       printf "  for all users, please run this script as root.\n"
     else
-      printf "  If you want to install Jacksum/HashGarten in %s\n" "$KDE_PROGNAME"
+      printf "  If you want to install Jacksum/HashGarten in %s\n" "${BROWSER_PROGNAME[kde]}"
       printf "  only for one user, run the script as a normal user. If you have a Live CD,\n"
       printf "  you must run the script as a normal user, because CD-ROMs are read-only.\n"
     fi
@@ -2309,6 +2546,52 @@ select_algorithms() {
 }
 
 # -------------------------------------------------------------------------
+# Shows what an installation would remove, create and modify, and asks
+# whether it should really be carried out. Returns 0 only if the user has
+# confirmed it.
+#
+# Like confirm_uninstall(), the report is not written by hand: it is the
+# installation itself, running with $DRYRUN=1, so that it cannot tell the
+# user anything else than what actually happens a moment later. An
+# installation starts by removing whatever is installed already, hence the
+# two sections.
+#
+confirm_install() {
+#
+# parameters:
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# -------------------------------------------------------------------------
+  local YESNO=""
+  local PROG="${BROWSER_PROGNAME[$1]}"
+
+  DRYRUN=1
+
+  PLAN_COUNT=0
+  printf "Uninstalling the previous %s from %s first:\n\n" "$NAME" "$PROG"
+  uninstall_silent "$1"
+  if [ "$PLAN_COUNT" -eq 0 ]; then
+    printf "  nothing, %s is not installed in %s yet\n" "$NAME" "$PROG"
+  fi
+
+  PLAN_COUNT=0
+  printf "\nInstalling %s into %s:\n\n" "$NAME" "$PROG"
+  install_script_generic
+  install_menu "$1"
+  if [ "$PLAN_COUNT" -eq 0 ]; then
+    printf "  nothing - that cannot be right, please report this as a bug.\n"
+  fi
+
+  DRYRUN=0
+
+  printf "\nDo you want to start the installation? [y]: "
+  read_key
+  YESNO="$KEY"
+  test -z "$YESNO" && YESNO="y"
+  test "$YESNO" = "y"
+}
+
+# -------------------------------------------------------------------------
 install_interactive() {
 #
 # parameters:
@@ -2326,9 +2609,16 @@ install_interactive() {
     case "$YESNO" in
     "y")
       printf "\n"
-      uninstall_silent "$1"
-      install_script "$1"
-      install_menu "$1"
+      if confirm_install "$1"; then
+        printf "\n"
+        uninstall_silent "$1"
+        install_script_generic
+        install_menu "$1"
+      else
+        # back to the question above, so that the user can change the
+        # parameters and have a look at a new report
+        YESNO=""
+      fi
       ;;
     "n")
       modify_params
@@ -2386,53 +2676,24 @@ install_done() {
   caja)
     restart_fb caja "Caja"
     ;;
-  kde)
-    printf "Please restart %s in order to make the change active.\n" "$KDE_PROGNAME"
-    ;;
-  rox)
-    # no restart required for ROX-Filer :)
-    ;;
-  thunar)
-    printf "Please restart Thunar in order to make the change active.\n"
-    ;;
-  xfe)
-    # no restart required for Xfe :)
-    ;;
-  elementary)
-    # no restart required for Elementary :)
-    ;;
-  spacefm)
-    # no restart required for SpaceFM :)
-    ;;
-  zzzfm)
-    # no restart required for zzzFM :)
+  kde | thunar | mucommander)
+    printf "Please restart %s in order to make the change active.\n" "${BROWSER_PROGNAME[$1]}"
     ;;
   mc)
     # no restart required, mc reads its user menu every time F2 is pressed :)
     printf "Press F2 in Midnight Commander to open the user menu.\n"
     ;;
-  mucommander)
-    printf "Please restart muCommander in order to make the change active.\n"
-    ;;
-  nnn)
-    # no restart required for nnn :)
-    ;;
-  pcmanfm)
-    ;;
-  ranger)
-    printf "Please restart ranger, then use these key bindings:\n"
+  ranger | yazi)
+    # the name of the program rather than the one from the menu: that is what
+    # has to be typed to start it again
+    printf "Please restart %s, then use these key bindings:\n" "$1"
     printf "  bh - Calc Hash Values\n"
     printf "  bc - Check Data Integrity\n"
     printf "  bo - Customized Output\n"
     printf "  be - Edit Script\n"
     ;;
-  yazi)
-    printf "Please restart yazi, then use these key bindings:\n"
-    printf "  bh - Calc Hash Values\n"
-    printf "  bc - Check Data Integrity\n"
-    printf "  bo - Customized Output\n"
-    printf "  be - Edit Script\n"
-    ;;
+  # ROX-Filer, Xfe, elementary, SpaceFM, zzzFM, nnn and PCManFM pick the new
+  # entries up by themselves, so there is nothing to say :)
   esac
   printf "Press the \"Enter\" key to continue ... "
   read -r
@@ -2450,6 +2711,44 @@ install_generic() {
   # init_viewer, and they are deliberately kept across runs.
   modify_params
   install_interactive "$1"
+  refresh_menu_item "$1"
+}
+
+# -------------------------------------------------------------------------
+# Shows what an uninstallation would delete and modify, and asks whether it
+# should really be carried out. Returns 0 only if the user has confirmed it.
+#
+# The report is not written by hand, it is the uninstallation itself, running
+# with $DRYRUN=1 - that way it cannot tell the user anything else than what
+# actually happens a moment later.
+#
+confirm_uninstall() {
+#
+# parameters:
+# $1 caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm, ranger,
+#    rox, spacefm, thunar, xfe, yazi or zzzfm
+# -------------------------------------------------------------------------
+  local YESNO=""
+  local PROG="${BROWSER_PROGNAME[$1]}"
+
+  DRYRUN=1
+  PLAN_COUNT=0
+  printf "\nUninstalling %s from %s would make the following changes:\n\n" "$NAME" "$PROG"
+  uninstall_silent "$1"
+  DRYRUN=0
+
+  if [ "$PLAN_COUNT" -eq 0 ]; then
+    printf "  none - %s is not installed in %s.\n" "$NAME" "$PROG"
+    printf "\nPlease press the \"Enter\" key to continue ... "
+    read -r
+    return 1
+  fi
+
+  printf "\nDo you really want to uninstall %s from %s? [y]: " "$NAME" "$PROG"
+  read_key
+  YESNO="$KEY"
+  test -z "$YESNO" && YESNO="y"
+  test "$YESNO" = "y"
 }
 
 # -------------------------------------------------------------------------
@@ -2459,62 +2758,50 @@ uninstall_generic() {
 #    rox, spacefm, thunar, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
-  uninstall "$1"
+  # the confirmation is deliberately not in uninstall_silent(), which every
+  # installation runs to clean up before it installs (see install_interactive)
+  if confirm_uninstall "$1"; then
+    uninstall "$1"
+    refresh_menu_item "$1"
+  fi
 }
 
 # -------------------------------------------------------------------------
 init_java() {
 # -------------------------------------------------------------------------
-  find_app java
-  JAVA="$APP"
+  find_app JAVA java
 }
 
 # -------------------------------------------------------------------------
 init_editor() {
 # -------------------------------------------------------------------------
-  find_app gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
-  EDIT="$APP"
+  find_app EDIT gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed
 }
 
 # -------------------------------------------------------------------------
 init_viewer() {
 # -------------------------------------------------------------------------
-  find_app zenity gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed pluma
-  VIEWER="$APP"
+  find_app VIEWER zenity gedit gnome-text-editor kate defaulttexteditor xfwrite pluma io.elementary.code geany xed
 }
 
 # -------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------
-set_env kde
-set_env gnome
-set_env rox
-set_env thunar
-set_env xfe
-set_env nemo
-set_env caja
-set_env elementary
-set_env spacefm
-set_env zzzfm
-set_env ranger
-set_env mucommander
-set_env mc
-set_env nnn
-set_env pcmanfm
-set_env yazi
+for KEY in $BROWSER_KEYS; do
+  refresh_menu_item "${BROWSER_ID[$KEY]}"
+done
 
 init_java
 init_editor
 init_viewer
 ACTION="install"
-OPTION=0
-HIDE_DISABLED=""
+HIDE_UNAVAILABLE=""
 
 while :; do
   clear
   print_header
   print_info_kde
-  print_menu $ACTION
+  print_menu
   printf "Enter option: "
   read_key
   OPTION="$KEY"
@@ -2527,100 +2814,23 @@ while :; do
     fi
     ;;
   h)
-    if [ -z "$HIDE_DISABLED" ]; then
-      HIDE_DISABLED=1
+    if [ -z "$HIDE_UNAVAILABLE" ]; then
+      HIDE_UNAVAILABLE=1
     else
-      HIDE_DISABLED=""
+      HIDE_UNAVAILABLE=""
     fi
     ;;
-
-  a)
-    if [ "$RANGER" -eq 1 ]; then
-      ${ACTION}_generic ranger
-    fi
-    ;;
-  c)
-    if [ "$CAJA" -eq 1 ]; then
-      ${ACTION}_generic caja
-    fi
-    ;;
-  d) # in the $KDE variable we have stored the major version
-    if [ "$KDE" -gt 1 ]; then
-      ${ACTION}_generic kde
-    fi
-    ;;
-  e)
-    if [ "$ELEMENTARY" -eq 1 ]; then
-      ${ACTION}_generic elementary
-    fi
-    ;;
-  g)
-    if [ "$GNOME" -eq 1 ]; then
-      ${ACTION}_generic gnome
-    fi
-    ;;
-  m)
-    if [ "$MC" -eq 1 ]; then
-      ${ACTION}_generic mc
-    fi
-    ;;
-  n)
-    if [ "$NNN" -eq 1 ]; then
-      ${ACTION}_generic nnn
-    fi
-    ;;
-  o)
-    if [ "$NEMO" -eq 1 ]; then
-      ${ACTION}_generic nemo
-    fi
-    ;;
-  p)
-    if [ "$PCMANFM" -eq 1 ]; then
-      ${ACTION}_generic pcmanfm
-    fi
-    ;;
-  r)
-    if [ "$ROX" -eq 1 ]; then
-      ${ACTION}_generic rox
-    fi
-    ;;
-  s)
-    if [ "$SPACEFM" -eq 1 ]; then
-      ${ACTION}_generic spacefm
-    fi
-    ;;
-  t)
-    if [ "$THUNAR" -eq 1 ]; then
-      ${ACTION}_generic thunar
-    fi
-    ;;
-  u)
-    if [ "$MUCOMMANDER" -eq 1 ]; then
-      ${ACTION}_generic mucommander
-    fi
-    ;;
-  x)
-    if [ "$XFE" -eq 1 ]; then
-      ${ACTION}_generic xfe
-    fi
-    ;;
-  y)
-    if [ "$YAZI" -eq 1 ]; then
-      ${ACTION}_generic yazi
-    fi
-    ;;
-  z)
-    if [ "$ZZZFM" -eq 1 ]; then
-      ${ACTION}_generic zzzfm
-    fi
-    ;;
-  
   0 | q)
     printf "\n"
     exit 0
     ;;
   *)
-    printf "\n"
+    BROWSER="$(browser_for_key "$OPTION")"
+    if [ -n "$BROWSER" ]; then
+      menu_action "$BROWSER"
+    else
+      printf "\n"
+    fi
     ;;
   esac
 done
