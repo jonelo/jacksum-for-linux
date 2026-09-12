@@ -1,57 +1,64 @@
 Release Notes
 -------------
-2.11.0, Sep 11, 2026
-- added an "h - Hide/Unhide the UNAVAILABLE entries menu" toggle
-- changed the Nemo menu key from n to o
-- changed the muCommander menu key from m to u
-- added support for broot
-- added support for Midnight Commander
-- added support for nnn
-- added support for ranger
-- added support for Yazi
-- an uninstallation now lists every file that it would delete or modify and
-  asks for confirmation before it touches anything
-- an installation does the same: it lists what it would remove first, what it
-  would create and what it would modify, and asks for confirmation before it
-  touches anything
-- the installer warns now if the java that was selected belongs to a headless
-  JRE/JDK, which cannot run HashGarten
-- every menu entry shows now what its key would do: install, reinstall for a
-  file browser that has Jacksum already, uninstall, and ------- wherever there
-  is nothing to do, be it because the file browser is not installed at all or
-  because there is nothing of Jacksum to remove
-- bug fix: the menu claimed an installation "for all users" for every file
-  browser as soon as the script was run as root on a KDE system, although
-  only KDE has a system wide location - all the others install into the home
-  of the user who runs the script, and say so now
-- bug fix: the PCManFM uninstallation removed the entire file manager config
-  folder including the user's own custom actions, and it always reported
-  [FAILED] for the desktop files
-- bug fix: the SpaceFM/zzzFM un-/installation unregistered foreign file
-  handlers, and it could merge two handler names into one
-- bug fix: the SpaceFM/zzzFM uninstallation left the copy of the session file
-  that the installation had taken behind
-- bug fix: an uninstallation left an empty rc.conf, keymap.toml, uca.xml,
-  commands.xml or mc user menu behind if the file browser had none of its own
-  before the installation and the installation had to create one
-- bug fix: a viewer that differs from the editor was ignored by the generated
-  script
-- bug fix: the editor was forgotten after an installation, so a second
-  installation in the same session insisted on an absolute path
-- bug fix: the KDE servicemenu got duplicated actions if the installation was
-  run more than once per session
-- bug fix: typing p in the algorithm selection asked the same question over
-  and over again instead of keeping the previous selection
-- bug fix: the Nautilus script folder is derived from the Nautilus version
-  again; on a fresh account the scripts were installed into the pre 14.04
-  folder, where a current Nautilus never looks
-- bug fix: an invalid XML declaration was written if Thunar had no uca.xml yet
-- bug fix: a version number with a leading zero (e.g. 4.08.1) aborted the
-  version comparison with "invalid octal number"
-- messages that the file browsers print on --version don't pollute the
-  installer menu anymore
-- the result files moved from a shared /tmp into a private folder per user
-- an uninstallation doesn't leave empty folders of its own behind anymore
+2.11.0, Sep 12, 2026
+- New Features
+  - added support for broot
+  - added support for Midnight Commander
+  - added support for nnn
+  - added support for ranger
+  - added support for vifm
+  - added support for Yazi
+  - an uninstallation now lists every file that it would delete or modify and
+    asks for confirmation before it touches anything
+  - an installation does the same: it lists what it would remove first, what it
+    would create and what it would modify, and asks for confirmation before it
+    touches anything
+
+- Improvements/Changes
+  - added an "h - Hide/Unhide the UNAVAILABLE entries menu" toggle
+  - changed the Nemo menu key from n to o
+  - changed the muCommander menu key from m to u
+  - the installer warns now if the java that was selected belongs to a headless
+    JRE/JDK, which cannot run HashGarten
+  - every menu entry shows now what its key would do: install, reinstall for a
+    file browser that has Jacksum already, uninstall, and ------- wherever there
+    is nothing to do, be it because the file browser is not installed at all or
+    because there is nothing of Jacksum to remove
+  - messages that the file browsers print on --version don't pollute the
+    installer menu anymore
+  - the result files moved from a shared /tmp into a private folder per user
+
+- Bug Fixes
+  - bug fix: the menu claimed an installation "for all users" for every file
+    browser as soon as the script was run as root on a KDE system, although
+    only KDE has a system wide location - all the others install into the home
+    of the user who runs the script, and say so now
+  - bug fix: the PCManFM uninstallation removed the entire file manager config
+    folder including the user's own custom actions, and it always reported
+    [FAILED] for the desktop files
+  - bug fix: the SpaceFM/zzzFM un-/installation unregistered foreign file
+    handlers, and it could merge two handler names into one
+  - bug fix: the SpaceFM/zzzFM uninstallation left the copy of the session file
+    that the installation had taken behind
+  - bug fix: an uninstallation left an empty rc.conf, keymap.toml, uca.xml,
+    commands.xml or mc user menu behind if the file browser had none of its own
+    before the installation and the installation had to create one
+  - bug fix: a viewer that differs from the editor was ignored by the generated
+    script
+  - bug fix: the editor was forgotten after an installation, so a second
+    installation in the same session insisted on an absolute path
+  - bug fix: the KDE servicemenu got duplicated actions if the installation was
+    run more than once per session
+  - bug fix: typing p in the algorithm selection asked the same question over
+    and over again instead of keeping the previous selection
+  - bug fix: the Nautilus script folder is derived from the Nautilus version
+    again; on a fresh account the scripts were installed into the pre 14.04
+    folder, where a current Nautilus never looks
+  - bug fix: an invalid XML declaration was written if Thunar had no uca.xml yet
+  - bug fix: a version number with a leading zero (e.g. 4.08.1) aborted the
+    version comparison with "invalid octal number"
+  - bug fix: an uninstallation doesn't leave empty folders of its own behind
+    anymore
 
 2.10.0, Aug 22, 2026
 - bundled Jacksum 4.0.0, HashGarten 0.19 and FlatLaf 3.7.2

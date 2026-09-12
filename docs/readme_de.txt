@@ -1,7 +1,7 @@
 Beschreibung
 ------------
 Jacksum File Browser Integration 2.11.0
-für GNU/Linux und Unix Betriebssysteme (11.09.2026)
+für GNU/Linux und Unix Betriebssysteme (12.09.2026)
 Copyright (C) 2006-2026 Dipl.-Inf. (FH) Johann N. Löfflmann
 
 This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,8 @@ Voraussetzungen
 
 2) Einen Dateimanager: broot, Caja, Dolphin, elementary Files, GNOME Nautilus
    (Files), Konqueror, Krusader, Midnight Commander, muCommander, Nemo, nnn,
-   PCManFM, PCManFM-Qt, ranger, ROX-Filer, SpaceFM, Thunar, Xfe, Yazi und
-   zzzFM werden unterstützt.
+   PCManFM, PCManFM-Qt, ranger, ROX-Filer, SpaceFM, Thunar, vifm, Xfe, Yazi
+   und zzzFM werden unterstützt.
 
 3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 
    Ein headless-OpenJDK ist nicht ausreichend.
