@@ -133,6 +133,11 @@ HASHGARTEN_VERSION="0.19.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
+# The lowest Java version that can run the jars above: both of them are
+# compiled for Java 21 (class file major version 65), an older JVM refuses
+# them with an UnsupportedClassVersionError as soon as a menu entry is
+# clicked. Keep this in sync with the jars, see enter_java().
+JAVA_MIN_VERSION="21"
 ALGOS_DIRECT_SUGGESTION="sha256 sha3-256 sha1 md5 cksum crc32 ed2k sumbsd sumsysv"
 ALGORITHMS=""
 COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cust;3)_Customized_Output cmd_edit;4)_Edit_Script"
@@ -419,8 +424,10 @@ find_bin() {
 # that tells them apart (Debian's openjdk-*-jre-headless, Red Hat's
 # java-*-openjdk-headless).
 #
-# Returns 1 for a full JRE/JDK, and also whenever the question cannot be
-# answered - a warning that turns out to be made up would be worse than none.
+# Returns 1 for a full JRE/JDK, one that can open a window, and 2 whenever the
+# question cannot be answered at all - neither a warning nor a promise that
+# turns out to be made up would be worth more than saying nothing. 0 stays the
+# only "yes", so the function can still be used as a plain condition.
 #
 is_headless_java() {
 #
@@ -432,14 +439,14 @@ is_headless_java() {
   # the binary that was entered is a wrapper script rather than a symlink
   JAVA_HOME_DIR="$("$1" -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p')"
   if [ ! -d "$JAVA_HOME_DIR" ]; then
-    return 1
+    return 2
   fi
 
   # not a layout we know (a Mac has libawt.dylib, and so on), so say nothing
   # rather than read "headless" into the absence of a file that would never
   # be there in the first place
   if ! glob_exists "$JAVA_HOME_DIR"/lib/libawt.so "$JAVA_HOME_DIR"/lib/*/libawt.so; then
-    return 1
+    return 2
   fi
 
   # lib/ is where Java 9 and later keep it, lib/<arch>/ is the older layout
@@ -2821,6 +2828,11 @@ print_params() {
 # -------------------------------------------------------------------------
   printf "\nCurrent parameters:\n"
   check_bin JAVA "java" "$JAVA"
+  if [ -z "$JAVA_VERSION" ]; then
+    printf "  [java version]: %s\n" "n/a"
+  else
+    printf "  [java version]: %s\n" "$JAVA_VERSION"
+  fi
   check_file JACKSUM_JAR "jacksum-${JACKSUM_VERSION}.jar" "$JACKSUM_JAR"
   check_file HASHGARTEN_JAR "HashGarten-${HASHGARTEN_VERSION}.jar" "$HASHGARTEN_JAR"
   check_bin VIEWER "Viewer" "$VIEWER"
@@ -2846,18 +2858,46 @@ enter_java() {
     JAVA_VERSION="${JAVA_VERSION%%_*}"
     JAVA_VERSION="${JAVA_VERSION%%+*}"
 
-    if [ "$(version_value "$JAVA_VERSION")" -lt "$(version_value 11.0.0)" ]; then
-      printf "Java version %s must be at least 11\n" "$JAVA_VERSION"
+    # By now this is the "21.0.5" of "openjdk full version \"21.0.5+11-LTS\"",
+    # but a binary that is not a JVM at all has left a message of its own here
+    # instead, and version_value() would answer that with an "invalid number"
+    # per component rather than with a verdict - so look before comparing.
+    JAVA_VERSION_OK=1
+    case "$JAVA_VERSION" in
+    "" | [!0-9]* | *[!0-9.]*) JAVA_VERSION_OK=0 ;;
+    esac
+
+    if [ "$JAVA_VERSION_OK" -eq 0 ]; then
+      printf "Could not determine the Java version of \"%s\".\n" "$JAVA"
+      printf "Please type the path to another java binary, or press \"Ctrl+C\" to abort.\n"
+    elif [ "$(version_value "$JAVA_VERSION")" -lt "$(version_value "${JAVA_MIN_VERSION}.0.0")" ]; then
+      printf "Java %s is too old, Jacksum and HashGarten need at least Java %s.\n" "$JAVA_VERSION" "$JAVA_MIN_VERSION"
+      printf "Please type the path to another java binary, or press \"Ctrl+C\" to abort.\n"
     else
       JAVA_FOUND=1
-      if is_headless_java "$JAVA"; then
+      is_headless_java "$JAVA"
+      JAVA_HEADLESS=$?
+      case "$JAVA_HEADLESS" in
+      0)
         printf "\nWarning: %s\n" "$JAVA"
-        printf "         is a headless JRE/JDK, it cannot open a window. HashGarten, the GUI\n"
-        printf "         for Jacksum, cannot be used with it, so the menu entries \"Calc Hash\n"
-        printf "         Values\" and \"Check Data Integrity\" would fail. \"Customized Output\",\n"
-        printf "         \"Edit Script\" and the entries for the algorithms don't need\n"
-        printf "         HashGarten and would work.\n"
-      fi
+        printf "         is Java %s, but a headless JRE/JDK, it cannot open a window.\n" "$JAVA_VERSION"
+        printf "         HashGarten, the GUI for Jacksum, cannot be used with it, so the menu\n"
+        printf "         entries \"Calc Hash Values\" and \"Check Data Integrity\" would fail.\n"
+        printf "         \"Customized Output\", \"Edit Script\" and the entries for the\n"
+        printf "         algorithms don't need HashGarten and would work.\n"
+        ;;
+      1)
+        printf "\nInfo: %s\n" "$JAVA"
+        printf "      is Java %s, a full JRE/JDK - it can open a window, so graphical\n" "$JAVA_VERSION"
+        printf "      applications such as HashGarten, the GUI for Jacksum, can be used\n"
+        printf "      with it.\n"
+        ;;
+      *)
+        printf "\nInfo: %s\n" "$JAVA"
+        printf "      is Java %s. Whether it can open a window could not be determined,\n" "$JAVA_VERSION"
+        printf "      so HashGarten, the GUI for Jacksum, may or may not work with it.\n"
+        ;;
+      esac
     fi
   done
 }
