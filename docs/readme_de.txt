@@ -27,7 +27,8 @@ Voraussetzungen
    PCManFM, PCManFM-Qt, ranger, ROX-Filer, SpaceFM, Thunar, vifm, Xfe, Yazi
    und zzzFM werden unterstützt.
 
-3) Eine komplette Java Laufzeitumgebung mit grafischen Bibliotheken. 
+3) Eine komplette Java Laufzeitumgebung ab Version 21 mit grafischen
+   Bibliotheken.
    Ein headless-OpenJDK ist nicht ausreichend.
 
    Beziehen Sie ein passende Java Laufzeitumgebung (JRE oder JDK)
@@ -40,7 +41,7 @@ Voraussetzungen
    https://www.microsoft.com/openjdk/
    https://aws.amazon.com/de/corretto/
    https://sapmachine.io
-   https://github.com/alibaba/dragonwell8
+   https://github.com/dragonwell-project/dragonwell21
    https://www.oracle.com/java
 
 4) jacksum-4.0.0.jar, HashGarten-0.19.0.jar und flatlaf-3.7.2.jar

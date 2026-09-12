@@ -20,6 +20,13 @@ Release Notes
   - changed the muCommander menu key from m to u
   - the installer warns now if the java that was selected belongs to a headless
     JRE/JDK, which cannot run HashGarten
+  - the installer requires Java 21 now, the version that both the Jacksum and
+    the HashGarten jar are compiled for, and it keeps asking for a java binary
+    as long as the one that was selected is older or does not tell a version
+    at all
+  - the installer reports the version of the java that was accepted, and
+    whether graphical applications such as HashGarten can be run with it; the
+    version is part of the parameter list as well
   - every menu entry shows now what its key would do: install, reinstall for a
     file browser that has Jacksum already, uninstall, and ------- wherever there
     is nothing to do, be it because the file browser is not installed at all or

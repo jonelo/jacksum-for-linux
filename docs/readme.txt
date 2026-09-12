@@ -27,8 +27,8 @@ Requirements
    PCManFM, PCManFM-Qt, ranger, ROX-Filer, SpaceFM, Thunar, vifm, Xfe, Yazi,
    and zzzFM are supported
 
-3) A complete Java Runtime Environment (JRE) or Java Developement Kit (JDK)
-   with graphical libraries.
+3) A complete Java Runtime Environment (JRE) or Java Development Kit (JDK)
+   with graphical libraries, version 21 or later.
 
    Note: a headless OpenJDK is not suitable to run the HashGarten GUI.
    You can get a suitable Java Runtime from many places:
@@ -40,7 +40,7 @@ Requirements
    https://www.microsoft.com/openjdk/
    https://aws.amazon.com/de/corretto/
    https://sapmachine.io
-   https://github.com/alibaba/dragonwell8
+   https://github.com/dragonwell-project/dragonwell21
    https://www.oracle.com/java
 
 4) jacksum-4.0.0.jar, and HashGarten-0.19.0.jar, and flatlaf-3.7.2.jar
