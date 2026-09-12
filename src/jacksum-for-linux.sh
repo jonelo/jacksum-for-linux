@@ -76,6 +76,8 @@
 #    Thunar 4.20.7 on Ubuntu Linux 26.04
 #    Thunar 4.18.4 on MX-Linux 23
 #
+#    vifm 0.14.3 on Ubuntu Linux 26.04
+#
 #    Xfe 1.43.2 on Ubuntu Linux 22.04.1
 #    Xfe 1.43 on Ubuntu Linux 22.04
 #
@@ -162,11 +164,11 @@ PLAN_COUNT=0
 # name, and the programs it stands for. The order of the keys is the order of
 # the menu. Together with an install_menu_* and an uninstall_* function this
 # is all it takes to add one.
-BROWSER_KEYS="a b c d e g m n o p r s t u x y z"
+BROWSER_KEYS="a b c d e g m n o p r s t u v x y z"
 declare -A BROWSER_ID=(
   [a]=ranger [b]=broot [c]=caja [d]=kde [e]=elementary [g]=gnome [m]=mc
   [n]=nnn [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar
-  [u]=mucommander [x]=xfe [y]=yazi [z]=zzzfm
+  [u]=mucommander [v]=vifm [x]=xfe [y]=yazi [z]=zzzfm
 )
 declare -A BROWSER_PROGNAME=(
   [broot]="broot"
@@ -183,6 +185,7 @@ declare -A BROWSER_PROGNAME=(
   [rox]="ROX-Filer"
   [spacefm]="SpaceFM"
   [thunar]="Thunar"
+  [vifm]="vifm"
   [xfe]="Xfe"
   [yazi]="Yazi"
   [zzzfm]="zzzFM"
@@ -194,7 +197,7 @@ declare -A BROWSER_IMPL=(
   [broot]=broot [caja]=gnome [elementary]=elementary [gnome]=gnome [kde]=kde
   [mc]=mc [mucommander]=mucommander [nemo]=gnome [nnn]=nnn [pcmanfm]=pcmanfm
   [ranger]=ranger [rox]=rox [spacefm]=xxxfm [thunar]=thunar
-  [xfe]=gnome [yazi]=yazi [zzzfm]=xxxfm
+  [vifm]=vifm [xfe]=gnome [yazi]=yazi [zzzfm]=xxxfm
 )
 
 # Filled in by set_env() and refresh_menu_item(), read by print_menu(): "the
@@ -466,7 +469,7 @@ set_env() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # Every file browser but KDE installs into the home of the user who runs
   # the script - none of the others has a system wide location that it would
@@ -699,6 +702,26 @@ set_env() {
     fi
     ;;
 
+  vifm)
+    if type vifm &>/dev/null; then
+      BROWSER_UNAVAILABLE[$1]=""
+      # vifm's config folder: $VIFM first, then ~/.vifm, then XDG - the very
+      # order vifm itself looks in (see vifm(1), "Startup")
+      if [ -n "$VIFM" ]; then
+        PREFIX="$VIFM"
+      elif [ -d "$HOME/.vifm" ]; then
+        PREFIX="$HOME/.vifm"
+      else
+        PREFIX="${XDG_CONFIG_HOME:-$HOME/.config}/vifm"
+      fi
+      # $MYVIFMRC wins over $VIFM/vifmrc and may well point somewhere else
+      # entirely. The whole path is remembered rather than the folder, because
+      # install_menu_vifm and uninstall_vifm have to arrive at the very same
+      # file (cf. $BROOT_CONF_EXT).
+      VIFMRC="${MYVIFMRC:-$PREFIX/vifmrc}"
+    fi
+    ;;
+
   yazi)
     if type yazi &>/dev/null; then
       BROWSER_UNAVAILABLE[$1]=""
@@ -741,7 +764,7 @@ refresh_menu_item() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
 
@@ -765,7 +788,7 @@ menu_action() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # the file browser is not there at all
   if [ -n "${BROWSER_UNAVAILABLE[$1]}" ]; then
@@ -783,7 +806,7 @@ uninstall() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press the \"Enter\" key to continue ... "
@@ -795,7 +818,7 @@ uninstall_silent() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "uninstall_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -815,7 +838,7 @@ is_installed() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local COUNT
 
@@ -1402,6 +1425,26 @@ uninstall_ranger() {
 }
 
 # -------------------------------------------------------------------------
+uninstall_vifm() {
+# -------------------------------------------------------------------------
+  VIFMRCBACKUP="$VIFMRC.before-jacksum"
+
+  remove_jacksum_sh
+  # A vifmrc that vifm did not have yet is a copy of the sample configuration
+  # that vifm itself would have created on its very first start (see
+  # install_menu_vifm), so restore_backup drops it rather than leaving that
+  # copy behind - vifm creates the folder and the file again, sample and all,
+  # the next time it is started. Looking the sample up starts a process, which
+  # is not worth it if there is no backup to compare it with in the first
+  # place (is_installed() probes every file browser on startup).
+  VIFM_SEED=""
+  if [ -f "$VIFMRCBACKUP" ]; then
+    vifm_seed
+  fi
+  restore_backup "$NAME entries" "$VIFMRC" "$VIFMRCBACKUP" "$VIFM_SEED"
+}
+
+# -------------------------------------------------------------------------
 uninstall_yazi() {
 # -------------------------------------------------------------------------
   YAZIKEYMAP="$PREFIX/keymap.toml"
@@ -1524,7 +1567,7 @@ install_menu() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "install_menu_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -2107,6 +2150,178 @@ EOF
 
   printf "  Verbs (type \":\" and the name in broot, \"?\" lists them all):\n"
   printf "%s" "$BROOT_VERBS"
+}
+
+# -------------------------------------------------------------------------
+# Looks for the sample vifmrc and returns its path in $VIFM_SAMPLE. vifm
+# takes it from the data folder that belongs to its own binary (see
+# get_installed_data_dir()), so that one is asked first and the usual system
+# wide places afterwards.
+#
+find_vifm_sample_vifmrc() {
+# -------------------------------------------------------------------------
+  local DIR
+  VIFM_SAMPLE=""
+  for DIR in "$(dirname "$(command -v vifm)" 2>/dev/null)/../share/vifm" \
+    /usr/share/vifm /usr/local/share/vifm /etc/vifm; do
+    if [ -f "$DIR/vifmrc" ]; then
+      VIFM_SAMPLE="$DIR/vifmrc"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# -------------------------------------------------------------------------
+# Returns in $VIFM_SEED what a vifmrc that vifm does not have yet is filled
+# with by the installation: the sample configuration that vifm copies there
+# itself - but only on its very first start, and only as long as the config
+# folder does not exist yet (see setup_dirs()/copy_rc_file()), so a vifmrc
+# that we create would take the sample away from the user for good. An empty
+# seed if there is no sample anywhere.
+#
+vifm_seed() {
+# -------------------------------------------------------------------------
+  if find_vifm_sample_vifmrc; then
+    VIFM_SEED="$(cat "$VIFM_SAMPLE")"
+  else
+    VIFM_SEED=""
+  fi
+}
+
+# -------------------------------------------------------------------------
+# Builds the name of the vifm command for one menu entry and prints it.
+#
+# vifm takes letters and digits in a command name and nothing else (see
+# vifm(1), :command), so the "_" that a broot verb carries is out of the
+# question here. On top of that vifm refuses a name whose part in front of a
+# digit matches a command that ends there or goes on with a letter, which
+# "ed2k" ("jacksumed" + "it") and pairs like "tiger"/"tiger2" or "md5"/"mdc2"
+# would run into. "X" solves both at once: it separates the name of the
+# program from the entry, it stands in for every character that vifm does not
+# take, and it goes in front of every group of digits.
+#
+#   cmd_calc -> jacksumXcalc      sha3-256    -> jacksumXshaX3X256
+#   ed2k     -> jacksumXedX2k     haval_256_5 -> jacksumXhavalX256X5
+#
+# Only the name is built this way: what is handed to jacksum.sh and what the
+# summary shows keep the algorithm exactly as it is.
+#
+vifm_command_name() {
+#
+# parameters:
+# $1 the command without its "cmd_", or the algorithm
+# -------------------------------------------------------------------------
+  local IN="$1"
+  local OUT=""
+  local PREV=""
+  local C I
+
+  for ((I = 0; I < ${#IN}; I++)); do
+    C="${IN:I:1}"
+    case "$C" in
+    [!A-Za-z0-9]) C="X" ;;
+    esac
+    case "$C" in
+    [0-9])
+      # an X in front of the group of digits, unless there is one already. A
+      # group that starts the name gets one too: "jacksumX2..." and
+      # "jacksumXcalc" would be ambiguous to vifm otherwise.
+      case "$PREV" in
+      "" | [!0-9X]) OUT="${OUT}X" ;;
+      esac
+      ;;
+    esac
+    OUT="$OUT$C"
+    PREV="$C"
+  done
+
+  printf '%sX%s' "$NAME" "$OUT"
+}
+
+# -------------------------------------------------------------------------
+# vifm has neither a context menu nor a browsable plugin folder, and its
+# normal mode keys are the ones a vi user expects them to be, so a key
+# binding of the ranger kind is no place for this either. Its own extension
+# point are user commands: they are called with ":" and their name, are
+# completed while they are typed, and ":command jacksum" lists all of ours as
+# a menu. A command costs no key, so unlike mc, ranger and Yazi vifm
+# deliberately gets one for every single selected algorithm, broot style.
+#
+# The commands are appended to the vifmrc that vifm reads (see set_env),
+# which is backed up/restored the way Thunar's uca.xml is. What deliberately
+# does not happen here is a ":filetype" entry per command: those would show
+# up in vifm's file menu, but they would also take the Enter key away from
+# every file that has no association of its own yet.
+#
+install_menu_vifm() {
+# -------------------------------------------------------------------------
+  VIFMRCBACKUP="$VIFMRC.before-jacksum"
+
+  # This one cannot use backup_file: a vifmrc that we have to create is not
+  # seeded with a fixed text but with a byte for byte copy of the sample
+  # configuration, which vifm would only ever write itself while it does not
+  # have a config folder yet (see vifm_seed).
+  if [ "$DRYRUN" -eq 1 ]; then
+    if [ ! -f "$VIFMRC" ]; then
+      if find_vifm_sample_vifmrc; then
+        plan_item "create" "$VIFMRC" "a copy of $VIFM_SAMPLE, the sample configuration that vifm creates on its first start"
+      else
+        plan_item "create" "$VIFMRC" "it does not exist yet"
+      fi
+    fi
+    plan_item "create" "$VIFMRCBACKUP" "backup of $(basename "$VIFMRC"), taken before it is changed"
+  else
+    status_begin "Backing up $(basename "$VIFMRC")"
+    if [ ! -f "$VIFMRC" ]; then
+      status_note "NOT FOUND"
+      mkdir -p "$(dirname "$VIFMRC")" 2>/dev/null
+      # this is what vifm_seed() describes for the uninstallation, keep the
+      # two in step - the uninstallation recognizes a vifmrc that is only
+      # ours by comparing the backup against it
+      if find_vifm_sample_vifmrc; then
+        cp "$VIFM_SAMPLE" "$VIFMRC"
+      else
+        : >"$VIFMRC"
+      fi
+      cp "$VIFMRC" "$VIFMRCBACKUP"
+    else
+      cp "$VIFMRC" "$VIFMRCBACKUP"
+      status_ok
+    fi
+  fi
+
+  count_entries "user commands" 0
+  plan_pending "modify" "$VIFMRC" "$ENTRIES_TEXT" && return 0
+
+  status_begin "Installing commands"
+  VIFM_COMMANDS=""
+  {
+    # a comment in a vifmrc starts with '"', not with '#'
+    printf '\n" Jacksum/HashGarten (added by jacksum-for-linux.sh)\n'
+    while IFS=$'\t' read -r KIND CMD TXT; do
+      if [ "$KIND" = "command" ]; then
+        VIFMCMD="$(vifm_command_name "${CMD#cmd_}")"
+      else
+        VIFMCMD="$(vifm_command_name "$CMD")"
+      fi
+      # "command!" rather than "command": a reinstallation, or a name that
+      # the user has given away already, is overwritten rather than making
+      # vifm complain about it on every start.
+      # %f = the selected files, or the file under the cursor if nothing is
+      # selected, shell quoted by vifm itself (the counterpart of ranger's
+      # %p). %i and the trailing "&" run it in the background, without an
+      # error dialog and without the terminal - everything we start is a GUI
+      # and vifm would stay blocked until its window is closed again
+      # otherwise; what it has to say is still in vifm's ":jobs" menu.
+      printf 'command! %s "%s" %s %%f %%i &\n' "$VIFMCMD" "$JACKSUMSH" "$CMD"
+      VIFM_COMMANDS="$VIFM_COMMANDS    :$VIFMCMD - $TXT"$'\n'
+    done < <(menu_entries)
+  } >>"$VIFMRC"
+  status_ok
+
+  printf "  Commands (type \":\" and the name in vifm, \":command %s\" lists them all):\n" "$NAME"
+  printf "%s" "$VIFM_COMMANDS"
 }
 
 # -------------------------------------------------------------------------
@@ -2745,7 +2960,7 @@ confirm_install() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -2781,7 +2996,7 @@ install_interactive() {
 #
 # parameters:
 # $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or broot or mc or mucommander or nnn or ranger or yazi
+# or broot or mc or mucommander or nnn or ranger or vifm or yazi
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -2849,7 +3064,7 @@ restart_fb() {
 # -------------------------------------------------------------------------
 install_done() {
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -2872,6 +3087,11 @@ install_done() {
     printf "Please restart broot, then type \":\" and the name of a verb,\n"
     printf "e.g. :jacksum_calc - the \"?\" help screen lists all of them.\n"
     ;;
+  vifm)
+    printf "Please restart vifm (\":restart\" rereads the vifmrc in a running\n"
+    printf "one), then type \":\" and the name of a command, e.g.\n"
+    printf ":jacksumXcalc - \":command jacksum\" lists all of them.\n"
+    ;;
   ranger | yazi)
     # the name of the program rather than the one from the menu: that is what
     # has to be typed to start it again
@@ -2892,7 +3112,7 @@ install_done() {
 install_generic() {
 #
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # No print_params here, install_interactive prints the parameters anyway.
@@ -2915,7 +3135,7 @@ confirm_uninstall() {
 #
 # parameters:
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -2944,7 +3164,7 @@ confirm_uninstall() {
 uninstall_generic() {
 #
 # $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, xfe, yazi or zzzfm
+#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # the confirmation is deliberately not in uninstall_silent(), which every
