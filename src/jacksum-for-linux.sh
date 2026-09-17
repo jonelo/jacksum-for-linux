@@ -43,6 +43,8 @@
 #    elementary Files 6.5.2 on elementary OS 7.1
 #    elementary Files 6.2.1 on elementary OS 7
 #
+#    fman 1.7.5 on Ubuntu Linux 26.04
+#
 #    GNOME Files (known as Gnome Nautilus) 50.2.2 on Ubuntu Linux 26.04
 #    GNOME Files (known as Gnome Nautilus) 46.0 on Ubuntu Linux 24.04
 #    GNOME Files (known as Gnome Nautilus) 42.6 on Ubuntu Linux 22.04.3
@@ -144,8 +146,9 @@ COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cus
 # How many of the $ALGORITHMS get an entry of their own where every entry
 # costs a key: mc, ranger and Yazi have a menu hotkey or a key binding per
 # entry, and an open ended list of algorithms would either run out of keys or
-# bury the entries of the user. Everywhere else all of them get one - broot
-# and nnn included, whose verbs and plugins cost no key at all.
+# bury the entries of the user. Everywhere else all of them get one - broot,
+# fman, nnn and vifm included, whose verbs, menu entries, plugins and
+# commands cost no key at all.
 MAX_DIRECT_ALGOS=5
 
 # What the installation puts into a config file of a file browser that does
@@ -169,16 +172,17 @@ PLAN_COUNT=0
 # name, and the programs it stands for. The order of the keys is the order of
 # the menu. Together with an install_menu_* and an uninstall_* function this
 # is all it takes to add one.
-BROWSER_KEYS="a b c d e g m n o p r s t u v x y z"
+BROWSER_KEYS="a b c d e f g m n o p r s t u v x y z"
 declare -A BROWSER_ID=(
-  [a]=ranger [b]=broot [c]=caja [d]=kde [e]=elementary [g]=gnome [m]=mc
-  [n]=nnn [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar
+  [a]=ranger [b]=broot [c]=caja [d]=kde [e]=elementary [f]=fman [g]=gnome
+  [m]=mc [n]=nnn [o]=nemo [p]=pcmanfm [r]=rox [s]=spacefm [t]=thunar
   [u]=mucommander [v]=vifm [x]=xfe [y]=yazi [z]=zzzfm
 )
 declare -A BROWSER_PROGNAME=(
   [broot]="broot"
   [caja]="Caja"
   [elementary]="Elementary Files"
+  [fman]="fman"
   [gnome]="GNOME Files (Nautilus)"
   [kde]="Dolphin, Konqueror, Krusader"
   [mc]="Midnight Commander"
@@ -199,9 +203,9 @@ declare -A BROWSER_PROGNAME=(
 # browsers share one, because they want the very same thing (the Nautilus
 # family its scripts folder, SpaceFM and zzzFM their handlers).
 declare -A BROWSER_IMPL=(
-  [broot]=broot [caja]=gnome [elementary]=elementary [gnome]=gnome [kde]=kde
-  [mc]=mc [mucommander]=mucommander [nemo]=gnome [nnn]=nnn [pcmanfm]=pcmanfm
-  [ranger]=ranger [rox]=rox [spacefm]=xxxfm [thunar]=thunar
+  [broot]=broot [caja]=gnome [elementary]=elementary [fman]=fman [gnome]=gnome
+  [kde]=kde [mc]=mc [mucommander]=mucommander [nemo]=gnome [nnn]=nnn
+  [pcmanfm]=pcmanfm [ranger]=ranger [rox]=rox [spacefm]=xxxfm [thunar]=thunar
   [vifm]=vifm [xfe]=gnome [yazi]=yazi [zzzfm]=xxxfm
 )
 
@@ -475,8 +479,8 @@ version_value() {
 set_env() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # Every file browser but KDE installs into the home of the user who runs
   # the script - none of the others has a system wide location that it would
@@ -672,6 +676,23 @@ set_env() {
     fi
     ;;
 
+  fman)
+    # "type" only, and never "fman --version": that one starts the GUI. Only
+    # "--help" is answered by the launcher script that the package installs
+    # as /usr/bin/fman, and even that one is of no use here.
+    if type fman &>/dev/null; then
+      BROWSER_UNAVAILABLE[$1]=""
+      # fman's data directory (see https://fman.io/docs/data-directory).
+      # XDG_CONFIG_HOME is deliberately not honored here: fman ignores it and
+      # uses $HOME/.config/fman whatever it is set to (tried with fman 1.7.5),
+      # so honoring it would install into a folder that fman never reads.
+      PREFIX="$HOME/.config/fman"
+      # where fman looks for the plugins of the user; ours gets a folder of
+      # its own in there, see install_menu_fman
+      FB_SCRIPTFOLDER=Plugins/User
+    fi
+    ;;
+
   mc)
     if type mc &>/dev/null; then
       BROWSER_UNAVAILABLE[$1]=""
@@ -770,8 +791,8 @@ browser_for_key() {
 refresh_menu_item() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
 
@@ -794,8 +815,8 @@ refresh_menu_item() {
 menu_action() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   # the file browser is not there at all
   if [ -n "${BROWSER_UNAVAILABLE[$1]}" ]; then
@@ -812,8 +833,8 @@ menu_action() {
 uninstall() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   uninstall_silent "$1"
   printf "\nUninstallation finished. Please press the \"Enter\" key to continue ... "
@@ -824,8 +845,8 @@ uninstall() {
 uninstall_silent() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "uninstall_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -844,8 +865,8 @@ uninstall_silent() {
 is_installed() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local COUNT
 
@@ -1356,6 +1377,18 @@ uninstall_gnome() {
 }
 
 # -------------------------------------------------------------------------
+uninstall_fman() {
+# -------------------------------------------------------------------------
+  FMAN_PLUGIN="$PREFIX/$FB_SCRIPTFOLDER/Jacksum"
+
+  remove_jacksum_sh
+  # Plugins/User holds the plugins of the user as well, so only our own
+  # plugin folder goes - fman created the folder above it, and the
+  # __pycache__ that fman leaves in ours is taken along with it
+  remove_items "$NAME plugin" "" "$FMAN_PLUGIN"
+}
+
+# -------------------------------------------------------------------------
 uninstall_nnn() {
 # -------------------------------------------------------------------------
   SCRIPTS="$PREFIX/$FB_SCRIPTFOLDER"
@@ -1573,8 +1606,8 @@ uninstall_xxxfm() {
 install_menu() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   "install_menu_${BROWSER_IMPL[$1]}" "$1"
 }
@@ -1777,6 +1810,108 @@ install_menu_nnn() {
     install_menu_nnn_plugin "$CMD" "$TXT"
   done < <(menu_entries)
   status_ok
+}
+
+# -------------------------------------------------------------------------
+# fman is extended with plugins, and a plugin is a folder below Plugins/User
+# of fman's data directory that holds a Python package with the commands
+# and, next to it, the JSON files that put those commands into a menu - that
+# is where fman's own Core plugin keeps its "File Context Menu (Linux).json"
+# too, and fman merges the menu of every plugin into the one before it (see
+# https://fman.io/docs/plugins-architecture). Everything of ours therefore
+# lives in one folder of our own: no file of the user is changed, nothing
+# has to be backed up, and the uninstallation is that one folder less.
+#
+# All entries share a single command: fman hands the "args" of a menu entry
+# to the command as keyword arguments, so one class with an "action"
+# parameter is enough. That is what keeps the algorithm intact - sha512/256
+# and haval_256_5 travel in the arguments rather than in a name, so unlike
+# broot's verbs and vifm's commands nothing of ours has to be mangled into a
+# Python class name first.
+#
+install_menu_fman() {
+# -------------------------------------------------------------------------
+  FMAN_PLUGIN="$PREFIX/$FB_SCRIPTFOLDER/Jacksum"
+  # "All your Python sources must lie inside such a package" - the package
+  # below the plugin folder is where the command itself goes
+  FMAN_PACKAGE="$FMAN_PLUGIN/$NAME"
+  FMAN_INIT="$FMAN_PACKAGE/__init__.py"
+  # a menu file without an operating system in its name is read on every one
+  # of them, which is what the Core plugin's "(Linux)" variants are not
+  FMAN_MENU="$FMAN_PLUGIN/File Context Menu.json"
+
+  create_folder "the plugin" "$FMAN_PLUGIN"
+  create_folder "the package" "$FMAN_PACKAGE"
+
+  # two files, whatever the number of entries: one command for all of them,
+  # and one menu file with an entry per command and per algorithm in it
+  count_entries "menu entries" 0
+  if plan_pending "create" "$FMAN_INIT" "the fman command that calls $NAME.sh"; then
+    plan_item "create" "$FMAN_MENU" "$ENTRIES_TEXT"
+    return 0
+  fi
+
+  status_begin "Installing the fman command"
+  {
+    printf '# Jacksum/HashGarten (generated by jacksum-for-linux.sh)\n'
+    cat <<'EOF'
+from fman import DirectoryPaneCommand, show_alert
+from fman.url import as_human_readable, splitscheme
+from subprocess import Popen
+
+EOF
+    printf 'JACKSUMSH = "%s"\n\n\n' "$JACKSUMSH"
+    cat <<'EOF'
+class Jacksum(DirectoryPaneCommand):
+    """Hands the files that are selected in the pane to jacksum.sh.
+
+    The class name is what fman makes the command name "jacksum" out of,
+    which is what the menu entries refer to.
+    """
+
+    def __call__(self, action='cmd_calc'):
+        # the one thing the menu entries differ in: either one of the cmd_*
+        # commands or the name of an algorithm, jacksum.sh dispatches on it
+        paths = []
+        for url in self.get_chosen_files():
+            if splitscheme(url)[0] != 'file://':
+                show_alert('Jacksum works on local files only.')
+                return
+            paths.append(as_human_readable(url))
+        if not paths:
+            show_alert('No file is selected!')
+            return
+        # detached: everything we start is a window of its own, and fman is
+        # not to be left waiting for a child process of ours
+        Popen([JACKSUMSH, action] + paths, start_new_session=True)
+EOF
+  } >"$FMAN_INIT"
+  if [ -f "$FMAN_INIT" ]; then
+    status_ok
+  else
+    status_failed
+  fi
+
+  status_begin "Installing menu entries"
+  {
+    printf '[\n'
+    # An "id" is what fman positions entries with: it names a section of the
+    # menu that the Core plugin has put there, and what follows goes behind
+    # that section. "archive" is its last one ("Compress..."), so the entries
+    # land at the end of the menu rather than in front of "Open", which is
+    # where they go without an id. The separator is the anchor itself.
+    printf '\t{ "caption": "-", "id": "archive" }'
+    while IFS=$'\t' read -r _KIND CMD TXT; do
+      printf ',\n\t{ "caption": "Jacksum - %s", "command": "%s", "args": { "action": "%s" } }' \
+        "$TXT" "$NAME" "$CMD"
+    done < <(menu_entries)
+    printf '\n]\n'
+  } >"$FMAN_MENU"
+  if [ -f "$FMAN_MENU" ]; then
+    status_ok
+  else
+    status_failed
+  fi
 }
 
 # -------------------------------------------------------------------------
@@ -2999,8 +3134,8 @@ select_algorithms() {
 confirm_install() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -3035,8 +3170,8 @@ confirm_install() {
 install_interactive() {
 #
 # parameters:
-# $1 kde, gnome, rox, thunar, xfe, caja, nemo, elementary, spacefm or zzzfm
-# or broot or mc or mucommander or nnn or ranger or vifm or yazi
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   while [ "$YESNO" != "y" ]; do
@@ -3103,8 +3238,8 @@ restart_fb() {
 
 # -------------------------------------------------------------------------
 install_done() {
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   case $1 in
   gnome)
@@ -3122,6 +3257,11 @@ install_done() {
   mc)
     # no restart required, mc reads its user menu every time F2 is pressed :)
     printf "Press F2 in Midnight Commander to open the user menu.\n"
+    ;;
+  fman)
+    printf "Please restart fman, or press Ctrl+Shift+P in a running one and\n"
+    printf "enter \"Reload plugins\". The entries are then in the context menu\n"
+    printf "that a right click on a file opens.\n"
     ;;
   broot)
     printf "Please restart broot, then type \":\" and the name of a verb,\n"
@@ -3151,8 +3291,8 @@ install_done() {
 # -------------------------------------------------------------------------
 install_generic() {
 #
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # No print_params here, install_interactive prints the parameters anyway.
@@ -3174,8 +3314,8 @@ install_generic() {
 confirm_uninstall() {
 #
 # parameters:
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   local YESNO=""
   local PROG="${BROWSER_PROGNAME[$1]}"
@@ -3203,8 +3343,8 @@ confirm_uninstall() {
 # -------------------------------------------------------------------------
 uninstall_generic() {
 #
-# $1 broot, caja, elementary, gnome, kde, mc, mucommander, nemo, nnn, pcmanfm,
-#    ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
+# $1 broot, caja, elementary, fman, gnome, kde, mc, mucommander, nemo, nnn,
+#    pcmanfm, ranger, rox, spacefm, thunar, vifm, xfe, yazi or zzzfm
 # -------------------------------------------------------------------------
   set_env "$1"
   # the confirmation is deliberately not in uninstall_silent(), which every
