@@ -1,6 +1,8 @@
 Release Notes
 -------------
-2.11.0, Sep 18, 2026
+2.11.0, Oct 11, 2026
+- bundled Jacksum 4.0.2, HashGarten 0.21 and FlatLaf 3.7.2
+
 - New Features
   - added support for broot
   - added support for fman

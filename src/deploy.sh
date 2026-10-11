@@ -1,10 +1,11 @@
 #!/bin/bash
 
-WIN_INSTALLER_VER=2.10.0
-LINUX_INSTALLER_VER=2.10.0
+WIN_TAG_VER=2.11
+WIN_INSTALLER_VER=2.11.0
+LINUX_INSTALLER_VER=2.11.0
 
-JACKSUM_VER=4.0.0
-HASHGARTEN_VER=0.19.0
+JACKSUM_VER=4.0.2
+HASHGARTEN_VER=0.21.0
 FLATLAF_VER=3.7.2
 
 # ------ no change required after this point ---- #
@@ -16,7 +17,7 @@ mkdir -p "$TARGET"
 cd "${TARGET}"
 
 # Download latest jacksum-for-windows release
-curl -L -o temp.zip "https://github.com/jonelo/jacksum-for-windows/releases/download/v${WIN_INSTALLER_VER}/jacksum-${JACKSUM_VER}-hashgarten-${HASHGARTEN_VER}-for-windows-${WIN_INSTALLER_VER}.zip"
+curl -L -o temp.zip "https://github.com/jonelo/jacksum-for-windows/releases/download/v${WIN_TAG_VER}/jacksum-${JACKSUM_VER}-hashgarten-${HASHGARTEN_VER}-for-windows-${WIN_INSTALLER_VER}.zip"
 
 # Extract all .jar files
 unzip temp.zip "*.exe"

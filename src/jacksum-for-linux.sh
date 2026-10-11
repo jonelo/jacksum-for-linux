@@ -130,16 +130,16 @@
 
 VERSION="2.11.0"
 NAME="jacksum"
-JACKSUM_VERSION="4.0.0"
-HASHGARTEN_VERSION="0.19.0"
+JACKSUM_VERSION="4.0.2"
+HASHGARTEN_VERSION="0.21.0"
 PROGNAME="Jacksum/HashGarten File Browser Integration"
 JACKSUM_JAR="$(pwd)/jacksum-${JACKSUM_VERSION}.jar"
 HASHGARTEN_JAR="$(pwd)/HashGarten-${HASHGARTEN_VERSION}.jar"
-# The lowest Java version that can run the jars above: both of them are
-# compiled for Java 21 (class file major version 65), an older JVM refuses
-# them with an UnsupportedClassVersionError as soon as a menu entry is
+# The lowest Java version that can run the jars above: HashGarten is
+# compiled for Java 25, an older JVM refuses
+# the app with an UnsupportedClassVersionError as soon as a menu entry is
 # clicked. Keep this in sync with the jars, see enter_java().
-JAVA_MIN_VERSION="21"
+JAVA_MIN_VERSION="25"
 ALGOS_DIRECT_SUGGESTION="sha256 sha3-256 sha1 md5 cksum crc32 ed2k sumbsd sumsysv"
 ALGORITHMS=""
 COMMANDS="cmd_calc;1)_Calc_Hash_Values cmd_check;2)_Check_Data_Integrity cmd_cust;3)_Customized_Output cmd_edit;4)_Edit_Script"
